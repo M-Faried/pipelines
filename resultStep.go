@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
@@ -14,11 +13,9 @@ type ResultStep[I any] struct {
 }
 
 func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
-	s.logsQueue.Enqueue(fmt.Sprintf("Starting: %s", s.id))
 	for {
 		select {
 		case <-ctx.Done():
-			s.logsQueue.Enqueue(fmt.Sprintf("Terminating: %s", s.id))
 			wg.Done()
 			return
 		case i, ok := <-s.input:

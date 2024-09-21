@@ -29,13 +29,6 @@ func printToken(t *Token) {
 	fmt.Println("Result:", t.currValue)
 }
 
-func logProcess[I any](p pipelines.IPipeline[I]) {
-	for {
-		log := p.ReadLog()
-		fmt.Println(log)
-	}
-}
-
 func Example2() {
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -47,7 +40,6 @@ func Example2() {
 	pip.Init()
 
 	// Running
-	go logProcess(pip)
 	go pip.Run(ctx)
 	time.Sleep(1 * time.Second)
 

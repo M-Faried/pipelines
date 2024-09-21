@@ -30,7 +30,6 @@ func Example1() {
 	pip.Init()
 
 	// Running
-	go logProcess(pip)
 	go pip.Run(ctx)
 
 	// Feeding inputs
