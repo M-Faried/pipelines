@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
@@ -10,8 +9,7 @@ type ResultStepProcess[I any] func(I) error
 
 type ResultStep[I any] struct {
 	baseStep[I]
-	decrementTokensCount func()
-	process              ResultStepProcess[I]
+	process ResultStepProcess[I]
 }
 
 // NewResultStep creates a new result step with the given id, number of replicas and process.
@@ -26,6 +24,12 @@ func NewResultStep[I any](id string, replicas uint16, process ResultStepProcess[
 	return step
 }
 
+func NewResultStepWithErrorHandler[I any](id string, replicas uint16, process ResultStepProcess[I], reportErrorHandler ReportError) *ResultStep[I] {
+	step := NewResultStep(id, replicas, process)
+	step.reportError = reportErrorHandler
+	return step
+}
+
 func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
@@ -35,9 +39,8 @@ func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 		case i, ok := <-s.input:
 			if ok {
 				err := s.process(i)
-				if err != nil {
-					wrappedErr := fmt.Errorf("error in %s: %w", s.id, err)
-					s.errorsQueue.Enqueue(wrappedErr)
+				if err != nil && s.reportError != nil {
+					s.reportError(s.id, err)
 				}
 				s.decrementTokensCount()
 			}

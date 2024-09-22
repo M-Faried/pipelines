@@ -16,8 +16,6 @@ type IPipeline[I any] interface {
 	FeedOne(i I)
 	// FeedMany feeds multiple items to the pipeline.
 	FeedMany(i []I)
-	// ReadError a blocking call which reads the errors reported by the pipeline steps one by one.
-	ReadError() error
 	// TokensCount returns the number of tokens being processed by the pipeline.
 	TokensCount() uint64
 	// WaitTillDone blocks until all tokens are consumed by the pipeline.
@@ -27,7 +25,6 @@ type IPipeline[I any] interface {
 type pipeline[I any] struct {
 	steps       []*Step[I]
 	resultStep  *ResultStep[I]
-	errorsQueue *Queue[error]
 	channelSize uint16
 
 	tokensCount uint64
@@ -51,9 +48,6 @@ func (p *pipeline[I]) Init() {
 		stepsCount := len(p.steps)
 		channelsCount := stepsCount + 1
 
-		// init error queue
-		p.errorsQueue = NewQueue[error]()
-
 		// init channels
 		allChannels := make([]chan I, channelsCount)
 		for i := 0; i < channelsCount; i++ {
@@ -64,7 +58,7 @@ func (p *pipeline[I]) Init() {
 		for i := 0; i < stepsCount && (i+1) < channelsCount; i++ {
 			p.steps[i].input = allChannels[i]
 			p.steps[i].output = allChannels[i+1]
-			p.steps[i].errorsQueue = p.errorsQueue
+			p.steps[i].decrementTokensCount = p.decrementTokensCount
 		}
 
 		// setting the input for the result step.
@@ -118,10 +112,6 @@ func (p *pipeline[I]) FeedMany(items []I) {
 		p.incrementTokensCount()
 		p.steps[0].input <- item
 	}
-}
-
-func (p *pipeline[I]) ReadError() error {
-	return p.errorsQueue.Dequeue()
 }
 
 func (p *pipeline[I]) Append(other IPipeline[I]) {

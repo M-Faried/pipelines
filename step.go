@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
@@ -28,6 +27,12 @@ func NewStep[I any](id string, replicas uint16, process StepProcess[I]) *Step[I]
 	return step
 }
 
+func NewStepWithErrorHandler[I any](id string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) *Step[I] {
+	step := NewStep(id, replicas, process)
+	step.reportError = reportErrorHandler
+	return step
+}
+
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
@@ -39,8 +44,11 @@ func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 			if ok {
 				o, err := s.process(i)
 				if err != nil {
-					wrappedErr := fmt.Errorf("error in %s: %w", s.id, err)
-					s.errorsQueue.Enqueue(wrappedErr)
+					if s.reportError != nil {
+						s.reportError(s.id, err)
+					}
+					// since we will not proceed with the current token, we need to decrement the tokens count.
+					s.decrementTokensCount()
 				} else {
 					s.output <- o
 				}

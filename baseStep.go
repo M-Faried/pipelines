@@ -1,5 +1,7 @@
 package pipelines
 
+type ReportError func(string, error)
+
 // baseStep is a base struct for all steps
 type baseStep[I any] struct {
 
@@ -12,6 +14,9 @@ type baseStep[I any] struct {
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint16
 
-	// errorsQueue is a queue for errors that may be reported during the step execution.
-	errorsQueue *Queue[error]
+	// reportError is the function called when an error occurs in the step.
+	reportError ReportError
+
+	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
+	decrementTokensCount func()
 }
