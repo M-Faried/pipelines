@@ -3,7 +3,6 @@ package examples
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/m-faried/pipelines"
 )
@@ -30,17 +29,21 @@ func Example1() {
 	pipe.Init()
 
 	// Running
-	go pipe.Run(ctx)
+	pipe.Run(ctx)
 
 	// Feeding inputs
 	for i := 0; i <= 500; i++ {
 		pipe.FeedOne(int64(i))
 	}
+
 	// 	waiting for all tokens to be processed
 	pipe.WaitTillDone()
-	// cancel the context
+
+	// cancel the context can come before or after Terminate
 	cancelCtx()
-	// optional: wait till all channels are closed
-	time.Sleep(1 * time.Second)
+
+	// terminating the pipeline and clearning resources
+	pipe.Terminate()
+
 	fmt.Println("Example1 Done!!!")
 }

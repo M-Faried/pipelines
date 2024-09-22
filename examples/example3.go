@@ -33,7 +33,7 @@ func Example3() {
 	pipe.Init()
 
 	// Running
-	go pipe.Run(ctx)
+	pipe.Run(ctx)
 
 	// Feeding inputs
 	for i := int64(0); i < 10; i++ {
@@ -43,7 +43,15 @@ func Example3() {
 	// Notice that we need only 3 seconds to process all inputs although by100 process takes 2 seconds
 	// and we process 10 items.
 	time.Sleep(3 * time.Second)
+
+	// we can replace the previous step with the following, but it was omitted to show the power of replicas
+	// pipe.WaitTillDone()
+
+	// terminating the pipeline and clearning resources
+	pipe.Terminate()
+
+	// cancel the context can come before or after Terminate
 	cancelCtx()
-	time.Sleep(1 * time.Second)
+
 	fmt.Println("Example3 Done!!!")
 }
