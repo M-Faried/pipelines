@@ -12,7 +12,6 @@ type IPipeline[I any] interface {
 	Run(ctx context.Context)
 	FeedOne(i I)
 	FeedMany(i []I)
-	ResultChannel() <-chan I
 	ReadError() error
 	Append(p IPipeline[I])
 }
@@ -98,12 +97,6 @@ func (p *pipeline[I]) FeedMany(items []I) {
 
 func (p *pipeline[I]) ReadError() error {
 	return p.errorsQueue.Dequeue()
-}
-
-func (p *pipeline[I]) ResultChannel() <-chan I {
-	lastStepIndex := len(p.steps) - 1
-	resultChannel := p.steps[lastStepIndex].output
-	return resultChannel
 }
 
 func (p *pipeline[I]) Append(other IPipeline[I]) {

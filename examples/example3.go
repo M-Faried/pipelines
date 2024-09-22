@@ -28,7 +28,7 @@ func Example3() {
 	step1 := pipelines.NewStep("step1", 1, by10)
 	step2 := pipelines.NewStep("step2", 10, by100)
 	resultStep := pipelines.NewResultStep("resultStep", 1, printBy10)
-	pip := pipelines.NewPipelineWithResultHandler(100, resultStep, step1, step2)
+	pip := pipelines.NewPipeline(100, resultStep, step1, step2)
 	pip.Init()
 
 	// Running

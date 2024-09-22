@@ -27,7 +27,7 @@ func Example1() {
 	plus5Step := pipelines.NewStep("plus5", 1, plus5)
 	minus10Step := pipelines.NewStep("minus10", 1, minus10)
 	printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
-	pip := pipelines.NewPipelineWithResultHandler(10, printResultStep, plus5Step, minus10Step)
+	pip := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step)
 	pip.Init()
 
 	// Running
