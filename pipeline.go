@@ -75,6 +75,7 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 
 	// running steps in reverse order
 	for i := len(p.steps) - 1; i >= 0; i-- {
+		// spawning the replicas for each step
 		for range p.steps[i].replicas {
 			wg.Add(1)
 			go p.steps[i].run(ctx, wg)
