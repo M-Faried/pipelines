@@ -21,7 +21,6 @@ func printResult(i int64) error {
 func Example1() {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
-	// The steps used from example 1
 	plus5Step := pipelines.NewStep("plus5", 1, plus5)
 	minus10Step := pipelines.NewStep("minus10", 1, minus10)
 	printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
