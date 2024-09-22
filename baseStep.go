@@ -1,12 +1,14 @@
 package pipelines
 
+// baseStep is a base struct for all steps
 type baseStep[I any] struct {
-	id          string
-	input       chan I
-	errorsQueue *Queue[error]
-	replicas    uint8
-}
 
-func (s *baseStep[I]) GetID() string {
-	return s.id
+	// id is an identifier of the step set by the user.
+	id string
+
+	// input is a channel for incoming data to the step.
+	input chan I
+
+	// replicas is a number of goroutines that will be running the step.
+	replicas uint8
 }
