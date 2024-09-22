@@ -8,13 +8,19 @@ import (
 var once sync.Once
 
 type IPipeline[I any] interface {
+	// Init initializes the pipeline and has to be called once before running the pipeline.
 	Init()
+	// Run starts the pipeline.
 	Run(ctx context.Context)
+	// FeedOne feeds a single item to the pipeline.
 	FeedOne(i I)
+	// FeedMany feeds multiple items to the pipeline.
 	FeedMany(i []I)
+	// ReadError a blocking call which reads the errors reported by the pipeline steps one by one.
 	ReadError() error
-	Append(p IPipeline[I])
+	// TokensCount returns the number of tokens being processed by the pipeline.
 	TokensCount() uint64
+	// WaitTillDone blocks until all tokens are consumed by the pipeline.
 	WaitTillDone()
 }
 
@@ -29,6 +35,8 @@ type pipeline[I any] struct {
 	doneCond    *sync.Cond
 }
 
+// NewPipeline creates a new pipeline with the given channel size, result step and steps.
+// The channel size is the buffer size for all channels used to connect steps.
 func NewPipeline[I any](channelSize uint16, resultStep *ResultStep[I], steps ...*Step[I]) IPipeline[I] {
 	pipe := &pipeline[I]{}
 	pipe.steps = steps
@@ -87,12 +95,15 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 
 	// wait for the context to be done
 	<-ctx.Done()
+
 	// wait for step routines to be done
 	wg.Wait()
+
 	// closing all channels
 	for _, step := range p.steps {
 		close(step.input)
 	}
+
 	// closing the output of the last step which is the input to the result
 	close(p.steps[len(p.steps)-1].output)
 }

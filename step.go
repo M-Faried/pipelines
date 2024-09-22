@@ -16,6 +16,18 @@ type Step[I any] struct {
 	process StepProcess[I]
 }
 
+// NewStep creates a new step with the given id, number of replicas and process.
+func NewStep[I any](id string, replicas uint16, process StepProcess[I]) *Step[I] {
+	if replicas == 0 {
+		replicas = 1
+	}
+	step := &Step[I]{}
+	step.id = id
+	step.replicas = replicas
+	step.process = process
+	return step
+}
+
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
@@ -35,16 +47,4 @@ func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 		}
 	}
-}
-
-// NewStep is a constructor for the Step struct.
-func NewStep[I any](id string, replicas uint8, process StepProcess[I]) *Step[I] {
-	if replicas == 0 {
-		replicas = 1
-	}
-	step := &Step[I]{}
-	step.id = id
-	step.replicas = replicas
-	step.process = process
-	return step
 }

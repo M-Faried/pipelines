@@ -14,6 +14,18 @@ type ResultStep[I any] struct {
 	process              ResultStepProcess[I]
 }
 
+// NewResultStep creates a new result step with the given id, number of replicas and process.
+func NewResultStep[I any](id string, replicas uint16, process ResultStepProcess[I]) *ResultStep[I] {
+	if replicas == 0 {
+		replicas = 1
+	}
+	step := &ResultStep[I]{}
+	step.id = id
+	step.replicas = replicas
+	step.process = process
+	return step
+}
+
 func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
@@ -31,15 +43,4 @@ func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 		}
 	}
-}
-
-func NewResultStep[I any](id string, replicas uint8, process ResultStepProcess[I]) *ResultStep[I] {
-	if replicas == 0 {
-		replicas = 1
-	}
-	step := &ResultStep[I]{}
-	step.id = id
-	step.replicas = replicas
-	step.process = process
-	return step
 }
