@@ -32,8 +32,11 @@ func filterErrorHandler(id string, err error) {
 func Example4() {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
-	// The filter step
+	// The filter step. It filters out odd numbers and reports the error.
+	// you don't have to use the error handler, you can just return error to be discarded from
+	// the pipeline
 	step1 := pipelines.NewStepWithErrorHandler("step1", 1, filterOdd, filterErrorHandler)
+	//step1 := pipelines.NewStep("step1", 1, filterOdd) // filtering without printing error
 
 	// The processing step
 	step2 := pipelines.NewStep("step2", 1, by2)
