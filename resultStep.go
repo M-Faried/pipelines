@@ -39,10 +39,10 @@ func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 		case i, ok := <-s.input:
 			if ok {
 				err := s.process(i)
+				s.decrementTokensCount()
 				if err != nil && s.reportError != nil {
 					s.reportError(s.id, err)
 				}
-				s.decrementTokensCount()
 			}
 		}
 	}

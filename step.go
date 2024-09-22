@@ -44,11 +44,11 @@ func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 			if ok {
 				o, err := s.process(i)
 				if err != nil {
+					// since we will not proceed with the current token, we need to decrement the tokens count.
+					s.decrementTokensCount()
 					if s.reportError != nil {
 						s.reportError(s.id, err)
 					}
-					// since we will not proceed with the current token, we need to decrement the tokens count.
-					s.decrementTokensCount()
 				} else {
 					s.output <- o
 				}
