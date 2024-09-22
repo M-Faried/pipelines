@@ -17,7 +17,7 @@ func by100(i int64) (int64, error) {
 	return i * 100, nil
 }
 
-func printBy10(i int64) error {
+func printBy10Result(i int64) error {
 	fmt.Printf("Result: %d \n", i)
 	return nil
 }
@@ -28,7 +28,7 @@ func Example3() {
 
 	step1 := pipelines.NewStep("step1", 1, by10)
 	step2 := pipelines.NewStep("step2", 10, by100) // Heavy process so we need 10 replicas
-	resultStep := pipelines.NewResultStep("resultStep", 1, printBy10)
+	resultStep := pipelines.NewResultStep("resultStep", 1, printBy10Result)
 	pipe := pipelines.NewPipeline(10, resultStep, step1, step2)
 	pipe.Init()
 
