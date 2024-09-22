@@ -131,10 +131,21 @@ resultStep := pipelines.NewResultStep("printResult", 1, printResult)
 resultStep := pipelines.NewResultStepWithErrorHandler("printResult", 1, printResult, errorHandlerFunction)
 ```
 
+### Pipeline Creation
+
+The pipeline creation requires three arguments
+
+1. The buffer size of the channels used to communicatio among the pipeline.
+2. The result step.
+3. One or more intermediate steps.
+
+```go
+channelBufferSize := 10
+pipe := pipelines.NewPipeline(channelBufferSize, resultStep, step1, step2, step3)
+```
+
 # Notes
 
+- The error handler function **should NOT** block the implementation for long or else it will block and delay the execution through the pipeline.
 - The pipeline can operate on on type, but you can create a container structure to have a separate field for every step to set if you want to accumulate results of different types.
-
 - To filter an item and discontinue its processing, you need to return error.
-
-- Error handling is left to the user of the package, and you can have a different handler for each step using **NewStepWithErrorHandler** instead of NewStep.
