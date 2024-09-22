@@ -22,25 +22,28 @@ func printBy10(i int64) error {
 	return nil
 }
 
+// Example3 demonstrates how to utilize replicas feature when you have a heavy process.
 func Example3() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	step1 := pipelines.NewStep("step1", 1, by10)
-	step2 := pipelines.NewStep("step2", 10, by100)
+	step2 := pipelines.NewStep("step2", 10, by100) // Heavy process so we need 10 replicas
 	resultStep := pipelines.NewResultStep("resultStep", 1, printBy10)
-	pip := pipelines.NewPipeline(100, resultStep, step1, step2)
-	pip.Init()
+	pipe := pipelines.NewPipeline(10, resultStep, step1, step2)
+	pipe.Init()
 
 	// Running
-	go pip.Run(ctx)
+	go pipe.Run(ctx)
 
 	// Feeding inputs
 	for i := int64(0); i < 10; i++ {
-		pip.FeedOne(i)
+		pipe.FeedOne(i)
 	}
 
+	// Notice that we need only 3 seconds to process all inputs although by100 process takes 2 seconds
+	// and we process 10 items.
 	time.Sleep(3 * time.Second)
-	cancel()
+	cancelCtx()
 	time.Sleep(1 * time.Second)
 	fmt.Println("Example3 Done!!!")
 }

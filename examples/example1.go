@@ -19,28 +19,28 @@ func printResult(i int64) error {
 	return nil
 }
 
-////////////////////////////
-
 func Example1() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancelCtx := context.WithCancel(context.Background())
 
+	// The steps used from example 1
 	plus5Step := pipelines.NewStep("plus5", 1, plus5)
 	minus10Step := pipelines.NewStep("minus10", 1, minus10)
 	printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
-	pip := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step)
-	pip.Init()
+	pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step) // Notice 10 is the buffer size
+	pipe.Init()
 
 	// Running
-	go pip.Run(ctx)
+	go pipe.Run(ctx)
 
 	// Feeding inputs
-	for i := 0; i <= 10; i++ {
-		time.Sleep(1 * time.Second)
-		pip.FeedOne(int64(i))
+	for i := 0; i <= 500; i++ {
+		pipe.FeedOne(int64(i))
 	}
-
-	time.Sleep(1 * time.Second)
-	cancel()
+	// 	waiting for all tokens to be processed
+	pipe.WaitTillDone()
+	// cancel the context
+	cancelCtx()
+	// optional: wait till all channels are closed
 	time.Sleep(1 * time.Second)
 	fmt.Println("Example1 Done!!!")
 }

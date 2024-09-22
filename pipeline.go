@@ -15,6 +15,7 @@ type IPipeline[I any] interface {
 	ReadError() error
 	Append(p IPipeline[I])
 	TokensCount() uint64
+	WaitTillDone()
 }
 
 type pipeline[I any] struct {
@@ -25,14 +26,16 @@ type pipeline[I any] struct {
 
 	tokensCount uint64
 	tokensMutex sync.Mutex
+	doneCond    *sync.Cond
 }
 
 func NewPipeline[I any](channelSize uint16, resultStep *ResultStep[I], steps ...*Step[I]) IPipeline[I] {
-	return &pipeline[I]{
-		steps:       steps,
-		resultStep:  resultStep,
-		channelSize: channelSize,
-	}
+	pipe := &pipeline[I]{}
+	pipe.steps = steps
+	pipe.resultStep = resultStep
+	pipe.channelSize = channelSize
+	pipe.doneCond = sync.NewCond(&pipe.tokensMutex)
+	return pipe
 }
 
 func (p *pipeline[I]) Init() {
@@ -123,6 +126,14 @@ func (p *pipeline[I]) TokensCount() uint64 {
 	return p.tokensCount
 }
 
+func (p *pipeline[I]) WaitTillDone() {
+	p.doneCond.L.Lock()
+	defer p.doneCond.L.Unlock()
+	for p.tokensCount > 0 {
+		p.doneCond.Wait()
+	}
+}
+
 func (p *pipeline[I]) incrementTokensCount() {
 	p.tokensMutex.Lock()
 	defer p.tokensMutex.Unlock()
@@ -133,4 +144,5 @@ func (p *pipeline[I]) decrementTokensCount() {
 	p.tokensMutex.Lock()
 	defer p.tokensMutex.Unlock()
 	p.tokensCount--
+	p.doneCond.Signal()
 }
