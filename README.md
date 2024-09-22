@@ -4,7 +4,7 @@ The package is created to fulfill the need for having a simple pipeline with a s
 
 Pipeline design pattern is generally useful when you have a complex process that you need to break down into multiple consecutive steps.
 
-# Benefits Of Pipelines Package
+### Benefits Of Using Pipelines
 
 - Very simple to use, integrate, and extend.
 
@@ -16,21 +16,17 @@ Pipeline design pattern is generally useful when you have a complex process that
 
 - Ability to have filter steps or make any step filter the items going through you pipeline.
 
-# Installation
+### Installation
 
 ```shell
-
 go get github.com/m-faried/pipelines
-
 ```
 
 # Usage
 
 A couple of examples are submitted in the examples folder. Only example 1 is demonstrated here. I left guiding comments on the rest of the examples.
 
-# Example
-
-#### Process Description:
+#### Exampe Description:
 
 1. Add 5 to the number
 
@@ -53,43 +49,40 @@ func printResult(i int64) error {
     return nil
 }
 
-```
 
-#### Pipeline Creation
+func main() {
 
-```go
-
-// Creating steps
-plus5Step := pipelines.NewStep("plus5", 1, plus5)
-minus10Step := pipelines.NewStep("minus10", 1, minus10)
-printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
+    // Creating steps
+    plus5Step := pipelines.NewStep("plus5", 1, plus5)
+    minus10Step := pipelines.NewStep("minus10", 1, minus10)
+    printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
 
 
-// Creating & init the pipeline
-pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step)
-pipe.Init()
+    // Creating & init the pipeline
+    pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step)
+    pipe.Init()
 
 
-// Running
-ctx, cancelCtx := context.WithCancel(context.Background())
-pipe.Run(ctx)
+    // Running
+    ctx, cancelCtx := context.WithCancel(context.Background())
+    pipe.Run(ctx)
 
 
-// Feeding inputs
-for i := 0; i <= 50; i++ {
-    pipe.FeedOne(int64(i))
+    // Feeding inputs
+    for i := 0; i <= 50; i++ {
+        pipe.FeedOne(int64(i))
+    }
+
+
+    // Waiting for all tokens to be processed
+    pipe.WaitTillDone()
+
+    // Cancel the context can come before or after Terminate
+    cancelCtx()
+
+    // Terminating the pipeline and clearning resources
+    pipe.Terminate()
 }
-
-
-// Waiting for all tokens to be processed
-pipe.WaitTillDone()
-
-// Cancel the context can come before or after Terminate
-cancelCtx()
-
-// Terminating the pipeline and clearning resources
-pipe.Terminate()
-
 ```
 
 # Explanation
@@ -107,7 +100,7 @@ plus5Step := pipelines.NewStep("plus5", 1, plus5)
 minus10Step := pipelines.NewStep("minus10", 1, minus10)
 ```
 
-Another version of the NewStep constructor called NewStepWithErrorHandler is available to enable users submit an error handler for the step in case they happen.
+Another version of the NewStep constructor called NewStepWithErrorHandler is available to enable users submit an error handler for the step in case they happen. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
 
 ```go
 // Error handler signature
@@ -116,8 +109,6 @@ type ReportError func(string, error)
 // To create a step with error handler
 step := pipelines.NewStepWithErrorHandler("step1", 1, stepProcess, errorHandlerFunction)
 ```
-
-When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
 
 ### Defining Result Step
 
@@ -135,7 +126,7 @@ resultStep := pipelines.NewResultStepWithErrorHandler("printResult", 1, printRes
 
 The pipeline creation requires three arguments
 
-1. The buffer size of the channels used to communicatio among the pipeline.
+1. The buffer size of the channels used to communication among the pipeline. Configure it depending on your needs.
 2. The result step.
 3. One or more intermediate steps.
 
