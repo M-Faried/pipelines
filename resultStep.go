@@ -10,7 +10,8 @@ type ResultStepProcess[I any] func(I) error
 
 type ResultStep[I any] struct {
 	baseStep[I]
-	process ResultStepProcess[I]
+	decrementTokensCount func()
+	process              ResultStepProcess[I]
 }
 
 func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
@@ -26,6 +27,7 @@ func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 					wrappedErr := fmt.Errorf("error in %s: %w", s.id, err)
 					s.errorsQueue.Enqueue(wrappedErr)
 				}
+				s.decrementTokensCount()
 			}
 		}
 	}
