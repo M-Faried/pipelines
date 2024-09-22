@@ -5,31 +5,58 @@ import (
 	"sync"
 )
 
-var once sync.Once
+var initOnce sync.Once
+var runOnce sync.Once
 
 type IPipeline[I any] interface {
+
 	// Init initializes the pipeline and has to be called once before running the pipeline.
 	Init()
+
 	// Run starts the pipeline.
 	Run(ctx context.Context)
-	// FeedOne feeds a single item to the pipeline.
-	FeedOne(i I)
-	// FeedMany feeds multiple items to the pipeline.
-	FeedMany(i []I)
-	// TokensCount returns the number of tokens being processed by the pipeline.
-	TokensCount() uint64
+
 	// WaitTillDone blocks until all tokens are consumed by the pipeline.
 	WaitTillDone()
+
+	// Terminate blocks and closes all the channels
+	Terminate()
+
+	// FeedOne feeds a single item to the pipeline.
+	FeedOne(i I)
+
+	// FeedMany feeds multiple items to the pipeline.
+	FeedMany(i []I)
+
+	// TokensCount returns the number of tokens being processed by the pipeline.
+	TokensCount() uint64
 }
 
 type pipeline[I any] struct {
-	steps       []*Step[I]
-	resultStep  *ResultStep[I]
+
+	// steps is the list of steps in the pipeline.
+	steps []*Step[I]
+
+	// resultStep is the final step in the pipeline.
+	resultStep *ResultStep[I]
+
+	// channelSize is the buffer size for all channels used to connect steps.
 	channelSize uint16
 
+	// stepsCtxCancel is used to cancel the context of the steps.
+	stepsCtxCancel context.CancelFunc
+
+	// stepsWaitGroup is used to wait for all the step routines to receive ctx cancel signal.
+	stepsWaitGroup *sync.WaitGroup
+
+	// tokensCount is the number of tokens being processed by the pipeline.
 	tokensCount uint64
+
+	// tokensMutex is protect tokensCount from race conditions.
 	tokensMutex sync.Mutex
-	doneCond    *sync.Cond
+
+	// doneCond is used to wait till all tokens are processed.
+	doneCond *sync.Cond
 }
 
 // NewPipeline creates a new pipeline with the given channel size, result step and steps.
@@ -44,11 +71,13 @@ func NewPipeline[I any](channelSize uint16, resultStep *ResultStep[I], steps ...
 }
 
 func (p *pipeline[I]) Init() {
-	once.Do(func() {
+	initOnce.Do(func() {
+
+		// getting the number of steps and channels
 		stepsCount := len(p.steps)
 		channelsCount := stepsCount + 1
 
-		// init channels
+		// creating the required channels
 		allChannels := make([]chan I, channelsCount)
 		for i := 0; i < channelsCount; i++ {
 			allChannels[i] = make(chan I, p.channelSize)
@@ -68,30 +97,50 @@ func (p *pipeline[I]) Init() {
 }
 
 func (p *pipeline[I]) Run(ctx context.Context) {
+	runOnce.Do(func() {
+		// creating a wait group for all the step routines.
+		p.stepsWaitGroup = &sync.WaitGroup{}
 
-	// creating a wait group for all the step routines.
-	wg := &sync.WaitGroup{}
+		stepsCtx, cancel := context.WithCancel(ctx)
+		p.stepsCtxCancel = cancel
 
-	// running the result step.
-	for range p.resultStep.replicas {
-		wg.Add(1)
-		go p.resultStep.run(ctx, wg)
-	}
-
-	// running steps in reverse order
-	for i := len(p.steps) - 1; i >= 0; i-- {
-		// spawning the replicas for each step
-		for range p.steps[i].replicas {
-			wg.Add(1)
-			go p.steps[i].run(ctx, wg)
+		// running the result step.
+		for range p.resultStep.replicas {
+			p.stepsWaitGroup.Add(1)
+			go p.resultStep.run(stepsCtx, p.stepsWaitGroup)
 		}
+
+		// running steps in reverse order
+		for i := len(p.steps) - 1; i >= 0; i-- {
+			// spawning the replicas for each step
+			for range p.steps[i].replicas {
+				p.stepsWaitGroup.Add(1)
+				go p.steps[i].run(stepsCtx, p.stepsWaitGroup)
+			}
+		}
+	})
+}
+
+func (p *pipeline[I]) WaitTillDone() {
+	p.doneCond.L.Lock()
+	defer p.doneCond.L.Unlock()
+	for p.tokensCount > 0 {
+		p.doneCond.Wait()
+	}
+}
+
+func (p *pipeline[I]) Terminate() {
+
+	// checking the steps are running
+	if p.stepsWaitGroup == nil {
+		return
 	}
 
-	// wait for the context to be done
-	<-ctx.Done()
+	// canceling the context in case the parent context is not cancelled.
+	p.stepsCtxCancel()
 
 	// wait for step routines to be done
-	wg.Wait()
+	p.stepsWaitGroup.Wait()
 
 	// closing all channels
 	for _, step := range p.steps {
@@ -100,6 +149,9 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 
 	// closing the output of the last step which is the input to the result
 	close(p.steps[len(p.steps)-1].output)
+
+	// clearing the wait group
+	p.stepsWaitGroup = nil
 }
 
 func (p *pipeline[I]) FeedOne(item I) {
@@ -114,25 +166,10 @@ func (p *pipeline[I]) FeedMany(items []I) {
 	}
 }
 
-func (p *pipeline[I]) Append(other IPipeline[I]) {
-	pOther := other.(*pipeline[I])
-	// input for the other is the output for the current.
-	pOther.steps[0].input = p.steps[len(p.steps)-1].output
-	p.steps = append(p.steps, pOther.steps...)
-}
-
 func (p *pipeline[I]) TokensCount() uint64 {
 	p.tokensMutex.Lock()
 	defer p.tokensMutex.Unlock()
 	return p.tokensCount
-}
-
-func (p *pipeline[I]) WaitTillDone() {
-	p.doneCond.L.Lock()
-	defer p.doneCond.L.Unlock()
-	for p.tokensCount > 0 {
-		p.doneCond.Wait()
-	}
 }
 
 func (p *pipeline[I]) incrementTokensCount() {
