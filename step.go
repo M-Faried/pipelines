@@ -14,8 +14,6 @@ type Step[I any] struct {
 	output chan I
 	// process is a function that will be applied to the incoming data.
 	process StepProcess[I]
-	// errorsQueue is a queue for errors that may be reported during the step execution.
-	errorsQueue *Queue[error]
 }
 
 // run is a method that runs the step process and will be executed in a separate goroutine.

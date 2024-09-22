@@ -11,4 +11,7 @@ type baseStep[I any] struct {
 
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint8
+
+	// errorsQueue is a queue for errors that may be reported during the step execution.
+	errorsQueue *Queue[error]
 }

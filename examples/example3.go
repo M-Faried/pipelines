@@ -17,8 +17,9 @@ func by100(i int64) (int64, error) {
 	return i * 100, nil
 }
 
-func printBy10(i int64) {
+func printBy10(i int64) error {
 	fmt.Printf("Result: %d \n", i)
+	return nil
 }
 
 func Example3() {

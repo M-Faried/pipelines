@@ -2,10 +2,11 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
-type ResultStepProcess[I any] func(I)
+type ResultStepProcess[I any] func(I) error
 
 type ResultStep[I any] struct {
 	baseStep[I]
@@ -20,7 +21,11 @@ func (s *ResultStep[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 			return
 		case i, ok := <-s.input:
 			if ok {
-				s.process(i)
+				err := s.process(i)
+				if err != nil {
+					wrappedErr := fmt.Errorf("error in %s: %w", s.id, err)
+					s.errorsQueue.Enqueue(wrappedErr)
+				}
 			}
 		}
 	}

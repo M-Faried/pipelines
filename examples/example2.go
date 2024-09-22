@@ -21,12 +21,13 @@ func processToken(t *Token) (*Token, error) {
 	return t, nil
 }
 
-func printToken(t *Token) {
+func printToken(t *Token) error {
 	// for _, v := range t.values {
 	// 	fmt.Println(v)
 	// }
 	// fmt.Println("Steps Count:", t.count)
 	fmt.Println("Result:", t.currValue)
+	return nil
 }
 
 func Example2() {

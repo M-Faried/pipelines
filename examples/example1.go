@@ -14,8 +14,9 @@ func plus5(i int64) (int64, error) {
 func minus10(i int64) (int64, error) {
 	return i - 10, nil
 }
-func printResult(i int64) {
+func printResult(i int64) error {
 	fmt.Printf("Result: %d \n", i)
+	return nil
 }
 
 ////////////////////////////
