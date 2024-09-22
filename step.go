@@ -10,10 +10,15 @@ type StepProcess[I any] func(I) (I, error)
 
 type Step[I any] struct {
 	baseStep[I]
-	output  chan I
+	// ouput is a channel for outgoing data from the step.
+	output chan I
+	// process is a function that will be applied to the incoming data.
 	process StepProcess[I]
+	// errorsQueue is a queue for errors that may be reported during the step execution.
+	errorsQueue *Queue[error]
 }
 
+// run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
@@ -34,6 +39,7 @@ func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
+// NewStep is a constructor for the Step struct.
 func NewStep[I any](id string, replicas uint8, process StepProcess[I]) *Step[I] {
 	if replicas == 0 {
 		replicas = 1
