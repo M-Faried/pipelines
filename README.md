@@ -135,6 +135,40 @@ channelBufferSize := 10
 pipe := pipelines.NewPipeline(channelBufferSize, resultStep, step1, step2, step3)
 ```
 
+### Pipeline Running
+
+The pipeline requires first a context to before you can run the pipeline. Define a suitable context for your case and then sendit to the Run function. The Run function doesn't need to run in a go subroutine as it is not blocking.
+
+```go
+ctx, cancelCtx := context.WithCancel(context.Background())
+pipe.Run(ctx)
+```
+
+### Feeding Items Into Pipeline
+
+There are 2 functions to feed data into the pipeline depending on your case.
+
+```go
+pipe.FeedOne(item)
+pipe.FeedMany(items)
+```
+
+### Waiting Pipeline To Finish
+
+To wait for the pipeline to be done with all the items fed into it, you can use the **blocking** call to the following function:
+
+```go
+pipe.WaitTillDone()
+```
+
+### Terminating Pipeline
+
+When you want to terminate the pipeline use the following function. Note that it will terminate regardless the parent context is closed or not. And once it terminates, it can't be rerun again and you need to create another pipeline.
+
+```go
+pipe.Terminate()
+```
+
 # Notes
 
 - The error handler function **should NOT** block the implementation for long or else it will block and delay the execution through the pipeline.
