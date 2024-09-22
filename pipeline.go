@@ -23,6 +23,14 @@ type pipeline[I any] struct {
 	channelSize uint16
 }
 
+func NewPipeline[I any](channelSize uint16, resultStep *ResultStep[I], steps ...*Step[I]) IPipeline[I] {
+	return &pipeline[I]{
+		steps:       steps,
+		resultStep:  resultStep,
+		channelSize: channelSize,
+	}
+}
+
 func (p *pipeline[I]) Init() {
 	once.Do(func() {
 		stepsCount := len(p.steps)
