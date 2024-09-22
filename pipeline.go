@@ -50,7 +50,6 @@ func (p *pipeline[I]) Init() {
 			return
 		}
 		p.resultStep.input = p.steps[stepsCount-1].output
-		p.resultStep.errorsQueue = p.errorsQueue
 	})
 }
 
