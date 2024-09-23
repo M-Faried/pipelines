@@ -152,7 +152,7 @@ channelBufferSize := 10
 pipe := pipelines.NewPipeline(channelBufferSize, resultStep, step1, step2, step3)
 ```
 
-Another version is available to create the pipeline on the fly without creating and configuring the steps first. This version takes the processes to be run directly in each step and creates all the steps with a standard label and the same replicas count.
+Another version is available to create the pipeline on the fly without creating and configuring the steps first. This version takes the processes to be converted into steps. This version limitation is that it creates all the steps with a standard label and the same replicas count.
 
 ```go
 channelBufferSize := 10
