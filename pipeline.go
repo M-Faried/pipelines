@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -69,6 +70,25 @@ func NewPipeline[I any](channelSize uint16, resultStep *ResultStep[I], steps ...
 	pipe.resultStep = resultStep
 	pipe.channelSize = channelSize
 	pipe.doneCond = sync.NewCond(&pipe.tokensMutex)
+	return pipe
+}
+
+// NewPipelineEasy creates a new pipeline with the given channel size, number of replicas for all steps, result step process, and step processes.
+func NewPipelineEasy[I any](channelSize uint16, replicas uint16, resultStepProcess ResultStepProcess[I], stepProcesses ...StepProcess[I]) IPipeline[I] {
+
+	// creating the result step
+	resultStep := NewResultStep("stepResult", replicas, resultStepProcess)
+
+	// creating the steps
+	steps := make([]*Step[I], len(stepProcesses))
+	for i, process := range stepProcesses {
+		label := fmt.Sprintf("step%d", i)
+		steps[i] = NewStep[I](label, replicas, process)
+	}
+
+	// creating the pipeline
+	pipe := NewPipeline(channelSize, resultStep, steps...)
+
 	return pipe
 }
 
