@@ -1,16 +1,18 @@
 # Motivation
 
-The package is created to fulfill the need for having a simple pipeline with a simple interface to facilitate the pipeline design pattern in Go programming language.
+The package is created to fulfill the need for having a pipeline with concurrent steps to facilitate the pipeline design pattern in Go programming language. Pipeline design pattern is generally useful when you have a complex process that you need to break down into multiple consecutive steps.
 
-Pipeline design pattern is generally useful when you have a complex process that you need to break down into multiple consecutive steps.
+To put the package into perspective, I was working on a scientific application receiving a stream of data from another service and had to make heavy transformation on the data before saving in the data base.
+
+I found myself having to handle complex transformation of data in addition to dealing with oncurrency and synchronization challenges at the same time. I also wanted to scale up some parts of the transformation equation by creating multiple go routines to serve, then feed their results to the following steps. I also wanted to filter some inputs during the execution based on a certain threshould.
 
 ### Benefits Of Using Pipelines
 
 - Very simple to use, integrate, and extend.
 
-- Built using generic to acomodate all data types.
+- Built using generics to acomodate all data types.
 
-- Elevates concurrency and handles step communication for you through channels.
+- Elevates concurrency and handles step communication through channels.
 
 - Ability to horizontally scale any step of the pipelines and have more replicas to handle heavy processing parts of your operation.
 
@@ -44,22 +46,29 @@ func minus10(i int64) (int64, error) {
     return i - 10, nil
 }
 
+func filterNegativeValues(i int64) (int64, error) {
+    if i < 0 {
+        return 0, fmt.Errorf("filtering: %d", i)
+    }
+    return i, nil
+}
+
 func printResult(i int64) error {
     fmt.Printf("Result: %d \n", i)
     return nil
 }
-
 
 func main() {
 
     // Creating steps
     plus5Step := pipelines.NewStep("plus5", 1, plus5)
     minus10Step := pipelines.NewStep("minus10", 1, minus10)
+    filterStep := pipelines.NewStep("filter", 1, filterNegativeValues)
     printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
 
 
     // Creating & init the pipeline
-    pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step)
+    pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step, filterStep)
     pipe.Init()
 
 
