@@ -196,7 +196,7 @@ pipe.Terminate()
 
 # Notes
 
-- The error handler function **should NOT** block the implementation for long or else it will block and delay the execution through the pipeline.
+- The error handler function **should NOT** block the implementation for long or else it will block and delay the execution through the pipeline. The error can be transferred to another function or process to be handled if it is going to take long.
 
 - The pipeline can operate on on type, but you can create a container structure to have a separate field for every step to set if you want to accumulate results of different types.
 
