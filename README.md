@@ -63,14 +63,14 @@ func printResult(i int64) error {
 func main() {
 
     // Creating steps
-    plus5Step := pipelines.NewStep("plus5", 1, plus5)
-    minus10Step := pipelines.NewStep("minus10", 1, minus10)
-    filterStep := pipelines.NewStep("filter", 1, filterNegativeValues)
-    printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
+    plus5Step := pipelines.NewStep[int64]("plus5", 1, plus5)
+    minus10Step := pipelines.NewStep[int64]("minus10", 1, minus10)
+    filterStep := pipelines.NewStep[int64]("filter", 1, filterNegativeValues)
+    printResultStep := pipelines.NewResultStep[int64]("printResult", 1, printResult)
 
 
     // Creating & init the pipeline
-    pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step, filterStep)
+    pipe := pipelines.NewPipeline[int64](10, printResultStep, plus5Step, minus10Step, filterStep)
     pipe.Init()
 
 
