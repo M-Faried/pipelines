@@ -26,7 +26,7 @@ go get github.com/m-faried/pipelines
 
 # Usage
 
-A couple of examples are submitted in the examples folder. Only example 1 is demonstrated here. I left guiding comments on the rest of the examples.
+A couple of examples are submitted in the examples folder in addition to the following example.
 
 #### Exampe Description:
 
@@ -34,7 +34,9 @@ A couple of examples are submitted in the examples folder. Only example 1 is dem
 
 2. Subtract 10 from the number
 
-3. Print result
+3. Filter negative values
+
+4. Print result
 
 ```Go
 
@@ -101,7 +103,9 @@ func main() {
 You first define all the intermediate steps of your pipeline. The creation of the steps requires 3 arguments at least
 
 1. The label of the step
+
 2. The number of replicas of the step
+
 3. The process to be run in this step
 
 ```go
@@ -136,7 +140,9 @@ resultStep := pipelines.NewResultStepWithErrorHandler("printResult", 1, printRes
 The pipeline creation requires three arguments
 
 1. The buffer size of the channels used to communication among the pipeline. Configure it depending on your needs.
+
 2. The result step.
+
 3. One or more intermediate steps.
 
 ```go
@@ -181,5 +187,7 @@ pipe.Terminate()
 # Notes
 
 - The error handler function **should NOT** block the implementation for long or else it will block and delay the execution through the pipeline.
+
 - The pipeline can operate on on type, but you can create a container structure to have a separate field for every step to set if you want to accumulate results of different types.
+
 - To filter an item and discontinue its processing, you need to return error.
