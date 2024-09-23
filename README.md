@@ -152,6 +152,14 @@ channelBufferSize := 10
 pipe := pipelines.NewPipeline(channelBufferSize, resultStep, step1, step2, step3)
 ```
 
+Another version is available to create the pipeline on the fly without creating and configuring the steps first. This version takes the processes to be run directly in each step and creates all the steps with a standard label and the same replicas count.
+
+```go
+channelBufferSize := 10
+replicasCount := 3      // 3 replicas of each step including result
+pipe := pipelines.NewPipelineEasy(channelBufferSize, replicasCount, resultProcess, process1, process2, process3)
+```
+
 ### Pipeline Running
 
 The pipeline requires first a context to before you can run the pipeline. Define a suitable context for your case and then sendit to the Run function. The Run function doesn't need to run in a go subroutine as it is not blocking.
