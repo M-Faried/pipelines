@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// StepProcess is a function that processes the input data and returns the output data.
 type StepProcess[I any] func(I) (I, error)
 
 type Step[I any] struct {
@@ -15,20 +16,21 @@ type Step[I any] struct {
 	process StepProcess[I]
 }
 
-// NewStep creates a new step with the given id, number of replicas and process.
-func NewStep[I any](id string, replicas uint16, process StepProcess[I]) *Step[I] {
+// NewStep creates a new step with the given label, number of replicas and process.
+func NewStep[I any](label string, replicas uint16, process StepProcess[I]) *Step[I] {
 	if replicas == 0 {
 		replicas = 1
 	}
 	step := &Step[I]{}
-	step.id = id
+	step.label = label
 	step.replicas = replicas
 	step.process = process
 	return step
 }
 
-func NewStepWithErrorHandler[I any](id string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) *Step[I] {
-	step := NewStep(id, replicas, process)
+// NewStepWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
+func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) *Step[I] {
+	step := NewStep(label, replicas, process)
 	step.reportError = reportErrorHandler
 	return step
 }
@@ -47,7 +49,7 @@ func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 					// since we will not proceed with the current token, we need to decrement the tokens count.
 					s.decrementTokensCount()
 					if s.reportError != nil {
-						s.reportError(s.id, err)
+						s.reportError(s.label, err)
 					}
 				} else {
 					s.output <- o

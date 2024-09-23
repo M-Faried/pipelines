@@ -1,12 +1,14 @@
 package pipelines
 
+// ReportError is the definition of error reporting handler which may or may not be set by the user during creation.
+// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
 type ReportError func(string, error)
 
 // baseStep is a base struct for all steps
 type baseStep[I any] struct {
 
-	// id is an identifier of the step set by the user.
-	id string
+	// label is an label for the step set by the user.
+	label string
 
 	// input is a channel for incoming data to the step.
 	input chan I

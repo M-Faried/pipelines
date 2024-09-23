@@ -8,6 +8,7 @@ import (
 var initOnce sync.Once
 var runOnce sync.Once
 
+// IPipeline is an interface that represents a pipeline.
 type IPipeline[I any] interface {
 
 	// Init initializes the pipeline and has to be called once before running the pipeline.
@@ -32,6 +33,7 @@ type IPipeline[I any] interface {
 	TokensCount() uint64
 }
 
+// pipeline is a struct that represents a pipeline.
 type pipeline[I any] struct {
 
 	// steps is the list of steps in the pipeline.
