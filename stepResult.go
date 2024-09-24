@@ -8,8 +8,8 @@ import (
 // StepResultProcess is a function that processes the input data and does not return any data.
 type StepResultProcess[I any] func(I) error
 
-// StepResult is a struct that represents a step in the pipeline that does not return any data.
-type StepResult[I any] struct {
+// stepResult is a struct that represents a step in the pipeline that does not return any data.
+type stepResult[I any] struct {
 	stepBase[I]
 	process StepResultProcess[I]
 }
@@ -19,7 +19,7 @@ func NewStepResult[I any](label string, replicas uint16, process StepResultProce
 	if replicas == 0 {
 		replicas = 1
 	}
-	step := &StepResult[I]{}
+	step := &stepResult[I]{}
 	step.label = label
 	step.replicas = replicas
 	step.process = process
@@ -33,7 +33,7 @@ func NewStepResultWithErrorHandler[I any](label string, replicas uint16, process
 	return step
 }
 
-func (s *StepResult[I]) run(ctx context.Context, wg *sync.WaitGroup) {
+func (s *stepResult[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
 		case <-ctx.Done():
@@ -51,14 +51,14 @@ func (s *StepResult[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-func (s *StepResult[I]) setOuputChannel(output chan I) {
+func (s *stepResult[I]) setOuputChannel(output chan I) {
 	panic("Not Supported Operation!!!")
 }
 
-func (s *StepResult[I]) getOuputChannel() chan I {
+func (s *stepResult[I]) getOuputChannel() chan I {
 	panic("Not Supported Operation!!!")
 }
 
-func (s *StepResult[I]) setIncrementTokensCountHandler(handler func()) {
+func (s *stepResult[I]) setIncrementTokensCountHandler(handler func()) {
 	panic("Not Supported Operation!!!")
 }
