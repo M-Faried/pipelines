@@ -43,9 +43,6 @@ type stepBase[I any] struct {
 	// reportError is the function called when an error occurs in the step.
 	reportError ReportError
 
-	// incrementTokensCount is a function that increments the number of tokens in the pipeline.
-	incrementTokensCount func()
-
 	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
 	decrementTokensCount func()
 }
