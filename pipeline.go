@@ -109,7 +109,10 @@ func (p *pipeline[I]) Init() {
 		for i := 0; i < stepsCount && (i+1) < channelsCount; i++ {
 			p.steps[i].input = allChannels[i]
 			p.steps[i].output = allChannels[i+1]
+			// setting decrement in case of filtering occurs at the step
 			p.steps[i].decrementTokensCount = p.decrementTokensCount
+			// setting increment in case of fragmentation occurs at the step
+			p.steps[i].incrementTokensCount = p.incrementTokensCount
 		}
 
 		// setting the input for the result step.
