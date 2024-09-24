@@ -37,7 +37,7 @@ type IPipeline[I any] interface {
 type pipeline[I any] struct {
 
 	// steps is the list of steps in the pipeline.
-	steps []InternalStep[I]
+	steps []iInternalStep[I]
 
 	// channelSize is the buffer size for all channels used to connect steps.
 	channelSize uint16
@@ -83,21 +83,21 @@ func (p *pipeline[I]) Init() {
 
 		// setting channels for each step
 		for i := 0; i < stepsCount-1; i++ {
-			p.steps[i].setInputChannel(allChannels[i])
-			p.steps[i].setOuputChannel(allChannels[i+1])
+			p.steps[i].SetInputChannel(allChannels[i])
+			p.steps[i].SetOutputChannel(allChannels[i+1])
 			// setting decrement in case of filtering occurs at the step
-			p.steps[i].setDecrementTokensCountHandler(p.decrementTokensCount)
+			p.steps[i].SetDecrementTokensCountHandler(p.decrementTokensCount)
 			// setting increment in case of fragmentation occurs at the step
-			p.steps[i].setIncrementTokensCountHandler(p.incrementTokensCount)
+			p.steps[i].SetIncrementTokensCountHandler(p.incrementTokensCount)
 		}
 
 		// setting the input for the result step.
 		stepBeforeResultIndex := stepsCount - 2
 		resultStepIndex := stepsCount - 1
 		// setting the input for the result step from the step before it.
-		p.steps[resultStepIndex].setInputChannel(p.steps[stepBeforeResultIndex].getOuputChannel())
+		p.steps[resultStepIndex].SetInputChannel(p.steps[stepBeforeResultIndex].GetOutputChannel())
 		// setting the decrement for the result step.
-		p.steps[resultStepIndex].setDecrementTokensCountHandler(p.decrementTokensCount)
+		p.steps[resultStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)
 	})
 }
 
@@ -113,9 +113,9 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 		// running steps in reverse order
 		for i := len(p.steps) - 1; i >= 0; i-- {
 			// spawning the replicas for each step
-			for range p.steps[i].getReplicas() {
+			for range p.steps[i].GetReplicas() {
 				p.stepsWaitGroup.Add(1)
-				go p.steps[i].run(stepsCtx, p.stepsWaitGroup)
+				go p.steps[i].Run(stepsCtx, p.stepsWaitGroup)
 			}
 		}
 	})
@@ -144,7 +144,7 @@ func (p *pipeline[I]) Terminate() {
 
 	// closing all channels
 	for _, step := range p.steps {
-		close(step.getInputChannel())
+		close(step.GetInputChannel())
 	}
 
 	// clearing the wait group
@@ -153,13 +153,13 @@ func (p *pipeline[I]) Terminate() {
 
 func (p *pipeline[I]) FeedOne(item I) {
 	p.incrementTokensCount()
-	p.steps[0].getInputChannel() <- item
+	p.steps[0].GetInputChannel() <- item
 }
 
 func (p *pipeline[I]) FeedMany(items []I) {
 	for _, item := range items {
 		p.incrementTokensCount()
-		p.steps[0].getInputChannel() <- item
+		p.steps[0].GetInputChannel() <- item
 	}
 }
 

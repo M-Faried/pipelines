@@ -10,7 +10,7 @@ type StepResultProcess[I any] func(I) error
 
 // stepResult is a struct that represents a step in the pipeline that does not return any data.
 type stepResult[I any] struct {
-	Step[I]
+	step[I]
 	process StepResultProcess[I]
 }
 
@@ -29,11 +29,11 @@ func NewStepResult[I any](label string, replicas uint16, process StepResultProce
 // NewStepResultWithErrorHandler creates a new result step with the given label, number of replicas, process and error handler.
 func NewStepResultWithErrorHandler[I any](label string, replicas uint16, process StepResultProcess[I], reportErrorHandler ReportError) IStep[I] {
 	step := NewStepResult(label, replicas, process).(*stepResult[I])
-	step.setReportErrorHanler(reportErrorHandler)
+	step.reportError = reportErrorHandler
 	return step
 }
 
-func (s *stepResult[I]) run(ctx context.Context, wg *sync.WaitGroup) {
+func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
 		case <-ctx.Done():

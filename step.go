@@ -13,31 +13,32 @@ type IStep[I any] interface {
 	GetLabel() string
 }
 
-type InternalStep[I any] interface {
+type iInternalStep[I any] interface {
 	IStep[I]
-	setOuputChannel(chan I)
-	getOuputChannel() chan I
 
-	setInputChannel(chan I)
-	getInputChannel() chan I
+	SetInputChannel(chan I)
+	GetInputChannel() chan I
 
-	getReplicas() uint16
-	setIncrementTokensCountHandler(func())
-	setDecrementTokensCountHandler(func())
-	setReportErrorHanler(ReportError)
-	run(context.Context, *sync.WaitGroup)
+	SetOutputChannel(chan I)
+	GetOutputChannel() chan I
+
+	GetReplicas() uint16
+	SetIncrementTokensCountHandler(func())
+	SetDecrementTokensCountHandler(func())
+
+	Run(context.Context, *sync.WaitGroup)
 }
 
-func castToInternalSteps[I any](step []IStep[I]) []InternalStep[I] {
-	internalSteps := make([]InternalStep[I], len(step))
+func castToInternalSteps[I any](step []IStep[I]) []iInternalStep[I] {
+	internalSteps := make([]iInternalStep[I], len(step))
 	for i, s := range step {
-		internalSteps[i] = s.(InternalStep[I])
+		internalSteps[i] = s.(iInternalStep[I])
 	}
 	return internalSteps
 }
 
-// Step is a base struct for all steps
-type Step[I any] struct {
+// step is a base struct for all steps
+type step[I any] struct {
 
 	// label is an label for the step set by the user.
 	label string
@@ -61,38 +62,38 @@ type Step[I any] struct {
 	incrementTokensCount func()
 }
 
-func (s *Step[I]) GetLabel() string {
+func (s *step[I]) GetLabel() string {
 	return s.label
 }
 
-func (s *Step[I]) setInputChannel(input chan I) {
+func (s *step[I]) SetInputChannel(input chan I) {
 	s.input = input
 }
 
-func (s *Step[I]) getInputChannel() chan I {
+func (s *step[I]) GetInputChannel() chan I {
 	return s.input
 }
 
-func (s *Step[I]) setOuputChannel(output chan I) {
+func (s *step[I]) SetOutputChannel(output chan I) {
 	s.output = output
 }
 
-func (s *Step[I]) getOuputChannel() chan I {
+func (s *step[I]) GetOutputChannel() chan I {
 	return s.output
 }
 
-func (s *Step[I]) getReplicas() uint16 {
+func (s *step[I]) GetReplicas() uint16 {
 	return s.replicas
 }
 
-func (s *Step[I]) setDecrementTokensCountHandler(handler func()) {
+func (s *step[I]) SetDecrementTokensCountHandler(handler func()) {
 	s.decrementTokensCount = handler
 }
 
-func (s *Step[I]) setIncrementTokensCountHandler(handler func()) {
+func (s *step[I]) SetIncrementTokensCountHandler(handler func()) {
 	s.incrementTokensCount = handler
 }
 
-func (s *Step[I]) setReportErrorHanler(handler ReportError) {
+func (s *step[I]) SetReportErrorHanler(handler ReportError) {
 	s.reportError = handler
 }
