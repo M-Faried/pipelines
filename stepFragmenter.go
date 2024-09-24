@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// ResultStepProcess is a function that processes the input data and does not return any data.
+// StepFragmenterProcess is a function that converts a token in the pipeline into multiple tokens.
 type StepFragmenterProcess[I any] func(I) ([]I, error)
 
 type stepFragmenter[I any] struct {
@@ -13,7 +13,7 @@ type stepFragmenter[I any] struct {
 	process StepFragmenterProcess[I]
 }
 
-// NewStepFragmenter creates a new step with the given label, number of replicas and process.
+// NewStepFragmenter creates a new fragmenter step with the given label, number of replicas and process.
 func NewStepFragmenter[I any](label string, replicas uint16, process StepFragmenterProcess[I]) IStep[I] {
 	return &stepFragmenter[I]{
 		step:    newStep[I](label, replicas, nil),
@@ -21,7 +21,7 @@ func NewStepFragmenter[I any](label string, replicas uint16, process StepFragmen
 	}
 }
 
-// NewStepFragmenterWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
+// NewStepFragmenterWithErrorHandler creates a new fragmenter step with the given label, number of replicas, process and error handler.
 func NewStepFragmenterWithErrorHandler[I any](label string, replicas uint16, process StepFragmenterProcess[I], errHandler ErrorHandler) IStep[I] {
 	return &stepFragmenter[I]{
 		step:    newStep[I](label, replicas, errHandler),

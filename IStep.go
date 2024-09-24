@@ -5,6 +5,7 @@ import (
 	"sync"
 )
 
+// IStep is an interface that defines a step accessible functionalities for the user code.
 type IStep[I any] interface {
 	GetLabel() string
 	GetReplicas() uint16

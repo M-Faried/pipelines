@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// StepProcess is a function that processes the input data and returns the output data.
+// StepProcess is a function that processes a single input data and returns a single output data.
 type StepProcess[I any] func(I) (I, error)
 
 type stepStandard[I any] struct {
