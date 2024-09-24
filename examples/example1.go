@@ -21,8 +21,8 @@ func printResult(i int64) error {
 func Example1() {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
-	plus5Step := pipelines.NewStepStandard("plus5", 1, plus5)
-	minus10Step := pipelines.NewStepStandard("minus10", 1, minus10)
+	plus5Step := pipelines.NewStep("plus5", 1, plus5)
+	minus10Step := pipelines.NewStep("minus10", 1, minus10)
 	printResultStep := pipelines.NewStepResult("printResult", 1, printResult)
 	pipe := pipelines.NewPipeline(10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
 	pipe.Init()

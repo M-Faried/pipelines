@@ -30,9 +30,9 @@ func printToken(t *Token) error {
 func Example2() {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
-	step1 := pipelines.NewStepStandard("step1", 1, processToken)
-	step2 := pipelines.NewStepStandard("step2", 1, processToken)
-	step3 := pipelines.NewStepStandard("step3", 1, processToken)
+	step1 := pipelines.NewStep("step1", 1, processToken)
+	step2 := pipelines.NewStep("step2", 1, processToken)
+	step3 := pipelines.NewStep("step3", 1, processToken)
 	resultStep := pipelines.NewStepResult("outStep", 1, printToken)
 	pipe := pipelines.NewPipeline(10, step1, step2, step3, resultStep)
 	pipe.Init()

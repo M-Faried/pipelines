@@ -34,11 +34,11 @@ func Example4() {
 	// The filter step. It filters out odd numbers and reports the error.
 	// you don't have to use the error handler, you can just return error to be discarded from
 	// the pipeline
-	step1 := pipelines.NewStepStandardWithErrorHandler("step1", 1, filterOdd, filterErrorHandler)
+	step1 := pipelines.NewStepWithErrorHandler("step1", 1, filterOdd, filterErrorHandler)
 	//step1 := pipelines.NewStep("step1", 1, filterOdd) // filtering without printing error
 
 	// The processing step
-	step2 := pipelines.NewStepStandard("step2", 1, by2)
+	step2 := pipelines.NewStep("step2", 1, by2)
 
 	// The result step
 	resultStep := pipelines.NewStepResult("resultStep", 1, printFilterResult)

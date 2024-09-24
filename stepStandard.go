@@ -5,17 +5,17 @@ import (
 	"sync"
 )
 
-// StepStandardProcess is a function that processes the input data and returns the output data.
-type StepStandardProcess[I any] func(I) (I, error)
+// StepProcess is a function that processes the input data and returns the output data.
+type StepProcess[I any] func(I) (I, error)
 
 type stepStandard[I any] struct {
 	stepIntermediate[I]
 	// process is a function that will be applied to the incoming data.
-	process StepStandardProcess[I]
+	process StepProcess[I]
 }
 
-// NewStepStandard creates a new step with the given label, number of replicas and process.
-func NewStepStandard[I any](label string, replicas uint16, process StepStandardProcess[I]) IStep[I] {
+// NewStep creates a new step with the given label, number of replicas and process.
+func NewStep[I any](label string, replicas uint16, process StepProcess[I]) IStep[I] {
 	if replicas == 0 {
 		replicas = 1
 	}
@@ -26,9 +26,9 @@ func NewStepStandard[I any](label string, replicas uint16, process StepStandardP
 	return step
 }
 
-// NewStepStandardWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
-func NewStepStandardWithErrorHandler[I any](label string, replicas uint16, process StepStandardProcess[I], reportErrorHandler ReportError) IStep[I] {
-	step := NewStepStandard(label, replicas, process)
+// NewStepWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
+func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) IStep[I] {
+	step := NewStep(label, replicas, process)
 	step.setReportErrorHanler(reportErrorHandler)
 	return step
 }
