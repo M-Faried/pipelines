@@ -150,6 +150,22 @@ resultStep := pipelines.NewStepResult("printResult", replicasCount, printResult)
 resultStep := pipelines.NewStepResultWithErrorHandler("printResult", replicasCount, printResult, errorHandler)
 ```
 
+### Defining Fragmenter Step (Example 5)
+
+Fragmenter step allows users to break down a token into multiple tokens and fed to the following steps of the pipelines. This is useful when you are having a large chunk of data and want to breake down into a smaller problem and aggregate results later into the result step. You can reap its benifits of course when you increase the number of the replcias of subsequent steps.
+
+```go
+// The fragmenter process type expected by the fragmenter step.
+// type StepFragmenterProcess[I any] func(I) ([]I, error)
+
+// Defining fragmenter step without error handler
+replicasCount := 1
+splitStep := pipelines.NewStepFragmenter("split", replicasCount, split)
+
+// With error handler
+splitStep := pipelines.NewStepFragmenterWithErrorHandler("split", replicasCount, split, errorHandler)
+```
+
 ### Pipeline Creation
 
 The pipeline creation requires 2 arguments
@@ -160,7 +176,7 @@ The pipeline creation requires 2 arguments
 
 ```go
 channelBufferSize := 10
-pipe := pipelines.NewPipeline(channelBufferSize, step1, step2, step3, resultStep)
+pipe := pipelines.NewPipeline[int64](channelBufferSize, step1, step2, step3, resultStep)
 ```
 
 ### Pipeline Running
