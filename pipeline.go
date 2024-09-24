@@ -37,7 +37,7 @@ type IPipeline[I any] interface {
 type pipeline[I any] struct {
 
 	// steps is the list of steps in the pipeline.
-	steps []IStep[I]
+	steps []internalStep[I]
 
 	// channelSize is the buffer size for all channels used to connect steps.
 	channelSize uint16
@@ -62,7 +62,10 @@ type pipeline[I any] struct {
 // The channel size is the buffer size for all channels used to connect steps.
 func NewPipeline[I any](channelSize uint16, steps ...IStep[I]) IPipeline[I] {
 	pipe := &pipeline[I]{}
-	pipe.steps = steps
+	pipe.steps = make([]internalStep[I], len(steps))
+	for i, step := range steps {
+		pipe.steps[i] = step.(internalStep[I])
+	}
 	pipe.channelSize = channelSize
 	pipe.doneCond = sync.NewCond(&pipe.tokensMutex)
 	return pipe

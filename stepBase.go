@@ -11,7 +11,10 @@ type ReportError func(string, error)
 
 type IStep[I any] interface {
 	GetLabel() string
+}
 
+type internalStep[I any] interface {
+	IStep[I]
 	setOuputChannel(chan I)
 	getOuputChannel() chan I
 

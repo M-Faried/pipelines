@@ -34,7 +34,7 @@ func Example2() {
 	step2 := pipelines.NewStep("step2", 1, processToken)
 	step3 := pipelines.NewStep("step3", 1, processToken)
 	resultStep := pipelines.NewStepResult("outStep", 1, printToken)
-	pipe := pipelines.NewPipeline(10, step1, step2, step3, resultStep)
+	pipe := pipelines.NewPipeline[*Token](10, step1, step2, step3, resultStep)
 	pipe.Init()
 
 	// Running

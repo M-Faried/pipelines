@@ -29,7 +29,7 @@ func Example3() {
 	step1 := pipelines.NewStep("step1", 1, by10)
 	step2 := pipelines.NewStep("step2", 10, by100) // Heavy process so we need 10 replicas
 	resultStep := pipelines.NewStepResult("resultStep", 1, printBy10Result)
-	pipe := pipelines.NewPipeline(10, step1, step2, resultStep)
+	pipe := pipelines.NewPipeline[int64](10, step1, step2, resultStep)
 	pipe.Init()
 
 	// Running

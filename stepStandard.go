@@ -28,7 +28,7 @@ func NewStep[I any](label string, replicas uint16, process StepProcess[I]) IStep
 
 // NewStepWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
 func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) IStep[I] {
-	step := NewStep(label, replicas, process)
+	step := NewStep(label, replicas, process).(*stepStandard[I])
 	step.setReportErrorHanler(reportErrorHandler)
 	return step
 }
