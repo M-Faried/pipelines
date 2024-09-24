@@ -111,6 +111,9 @@ You first define all the intermediate steps of your pipeline. The creation of th
 3. The process to be run in this step
 
 ```go
+// The process type expected by the step
+// type StepProcess[I any] func(I) (I, error)
+
 plus5Step := pipelines.NewStep("plus5", 1, plus5)
 minus10Step := pipelines.NewStep("minus10", 1, minus10)
 ```
@@ -118,8 +121,8 @@ minus10Step := pipelines.NewStep("minus10", 1, minus10)
 Another version of the NewStep constructor called NewStepWithErrorHandler is available to enable users submit an error handler for the step in case they happen. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
 
 ```go
-// Error handler signature
-type ReportError func(string, error)
+// The handler type expected as error handler.
+// type ReportError func(label string, err error)
 
 // To create a step with error handler
 step := pipelines.NewStepWithErrorHandler("step1", 1, stepProcess, errorHandlerFunction)
@@ -130,6 +133,9 @@ step := pipelines.NewStepWithErrorHandler("step1", 1, stepProcess, errorHandlerF
 Result step is the final step in the pipeline and can return errors only. It also has the same two versions of the constructor with the same parameters order. It is the process where you save the results of the pipeline to the database, send it over the network, ....
 
 ```go
+// The result process type expected by the result step.
+// type ResultStepProcess[I any] func(I) error
+
 // Defining result step without error handler
 resultStep := pipelines.NewResultStep("printResult", 1, printResult)
 
