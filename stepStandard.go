@@ -16,21 +16,18 @@ type stepStandard[I any] struct {
 
 // NewStep creates a new step with the given label, number of replicas and process.
 func NewStep[I any](label string, replicas uint16, process StepProcess[I]) IStep[I] {
-	if replicas == 0 {
-		replicas = 1
+	return &stepStandard[I]{
+		step:    newStep[I](label, replicas, nil),
+		process: process,
 	}
-	step := &stepStandard[I]{}
-	step.label = label
-	step.replicas = replicas
-	step.process = process
-	return step
 }
 
 // NewStepWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
-func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) IStep[I] {
-	step := NewStep(label, replicas, process).(*stepStandard[I])
-	step.reportError = reportErrorHandler
-	return step
+func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ErrorHandler) IStep[I] {
+	return &stepStandard[I]{
+		step:    newStep[I](label, replicas, reportErrorHandler),
+		process: process,
+	}
 }
 
 // run is a method that runs the step process and will be executed in a separate goroutine.
@@ -46,8 +43,8 @@ func (s *stepStandard[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				if err != nil {
 					// since we will not proceed with the current token, we need to decrement the tokens count.
 					s.decrementTokensCount()
-					if s.reportError != nil {
-						s.reportError(s.label, err)
+					if s.errorHandler != nil {
+						s.errorHandler(s.label, err)
 					}
 				} else {
 					s.output <- o

@@ -1,41 +1,8 @@
 package pipelines
 
-import (
-	"context"
-	"sync"
-)
-
-// ReportError is the definition of error reporting handler which may or may not be set by the user during creation of the step.
+// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
 // The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type ReportError func(string, error)
-
-type IStep[I any] interface {
-	GetLabel() string
-}
-
-type iInternalStep[I any] interface {
-	IStep[I]
-
-	SetInputChannel(chan I)
-	GetInputChannel() chan I
-
-	SetOutputChannel(chan I)
-	GetOutputChannel() chan I
-
-	GetReplicas() uint16
-	SetIncrementTokensCountHandler(func())
-	SetDecrementTokensCountHandler(func())
-
-	Run(context.Context, *sync.WaitGroup)
-}
-
-func castToInternalSteps[I any](step []IStep[I]) []iInternalStep[I] {
-	internalSteps := make([]iInternalStep[I], len(step))
-	for i, s := range step {
-		internalSteps[i] = s.(iInternalStep[I])
-	}
-	return internalSteps
-}
+type ErrorHandler func(string, error)
 
 // step is a base struct for all steps
 type step[I any] struct {
@@ -52,14 +19,25 @@ type step[I any] struct {
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint16
 
-	// reportError is the function called when an error occurs in the step.
-	reportError ReportError
+	// errorHandler is the function called when an error occurs in the step.
+	errorHandler ErrorHandler
 
 	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
 	decrementTokensCount func()
 
 	// incrementTokensCount is a function that increments the number of tokens in the pipeline.
 	incrementTokensCount func()
+}
+
+func newStep[I any](label string, replicas uint16, errorHandler ErrorHandler) step[I] {
+	if replicas == 0 {
+		replicas = 1
+	}
+	return step[I]{
+		label:        label,
+		replicas:     replicas,
+		errorHandler: errorHandler,
+	}
 }
 
 func (s *step[I]) GetLabel() string {
@@ -94,6 +72,6 @@ func (s *step[I]) SetIncrementTokensCountHandler(handler func()) {
 	s.incrementTokensCount = handler
 }
 
-func (s *step[I]) SetReportErrorHanler(handler ReportError) {
-	s.reportError = handler
+func (s *step[I]) SetReportErrorHanler(handler ErrorHandler) {
+	s.errorHandler = handler
 }
