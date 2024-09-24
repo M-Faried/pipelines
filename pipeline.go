@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"sync"
 )
 
@@ -38,10 +37,7 @@ type IPipeline[I any] interface {
 type pipeline[I any] struct {
 
 	// steps is the list of steps in the pipeline.
-	steps []*Step[I]
-
-	// resultStep is the final step in the pipeline.
-	resultStep *ResultStep[I]
+	steps []IStep[I]
 
 	// channelSize is the buffer size for all channels used to connect steps.
 	channelSize uint16
@@ -64,31 +60,11 @@ type pipeline[I any] struct {
 
 // NewPipeline creates a new pipeline with the given channel size, result step and steps.
 // The channel size is the buffer size for all channels used to connect steps.
-func NewPipeline[I any](channelSize uint16, resultStep *ResultStep[I], steps ...*Step[I]) IPipeline[I] {
+func NewPipeline[I any](channelSize uint16, steps ...IStep[I]) IPipeline[I] {
 	pipe := &pipeline[I]{}
 	pipe.steps = steps
-	pipe.resultStep = resultStep
 	pipe.channelSize = channelSize
 	pipe.doneCond = sync.NewCond(&pipe.tokensMutex)
-	return pipe
-}
-
-// NewPipelineEasy creates a new pipeline with the given channel size, number of replicas for all steps, result step process, and step processes.
-func NewPipelineEasy[I any](channelSize uint16, replicas uint16, resultStepProcess ResultStepProcess[I], stepProcesses ...StepProcess[I]) IPipeline[I] {
-
-	// creating the result step
-	resultStep := NewResultStep("stepResult", replicas, resultStepProcess)
-
-	// creating the steps
-	steps := make([]*Step[I], len(stepProcesses))
-	for i, process := range stepProcesses {
-		label := fmt.Sprintf("step%d", i)
-		steps[i] = NewStep[I](label, replicas, process)
-	}
-
-	// creating the pipeline
-	pipe := NewPipeline(channelSize, resultStep, steps...)
-
 	return pipe
 }
 
@@ -97,27 +73,31 @@ func (p *pipeline[I]) Init() {
 
 		// getting the number of steps and channels
 		stepsCount := len(p.steps)
-		channelsCount := stepsCount + 1
 
 		// creating the required channels
-		allChannels := make([]chan I, channelsCount)
-		for i := 0; i < channelsCount; i++ {
+		// an input for each step
+		allChannels := make([]chan I, stepsCount)
+		for i := 0; i < stepsCount; i++ {
 			allChannels[i] = make(chan I, p.channelSize)
 		}
 
 		// setting channels for each step
-		for i := 0; i < stepsCount && (i+1) < channelsCount; i++ {
-			p.steps[i].input = allChannels[i]
-			p.steps[i].output = allChannels[i+1]
+		for i := 0; i < stepsCount-1; i++ {
+			p.steps[i].setInputChannel(allChannels[i])
+			p.steps[i].setOuputChannel(allChannels[i+1])
 			// setting decrement in case of filtering occurs at the step
-			p.steps[i].decrementTokensCount = p.decrementTokensCount
+			p.steps[i].setDecrementTokensCountHandler(p.decrementTokensCount)
 			// setting increment in case of fragmentation occurs at the step
-			p.steps[i].incrementTokensCount = p.incrementTokensCount
+			p.steps[i].setIncrementTokensCountHandler(p.incrementTokensCount)
 		}
 
 		// setting the input for the result step.
-		p.resultStep.input = p.steps[stepsCount-1].output
-		p.resultStep.decrementTokensCount = p.decrementTokensCount
+		stepBeforeResultIndex := stepsCount - 2
+		resultStepIndex := stepsCount - 1
+		// setting the input for the result step from the step before it.
+		p.steps[resultStepIndex].setInputChannel(p.steps[stepBeforeResultIndex].getOuputChannel())
+		// setting the decrement for the result step.
+		p.steps[resultStepIndex].setDecrementTokensCountHandler(p.decrementTokensCount)
 	})
 }
 
@@ -126,19 +106,14 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 		// creating a wait group for all the step routines.
 		p.stepsWaitGroup = &sync.WaitGroup{}
 
+		// creating a child context for the steps from the parent context.
 		stepsCtx, cancel := context.WithCancel(ctx)
 		p.stepsCtxCancel = cancel
-
-		// running the result step.
-		for range p.resultStep.replicas {
-			p.stepsWaitGroup.Add(1)
-			go p.resultStep.run(stepsCtx, p.stepsWaitGroup)
-		}
 
 		// running steps in reverse order
 		for i := len(p.steps) - 1; i >= 0; i-- {
 			// spawning the replicas for each step
-			for range p.steps[i].replicas {
+			for range p.steps[i].getReplicas() {
 				p.stepsWaitGroup.Add(1)
 				go p.steps[i].run(stepsCtx, p.stepsWaitGroup)
 			}
@@ -169,11 +144,8 @@ func (p *pipeline[I]) Terminate() {
 
 	// closing all channels
 	for _, step := range p.steps {
-		close(step.input)
+		close(step.getInputChannel())
 	}
-
-	// closing the output of the last step which is the input to the result
-	close(p.steps[len(p.steps)-1].output)
 
 	// clearing the wait group
 	p.stepsWaitGroup = nil
@@ -181,13 +153,13 @@ func (p *pipeline[I]) Terminate() {
 
 func (p *pipeline[I]) FeedOne(item I) {
 	p.incrementTokensCount()
-	p.steps[0].input <- item
+	p.steps[0].getInputChannel() <- item
 }
 
 func (p *pipeline[I]) FeedMany(items []I) {
 	for _, item := range items {
 		p.incrementTokensCount()
-		p.steps[0].input <- item
+		p.steps[0].getInputChannel() <- item
 	}
 }
 

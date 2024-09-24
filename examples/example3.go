@@ -26,10 +26,10 @@ func printBy10Result(i int64) error {
 func Example3() {
 	ctx, cancelCtx := context.WithCancel(context.Background())
 
-	step1 := pipelines.NewStep("step1", 1, by10)
-	step2 := pipelines.NewStep("step2", 10, by100) // Heavy process so we need 10 replicas
-	resultStep := pipelines.NewResultStep("resultStep", 1, printBy10Result)
-	pipe := pipelines.NewPipeline(10, resultStep, step1, step2)
+	step1 := pipelines.NewStepStandard("step1", 1, by10)
+	step2 := pipelines.NewStepStandard("step2", 10, by100) // Heavy process so we need 10 replicas
+	resultStep := pipelines.NewStepResult("resultStep", 1, printBy10Result)
+	pipe := pipelines.NewPipeline(10, step1, step2, resultStep)
 	pipe.Init()
 
 	// Running
