@@ -10,7 +10,7 @@ type IStep[I any] interface {
 	GetReplicas() uint16
 }
 
-type iInternalStep[I any] interface {
+type iStepInternal[I any] interface {
 	IStep[I]
 
 	SetInputChannel(chan I)
@@ -25,10 +25,10 @@ type iInternalStep[I any] interface {
 	Run(context.Context, *sync.WaitGroup)
 }
 
-func castToInternalSteps[I any](step []IStep[I]) []iInternalStep[I] {
-	internalSteps := make([]iInternalStep[I], len(step))
+func castToInternalSteps[I any](step []IStep[I]) []iStepInternal[I] {
+	internalSteps := make([]iStepInternal[I], len(step))
 	for i, s := range step {
-		internalSteps[i] = s.(iInternalStep[I])
+		internalSteps[i] = s.(iStepInternal[I])
 	}
 	return internalSteps
 }

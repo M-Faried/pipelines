@@ -49,7 +49,7 @@ func Example5() {
 	stars := pipelines.NewStep("stars", 2, addStars)
 	result := pipelines.NewStepResult("result", 2, tokenPrinter)
 
-	pipe := pipelines.NewPipeline[*StringToken](2, splitter, trim, stars, result)
+	pipe := pipelines.NewPipeline[*StringToken](10, splitter, trim, stars, result)
 	pipe.Init()
 
 	ctx := context.Background()
