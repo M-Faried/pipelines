@@ -5,9 +5,13 @@ import (
 	"sync"
 )
 
-// IStep is an interface that defines a step accessible functionalities for the user code.
+// IStep is an interface for all steps of the pipeline.
 type IStep[I any] interface {
+
+	// GetLabel returns the label of the step.
 	GetLabel() string
+
+	// GetReplicas returns the number of replicas of the step.
 	GetReplicas() uint16
 }
 
