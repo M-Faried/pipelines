@@ -28,6 +28,14 @@ type internalStep[I any] interface {
 	run(context.Context, *sync.WaitGroup)
 }
 
+func castToInternalSteps[I any](step []IStep[I]) []internalStep[I] {
+	internalSteps := make([]internalStep[I], len(step))
+	for i, s := range step {
+		internalSteps[i] = s.(internalStep[I])
+	}
+	return internalSteps
+}
+
 // stepBase is a base struct for all steps
 type stepBase[I any] struct {
 
