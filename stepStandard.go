@@ -8,20 +8,18 @@ import (
 // StepProcess is a function that processes the input data and returns the output data.
 type StepProcess[I any] func(I) (I, error)
 
-type Step[I any] struct {
-	baseStep[I]
-	// ouput is a channel for outgoing data from the step.
-	output chan I
+type stepStandard[I any] struct {
+	stepIntermediate[I]
 	// process is a function that will be applied to the incoming data.
 	process StepProcess[I]
 }
 
 // NewStep creates a new step with the given label, number of replicas and process.
-func NewStep[I any](label string, replicas uint16, process StepProcess[I]) *Step[I] {
+func NewStep[I any](label string, replicas uint16, process StepProcess[I]) IStep[I] {
 	if replicas == 0 {
 		replicas = 1
 	}
-	step := &Step[I]{}
+	step := &stepStandard[I]{}
 	step.label = label
 	step.replicas = replicas
 	step.process = process
@@ -29,14 +27,14 @@ func NewStep[I any](label string, replicas uint16, process StepProcess[I]) *Step
 }
 
 // NewStepWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
-func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) *Step[I] {
-	step := NewStep(label, replicas, process)
-	step.reportError = reportErrorHandler
+func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ReportError) IStep[I] {
+	step := NewStep(label, replicas, process).(*stepStandard[I])
+	step.setReportErrorHanler(reportErrorHandler)
 	return step
 }
 
 // run is a method that runs the step process and will be executed in a separate goroutine.
-func (s *Step[I]) run(ctx context.Context, wg *sync.WaitGroup) {
+func (s *stepStandard[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
 		case <-ctx.Done():

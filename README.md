@@ -67,12 +67,12 @@ func main() {
     plus5Step := pipelines.NewStep[int64]("plus5", replicasCount, plus5)
     minus10Step := pipelines.NewStep[int64]("minus10", replicasCount, minus10)
     filterStep := pipelines.NewStep[int64]("filter", replicasCount, filterNegativeValues)
-    printResultStep := pipelines.NewResultStep[int64]("printResult", replicasCount, printResult)
+    printResultStep := pipelines.NewStepResult[int64]("printResult", replicasCount, printResult)
 
 
     // Creating & init the pipeline
     channelsBufferSize := 10
-    pipe := pipelines.NewPipeline[int64](channelsBufferSize, printResultStep, plus5Step, minus10Step, filterStep)
+    pipe := pipelines.NewPipeline[int64](channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
     pipe.Init()
 
 
@@ -114,8 +114,9 @@ You first define all the intermediate steps of your pipeline. The creation of th
 // The process type expected by the step
 // type StepProcess[I any] func(I) (I, error)
 
-plus5Step := pipelines.NewStep("plus5", 1, plus5)
-minus10Step := pipelines.NewStep("minus10", 1, minus10)
+replicasCount := 1
+plus5Step := pipelines.NewStep("plus5", replicasCount, plus5)
+minus10Step := pipelines.NewStep("minus10", replicasCount, minus10)
 ```
 
 Another version of the NewStep constructor called NewStepWithErrorHandler is available to enable users submit an error handler for the step in case they happen. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
@@ -125,7 +126,7 @@ Another version of the NewStep constructor called NewStepWithErrorHandler is ava
 // type ReportError func(label string, err error)
 
 // To create a step with error handler
-step := pipelines.NewStepWithErrorHandler("step1", 1, stepProcess, errorHandlerFunction)
+step := pipelines.NewStepWithErrorHandler("plus5", replicasCount, plus5, errorHandlerFunction)
 ```
 
 ### Defining Result Step
@@ -134,36 +135,27 @@ Result step is the final step in the pipeline and can return errors only. It als
 
 ```go
 // The result process type expected by the result step.
-// type ResultStepProcess[I any] func(I) error
+// type StepResultProcess[I any] func(I) error
 
 // Defining result step without error handler
-resultStep := pipelines.NewResultStep("printResult", 1, printResult)
+replicasCount := 1
+resultStep := pipelines.NewStepResult("printResult", replicasCount, printResult)
 
 // With error handler
-resultStep := pipelines.NewResultStepWithErrorHandler("printResult", 1, printResult, errorHandlerFunction)
+resultStep := pipelines.NewStepResultWithErrorHandler("printResult", replicasCount, printResult, errorHandlerFunction)
 ```
 
 ### Pipeline Creation
 
-The pipeline creation requires three arguments
+The pipeline creation requires 2 arguments
 
 1. The buffer size of the channels used to communication among the pipeline. Configure it depending on your needs.
 
-2. The result step.
-
-3. One or more intermediate steps.
+2. Steps in the order of execution
 
 ```go
 channelBufferSize := 10
-pipe := pipelines.NewPipeline(channelBufferSize, resultStep, step1, step2, step3)
-```
-
-Another version is available to create the pipeline on the fly without creating and configuring the steps first. This version takes the processes to be converted into steps. This version limitation is that it creates all the steps with a standard label and the same replicas count.
-
-```go
-channelBufferSize := 10
-replicasCount := 3      // 3 replicas of each step including result
-pipe := pipelines.NewPipelineEasy(channelBufferSize, replicasCount, resultProcess, process1, process2, process3)
+pipe := pipelines.NewPipeline(channelBufferSize, step1, step2, step3, resultStep)
 ```
 
 ### Pipeline Running
@@ -171,7 +163,7 @@ pipe := pipelines.NewPipelineEasy(channelBufferSize, replicasCount, resultProces
 The pipeline requires first a context to before you can run the pipeline. Define a suitable context for your case and then sendit to the Run function. The Run function doesn't need to run in a go subroutine as it is not blocking.
 
 ```go
-ctx, cancelCtx := context.WithCancel(context.Background())
+ctx, cancelCtx := context.WithCancel(context.Background()) // any type of context can be used here
 pipe.Run(ctx)
 ```
 

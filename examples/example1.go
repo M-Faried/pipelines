@@ -23,8 +23,8 @@ func Example1() {
 
 	plus5Step := pipelines.NewStep("plus5", 1, plus5)
 	minus10Step := pipelines.NewStep("minus10", 1, minus10)
-	printResultStep := pipelines.NewResultStep("printResult", 1, printResult)
-	pipe := pipelines.NewPipeline(10, printResultStep, plus5Step, minus10Step) // Notice 10 is the buffer size
+	printResultStep := pipelines.NewStepResult("printResult", 1, printResult)
+	pipe := pipelines.NewPipeline[int64](10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
 	pipe.Init()
 
 	// Running

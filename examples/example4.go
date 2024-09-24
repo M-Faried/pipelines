@@ -41,10 +41,10 @@ func Example4() {
 	step2 := pipelines.NewStep("step2", 1, by2)
 
 	// The result step
-	resultStep := pipelines.NewResultStep("resultStep", 1, printFilterResult)
+	resultStep := pipelines.NewStepResult("resultStep", 1, printFilterResult)
 
 	// init pipeline
-	pipe := pipelines.NewPipeline(10, resultStep, step1, step2)
+	pipe := pipelines.NewPipeline[int64](10, step1, step2, resultStep)
 	pipe.Init()
 
 	// Running
