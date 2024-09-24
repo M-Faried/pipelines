@@ -28,7 +28,6 @@ func printToken(t *Token) error {
 // Example2 demonstrates how to use pipelines with custom struct as input and output.
 // It also demonstrates how to create identical steps in a pipeline.
 func Example2() {
-	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	step1 := pipelines.NewStep("step1", 1, processToken)
 	step2 := pipelines.NewStep("step2", 1, processToken)
@@ -38,6 +37,7 @@ func Example2() {
 	pipe.Init()
 
 	// Running
+	ctx := context.Background()
 	pipe.Run(ctx)
 
 	// Feeding inputs
@@ -54,8 +54,5 @@ func Example2() {
 	// terminating the pipeline and clearning resources
 	pipe.Terminate()
 
-	// cancel the context can come before or after Terminate
-	cancelCtx()
-
-	fmt.Println("Example2 Done!!!")
+	fmt.Println("Example 2 Done!!!")
 }

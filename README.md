@@ -77,7 +77,7 @@ func main() {
 
 
     // Running
-    ctx, cancelCtx := context.WithCancel(context.Background())
+    ctx := context.Background()
     pipe.Run(ctx)
 
 
@@ -90,9 +90,6 @@ func main() {
     // Waiting for all tokens to be processed
     pipe.WaitTillDone()
 
-    // Cancel the context can come before or after Terminate
-    cancelCtx()
-
     // Terminating the pipeline and clearning resources
     pipe.Terminate()
 }
@@ -101,6 +98,14 @@ func main() {
 # Explanation
 
 ### Defining Intermediate Steps
+
+#### You have 3 types of steps:
+
+1. **Single Input Single Output Step** which is created using **NewStep**
+
+2. **Single Input Multiple Output Step** which is created using **NewStepFragmenter** (example 5)
+
+3. **Single Input No Output Step** which is created using **NewStepResult**
 
 You first define all the intermediate steps of your pipeline. The creation of the steps requires 3 arguments at least
 
@@ -123,10 +128,10 @@ Another version of the NewStep constructor called NewStepWithErrorHandler is ava
 
 ```go
 // The handler type expected as error handler.
-// type ReportError func(label string, err error)
+// type ErrorHandler func(label string, err error)
 
 // To create a step with error handler
-step := pipelines.NewStepWithErrorHandler("plus5", replicasCount, plus5, errorHandlerFunction)
+step := pipelines.NewStepWithErrorHandler("plus5", replicasCount, plus5, errorHandler)
 ```
 
 ### Defining Result Step
@@ -142,7 +147,7 @@ replicasCount := 1
 resultStep := pipelines.NewStepResult("printResult", replicasCount, printResult)
 
 // With error handler
-resultStep := pipelines.NewStepResultWithErrorHandler("printResult", replicasCount, printResult, errorHandlerFunction)
+resultStep := pipelines.NewStepResultWithErrorHandler("printResult", replicasCount, printResult, errorHandler)
 ```
 
 ### Pipeline Creation
@@ -163,7 +168,7 @@ pipe := pipelines.NewPipeline(channelBufferSize, step1, step2, step3, resultStep
 The pipeline requires first a context to before you can run the pipeline. Define a suitable context for your case and then sendit to the Run function. The Run function doesn't need to run in a go subroutine as it is not blocking.
 
 ```go
-ctx, cancelCtx := context.WithCancel(context.Background()) // any type of context can be used here
+ctx := context.Background() // any type of context can be used here
 pipe.Run(ctx)
 ```
 

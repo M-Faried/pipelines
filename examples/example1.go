@@ -19,7 +19,6 @@ func printResult(i int64) error {
 }
 
 func Example1() {
-	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	plus5Step := pipelines.NewStep("plus5", 1, plus5)
 	minus10Step := pipelines.NewStep("minus10", 1, minus10)
@@ -28,6 +27,7 @@ func Example1() {
 	pipe.Init()
 
 	// Running
+	ctx := context.Background()
 	pipe.Run(ctx)
 
 	// Feeding inputs
@@ -38,11 +38,8 @@ func Example1() {
 	// 	waiting for all tokens to be processed
 	pipe.WaitTillDone()
 
-	// cancel the context can come before or after Terminate
-	cancelCtx()
-
 	// terminating the pipeline and clearning resources
 	pipe.Terminate()
 
-	fmt.Println("Example1 Done!!!")
+	fmt.Println("Example 1 Done!!!")
 }
