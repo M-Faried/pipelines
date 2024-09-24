@@ -67,12 +67,12 @@ func main() {
     plus5Step := pipelines.NewStep[int64]("plus5", replicasCount, plus5)
     minus10Step := pipelines.NewStep[int64]("minus10", replicasCount, minus10)
     filterStep := pipelines.NewStep[int64]("filter", replicasCount, filterNegativeValues)
-    printResultStep := pipelines.NewResultStep[int64]("printResult", replicasCount, printResult)
+    printResultStep := pipelines.NewStepResult[int64]("printResult", replicasCount, printResult)
 
 
     // Creating & init the pipeline
     channelsBufferSize := 10
-    pipe := pipelines.NewPipeline[int64](channelsBufferSize, printResultStep, plus5Step, minus10Step, filterStep)
+    pipe := pipelines.NewPipeline[int64](channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
     pipe.Init()
 
 
@@ -134,13 +134,13 @@ Result step is the final step in the pipeline and can return errors only. It als
 
 ```go
 // The result process type expected by the result step.
-// type ResultStepProcess[I any] func(I) error
+// type StepResultProcess[I any] func(I) error
 
 // Defining result step without error handler
-resultStep := pipelines.NewResultStep("printResult", 1, printResult)
+resultStep := pipelines.NewStepResult("printResult", 1, printResult)
 
 // With error handler
-resultStep := pipelines.NewResultStepWithErrorHandler("printResult", 1, printResult, errorHandlerFunction)
+resultStep := pipelines.NewStepResultWithErrorHandler("printResult", 1, printResult, errorHandlerFunction)
 ```
 
 ### Pipeline Creation
@@ -155,15 +155,7 @@ The pipeline creation requires three arguments
 
 ```go
 channelBufferSize := 10
-pipe := pipelines.NewPipeline(channelBufferSize, resultStep, step1, step2, step3)
-```
-
-Another version is available to create the pipeline on the fly without creating and configuring the steps first. This version takes the processes to be converted into steps. This version limitation is that it creates all the steps with a standard label and the same replicas count.
-
-```go
-channelBufferSize := 10
-replicasCount := 3      // 3 replicas of each step including result
-pipe := pipelines.NewPipelineEasy(channelBufferSize, replicasCount, resultProcess, process1, process2, process3)
+pipe := pipelines.NewPipeline(channelBufferSize, step1, step2, step3, resultStep)
 ```
 
 ### Pipeline Running
