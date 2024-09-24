@@ -24,7 +24,6 @@ func printBy10Result(i int64) error {
 
 // Example3 demonstrates how to utilize replicas feature when you have a heavy process.
 func Example3() {
-	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	step1 := pipelines.NewStep("step1", 1, by10)
 	step2 := pipelines.NewStep("step2", 10, by100) // Heavy process so we need 10 replicas
@@ -33,6 +32,7 @@ func Example3() {
 	pipe.Init()
 
 	// Running
+	ctx := context.Background()
 	pipe.Run(ctx)
 
 	// Feeding inputs
@@ -50,8 +50,5 @@ func Example3() {
 	// terminating the pipeline and clearning resources
 	pipe.Terminate()
 
-	// cancel the context can come before or after Terminate
-	cancelCtx()
-
-	fmt.Println("Example3 Done!!!")
+	fmt.Println("Example 3 Done!!!")
 }

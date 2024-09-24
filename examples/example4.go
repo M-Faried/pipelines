@@ -29,7 +29,6 @@ func filterErrorHandler(id string, err error) {
 
 // Example4 demonstrates how to utilize error handling in a pipeline and use steps as filters
 func Example4() {
-	ctx, cancelCtx := context.WithCancel(context.Background())
 
 	// The filter step. It filters out odd numbers and reports the error.
 	// you don't have to use the error handler, you can just return error to be discarded from
@@ -48,6 +47,7 @@ func Example4() {
 	pipe.Init()
 
 	// Running
+	ctx := context.Background()
 	go pipe.Run(ctx)
 
 	// Feeding inputs
@@ -61,8 +61,5 @@ func Example4() {
 	// terminating the pipeline and clearning resources
 	pipe.Terminate()
 
-	// cancel the context can come before or after Terminate
-	cancelCtx()
-
-	fmt.Println("Example4 Done!!!")
+	fmt.Println("Example 4 Done!!!")
 }

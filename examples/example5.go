@@ -43,7 +43,9 @@ func tokenPrinter(token *StringToken) error {
 	return nil
 }
 
+// Example5 demonstrates a pipeline with a step that fragments tokens.
 func Example5() {
+
 	splitter := pipelines.NewStepFragmenter("fragmenter", 1, splitter)
 	trim := pipelines.NewStep("trim", 2, trimSpaces)
 	stars := pipelines.NewStep("stars", 2, addStars)
