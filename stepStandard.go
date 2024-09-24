@@ -9,7 +9,7 @@ import (
 type StepProcess[I any] func(I) (I, error)
 
 type stepStandard[I any] struct {
-	stepIntermediate[I]
+	Step[I]
 	// process is a function that will be applied to the incoming data.
 	process StepProcess[I]
 }

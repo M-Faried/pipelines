@@ -37,7 +37,7 @@ type IPipeline[I any] interface {
 type pipeline[I any] struct {
 
 	// steps is the list of steps in the pipeline.
-	steps []internalStep[I]
+	steps []InternalStep[I]
 
 	// channelSize is the buffer size for all channels used to connect steps.
 	channelSize uint16

@@ -10,7 +10,7 @@ type StepResultProcess[I any] func(I) error
 
 // stepResult is a struct that represents a step in the pipeline that does not return any data.
 type stepResult[I any] struct {
-	stepBase[I]
+	Step[I]
 	process StepResultProcess[I]
 }
 
@@ -49,16 +49,4 @@ func (s *stepResult[I]) run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 		}
 	}
-}
-
-func (s *stepResult[I]) setOuputChannel(output chan I) {
-	panic("Not Supported Operation!!!")
-}
-
-func (s *stepResult[I]) getOuputChannel() chan I {
-	panic("Not Supported Operation!!!")
-}
-
-func (s *stepResult[I]) setIncrementTokensCountHandler(handler func()) {
-	panic("Not Supported Operation!!!")
 }

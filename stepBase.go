@@ -13,7 +13,7 @@ type IStep[I any] interface {
 	GetLabel() string
 }
 
-type internalStep[I any] interface {
+type InternalStep[I any] interface {
 	IStep[I]
 	setOuputChannel(chan I)
 	getOuputChannel() chan I
@@ -28,22 +28,25 @@ type internalStep[I any] interface {
 	run(context.Context, *sync.WaitGroup)
 }
 
-func castToInternalSteps[I any](step []IStep[I]) []internalStep[I] {
-	internalSteps := make([]internalStep[I], len(step))
+func castToInternalSteps[I any](step []IStep[I]) []InternalStep[I] {
+	internalSteps := make([]InternalStep[I], len(step))
 	for i, s := range step {
-		internalSteps[i] = s.(internalStep[I])
+		internalSteps[i] = s.(InternalStep[I])
 	}
 	return internalSteps
 }
 
-// stepBase is a base struct for all steps
-type stepBase[I any] struct {
+// Step is a base struct for all steps
+type Step[I any] struct {
 
 	// label is an label for the step set by the user.
 	label string
 
 	// input is a channel for incoming data to the step.
 	input chan I
+
+	// ouput is a channel for outgoing data from the step.
+	output chan I
 
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint16
@@ -53,28 +56,43 @@ type stepBase[I any] struct {
 
 	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
 	decrementTokensCount func()
+
+	// incrementTokensCount is a function that increments the number of tokens in the pipeline.
+	incrementTokensCount func()
 }
 
-func (s *stepBase[I]) GetLabel() string {
+func (s *Step[I]) GetLabel() string {
 	return s.label
 }
 
-func (s *stepBase[I]) setInputChannel(input chan I) {
+func (s *Step[I]) setInputChannel(input chan I) {
 	s.input = input
 }
 
-func (s *stepBase[I]) getInputChannel() chan I {
+func (s *Step[I]) getInputChannel() chan I {
 	return s.input
 }
 
-func (s *stepBase[I]) setDecrementTokensCountHandler(handler func()) {
+func (s *Step[I]) setOuputChannel(output chan I) {
+	s.output = output
+}
+
+func (s *Step[I]) getOuputChannel() chan I {
+	return s.output
+}
+
+func (s *Step[I]) getReplicas() uint16 {
+	return s.replicas
+}
+
+func (s *Step[I]) setDecrementTokensCountHandler(handler func()) {
 	s.decrementTokensCount = handler
 }
 
-func (s *stepBase[I]) setReportErrorHanler(handler ReportError) {
-	s.reportError = handler
+func (s *Step[I]) setIncrementTokensCountHandler(handler func()) {
+	s.incrementTokensCount = handler
 }
 
-func (s *stepBase[I]) getReplicas() uint16 {
-	return s.replicas
+func (s *Step[I]) setReportErrorHanler(handler ReportError) {
+	s.reportError = handler
 }
