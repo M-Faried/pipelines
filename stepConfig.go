@@ -37,8 +37,8 @@ func createBaseStep[I any](label string, replicas uint16, errorHandler ErrorHand
 func NewStep[I any](config IStepConfig[I]) IStep[I] {
 
 	if c, ok := config.(*StepConfig[I]); ok {
-		if c.Label == "" {
-			c.Label = "standard step"
+		if c.Process == nil {
+			panic("process is required")
 		}
 		return &stepStandard[I]{
 			step:    createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
@@ -47,8 +47,8 @@ func NewStep[I any](config IStepConfig[I]) IStep[I] {
 	}
 
 	if c, ok := config.(*StepFragmenterConfig[I]); ok {
-		if c.Label == "" {
-			c.Label = "fragmenter step"
+		if c.Process == nil {
+			panic("process is required")
 		}
 		return &stepFragmenter[I]{
 			step:    createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
@@ -57,8 +57,8 @@ func NewStep[I any](config IStepConfig[I]) IStep[I] {
 	}
 
 	if c, ok := config.(*StepResultConfig[I]); ok {
-		if c.Label == "" {
-			c.Label = "result step"
+		if c.Process == nil {
+			panic("process is required")
 		}
 		return &stepResult[I]{
 			step:    createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
