@@ -46,28 +46,30 @@ func tokenPrinter(token *StringToken) error {
 // Example5 demonstrates a pipeline with a step that fragments tokens.
 func Example5() {
 
-	splitter := pip.NewStep[*StringToken](&pip.StepFragmenterConfig[*StringToken]{
+	builder := &pip.Builder[*StringToken]{}
+
+	splitter := builder.NewStep(&pip.StepFragmenterConfig[*StringToken]{
 		Label:    "fragmenter",
 		Replicas: 1,
 		Process:  splitter,
 	})
-	trim := pip.NewStep[*StringToken](&pip.StepConfig[*StringToken]{
+	trim := builder.NewStep(&pip.StepConfig[*StringToken]{
 		Label:    "trim",
 		Replicas: 2,
 		Process:  trimSpaces,
 	})
-	stars := pip.NewStep[*StringToken](&pip.StepConfig[*StringToken]{
+	stars := builder.NewStep(&pip.StepConfig[*StringToken]{
 		Label:    "stars",
 		Replicas: 2,
 		Process:  addStars,
 	})
-	result := pip.NewStep[*StringToken](&pip.StepResultConfig[*StringToken]{
+	result := builder.NewStep(&pip.StepResultConfig[*StringToken]{
 		Label:    "result",
 		Replicas: 2,
 		Process:  tokenPrinter,
 	})
 
-	pipeline := pip.NewPipeline[*StringToken](10, splitter, trim, stars, result)
+	pipeline := builder.NewPipeline(10, splitter, trim, stars, result)
 	pipeline.Init()
 
 	ctx := context.Background()

@@ -4,8 +4,8 @@ package pipelines
 // The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
 type ErrorHandler func(string, error)
 
-// step is a base struct for all steps
-type step[I any] struct {
+// stepBase is a base struct for all steps
+type stepBase[I any] struct {
 
 	// label is an label for the step set by the user.
 	label string
@@ -29,38 +29,38 @@ type step[I any] struct {
 	incrementTokensCount func()
 }
 
-func (s *step[I]) GetLabel() string {
+func (s *stepBase[I]) GetLabel() string {
 	return s.label
 }
 
-func (s *step[I]) SetInputChannel(input chan I) {
+func (s *stepBase[I]) SetInputChannel(input chan I) {
 	s.input = input
 }
 
-func (s *step[I]) GetInputChannel() chan I {
+func (s *stepBase[I]) GetInputChannel() chan I {
 	return s.input
 }
 
-func (s *step[I]) SetOutputChannel(output chan I) {
+func (s *stepBase[I]) SetOutputChannel(output chan I) {
 	s.output = output
 }
 
-func (s *step[I]) GetOutputChannel() chan I {
+func (s *stepBase[I]) GetOutputChannel() chan I {
 	return s.output
 }
 
-func (s *step[I]) GetReplicas() uint16 {
+func (s *stepBase[I]) GetReplicas() uint16 {
 	return s.replicas
 }
 
-func (s *step[I]) SetDecrementTokensCountHandler(handler func()) {
+func (s *stepBase[I]) SetDecrementTokensCountHandler(handler func()) {
 	s.decrementTokensCount = handler
 }
 
-func (s *step[I]) SetIncrementTokensCountHandler(handler func()) {
+func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) {
 	s.incrementTokensCount = handler
 }
 
-func (s *step[I]) SetReportErrorHanler(handler ErrorHandler) {
+func (s *stepBase[I]) SetReportErrorHanler(handler ErrorHandler) {
 	s.errorHandler = handler
 }

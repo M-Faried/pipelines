@@ -8,8 +8,16 @@ import (
 // StepProcess is a function that processes a single input data and returns a single output data.
 type StepProcess[I any] func(I) (I, error)
 
+// StepConfig is a struct that defines the configuration for a standard step
+type StepConfig[I any] struct {
+	Label        string
+	Replicas     uint16
+	ErrorHandler ErrorHandler
+	Process      StepProcess[I]
+}
+
 type stepStandard[I any] struct {
-	step[I]
+	stepBase[I]
 	// process is a function that will be applied to the incoming data.
 	process StepProcess[I]
 }
