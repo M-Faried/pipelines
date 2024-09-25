@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/m-faried/pipelines"
+	pip "github.com/m-faried/pipelines"
 )
 
 type Token struct {
@@ -29,30 +29,47 @@ func printToken(t *Token) error {
 // It also demonstrates how to create identical steps in a pipeline.
 func Example2() {
 
-	step1 := pipelines.NewStep("step1", 1, processToken)
-	step2 := pipelines.NewStep("step2", 1, processToken)
-	step3 := pipelines.NewStep("step3", 1, processToken)
-	resultStep := pipelines.NewStepResult("outStep", 1, printToken)
-	pipe := pipelines.NewPipeline[*Token](10, step1, step2, step3, resultStep)
-	pipe.Init()
+	step1 := pip.NewStep[*Token](&pip.StepConfig[*Token]{
+		Label:    "step1",
+		Replicas: 1,
+		Process:  processToken,
+	})
+	step2 := pip.NewStep[*Token](&pip.StepConfig[*Token]{
+		Label:    "step2",
+		Replicas: 1,
+		Process:  processToken,
+	})
+	step3 := pip.NewStep[*Token](&pip.StepConfig[*Token]{
+		Label:    "step3",
+		Replicas: 1,
+		Process:  processToken,
+	})
+	resultStep := pip.NewStep[*Token](&pip.StepResultConfig[*Token]{
+		Label:    "result",
+		Replicas: 1,
+		Process:  printToken,
+	})
+
+	pipeline := pip.NewPipeline[*Token](10, step1, step2, step3, resultStep)
+	pipeline.Init()
 
 	// Running
 	ctx := context.Background()
-	pipe.Run(ctx)
+	pipeline.Run(ctx)
 
 	// Feeding inputs
-	pipe.FeedOne(&Token{values: []string{}, currValue: "Hello"})
-	pipe.FeedOne(&Token{values: []string{}, currValue: "World"})
-	pipe.FeedMany([]*Token{
+	pipeline.FeedOne(&Token{values: []string{}, currValue: "Hello"})
+	pipeline.FeedOne(&Token{values: []string{}, currValue: "World"})
+	pipeline.FeedMany([]*Token{
 		{values: []string{}, currValue: "Welcome"},
 		{values: []string{}, currValue: "All"},
 	})
 
 	// waiting for all tokens to be processed
-	pipe.WaitTillDone()
+	pipeline.WaitTillDone()
 
 	// terminating the pipeline and clearning resources
-	pipe.Terminate()
+	pipeline.Terminate()
 
 	fmt.Println("Example 2 Done!!!")
 }

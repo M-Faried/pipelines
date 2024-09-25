@@ -40,6 +40,13 @@ A couple of examples are submitted in the examples folder in addition to the fol
 
 ```Go
 
+import (
+	"context"
+	"fmt"
+
+	pip "github.com/m-faried/pipelines"
+)
+
 func plus5(i int64) (int64, error) {
     return i + 5, nil
 }
@@ -63,35 +70,50 @@ func printResult(i int64) error {
 func main() {
 
     // Creating steps
-    replicasCount := 1 // can be a different value for each step
-    plus5Step := pipelines.NewStep[int64]("plus5", replicasCount, plus5)
-    minus10Step := pipelines.NewStep[int64]("minus10", replicasCount, minus10)
-    filterStep := pipelines.NewStep[int64]("filter", replicasCount, filterNegativeValues)
-    printResultStep := pipelines.NewStepResult[int64]("printResult", replicasCount, printResult)
+    plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+		Label:    "plus5",
+		Replicas: 1,
+		Process:  plus5,
+	})
+	minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+		Label:    "minus10",
+		Replicas: 1,
+		Process:  minus10,
+	})
+    filterStep := pip.NewStep[int64](&pip.StepConfig[int64]{
+        Label: "filter",
+        Replicas: 1,
+        Process: filterNegativeValues,
+    })
+	printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+		Label:    "print",
+		Replicas: 1,
+		Process:  printResult,
+	})
 
 
     // Creating & init the pipeline
     channelsBufferSize := 10
-    pipe := pipelines.NewPipeline[int64](channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
-    pipe.Init()
+    pipeline := pip.NewPipeline[int64](channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
+    pipeline.Init()
 
 
     // Running
     ctx := context.Background()
-    pipe.Run(ctx)
+    pipeline.Run(ctx)
 
 
     // Feeding inputs
     for i := 0; i <= 50; i++ {
-        pipe.FeedOne(int64(i))
+        pipeline.FeedOne(int64(i))
     }
 
 
     // Waiting for all tokens to be processed
-    pipe.WaitTillDone()
+    pipeline.WaitTillDone()
 
     // Terminating the pipeline and clearning resources
-    pipe.Terminate()
+    pipeline.Terminate()
 }
 ```
 
@@ -119,19 +141,33 @@ You first define all the intermediate steps of your pipeline. The creation of th
 // The process type expected by the step
 // type StepProcess[I any] func(I) (I, error)
 
-replicasCount := 1
-plus5Step := pipelines.NewStep("plus5", replicasCount, plus5)
-minus10Step := pipelines.NewStep("minus10", replicasCount, minus10)
+plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+    Label:    "plus5",
+    Replicas: 1,
+    Process:  plus5,
+})
+minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+    Label:    "minus10",
+    Replicas: 1,
+    Process:  minus10,
+})
 ```
 
-Another version of the NewStep constructor called NewStepWithErrorHandler is available to enable users submit an error handler for the step in case they happen. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
+### Error Handler
+
+You can add the error handler to the configuration of the step in case you need to handle error. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped. This applies to all configurations of steps.
 
 ```go
 // The handler type expected as error handler.
 // type ErrorHandler func(label string, err error)
 
 // To create a step with error handler
-step := pipelines.NewStepWithErrorHandler("plus5", replicasCount, plus5, errorHandler)
+plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+    Label:    "plus5",
+    Replicas: 1,
+    Process:  plus5,
+    ErrorHandler: errorHandler,
+})
 ```
 
 ### Defining Result Step
@@ -142,12 +178,12 @@ Result step is the final step in the pipeline and can return errors only. It als
 // The result process type expected by the result step.
 // type StepResultProcess[I any] func(I) error
 
-// Defining result step without error handler
-replicasCount := 1
-resultStep := pipelines.NewStepResult("printResult", replicasCount, printResult)
-
-// With error handler
-resultStep := pipelines.NewStepResultWithErrorHandler("printResult", replicasCount, printResult, errorHandler)
+// result step
+printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+    Label:    "print",
+    Replicas: 1,
+    Process:  printResult,
+})
 ```
 
 ### Defining Fragmenter Step (Example 5)
@@ -158,12 +194,12 @@ Fragmenter step allows users to break down a token into multiple tokens and fed 
 // The fragmenter process type expected by the fragmenter step.
 // type StepFragmenterProcess[I any] func(I) ([]I, error)
 
-// Defining fragmenter step without error handler
-replicasCount := 1
-splitStep := pipelines.NewStepFragmenter("split", replicasCount, split)
-
-// With error handler
-splitStep := pipelines.NewStepFragmenterWithErrorHandler("split", replicasCount, split, errorHandler)
+// fragmenter step
+splitter := pip.NewStep[string](&pip.StepFragmenterConfig[string]{
+    Label:    "fragmenter",
+    Replicas: 1,
+    Process:  splitter,
+})
 ```
 
 ### Pipeline Creation
@@ -176,7 +212,7 @@ The pipeline creation requires 2 arguments
 
 ```go
 channelBufferSize := 10
-pipe := pipelines.NewPipeline[int64](channelBufferSize, step1, step2, step3, resultStep)
+pipeline := pip.NewPipeline[int64](channelBufferSize, step1, step2, step3, resultStep)
 ```
 
 ### Pipeline Running
@@ -185,7 +221,7 @@ The pipeline requires first a context to before you can run the pipeline. Define
 
 ```go
 ctx := context.Background() // any type of context can be used here
-pipe.Run(ctx)
+pipeline.Run(ctx)
 ```
 
 ### Feeding Items Into Pipeline
@@ -193,8 +229,8 @@ pipe.Run(ctx)
 There are 2 functions to feed data into the pipeline depending on your case.
 
 ```go
-pipe.FeedOne(item)
-pipe.FeedMany(items)
+pipeline.FeedOne(item)
+pipeline.FeedMany(items)
 ```
 
 ### Waiting Pipeline To Finish
@@ -202,7 +238,7 @@ pipe.FeedMany(items)
 To wait for the pipeline to be done with all the items fed into it, you can use the **blocking** call to the following function:
 
 ```go
-pipe.WaitTillDone()
+pipeline.WaitTillDone()
 ```
 
 ### Terminating Pipeline
@@ -210,7 +246,7 @@ pipe.WaitTillDone()
 When you want to terminate the pipeline use the following function. Note that it will terminate regardless the parent context is closed or not. And once it terminates, it can't be rerun again and you need to create another pipeline.
 
 ```go
-pipe.Terminate()
+pipeline.Terminate()
 ```
 
 # Notes

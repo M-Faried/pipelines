@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/m-faried/pipelines"
+	pip "github.com/m-faried/pipelines"
 )
 
 func filterOdd(i int64) (int64, error) {
@@ -33,33 +33,46 @@ func Example4() {
 	// The filter step. It filters out odd numbers and reports the error.
 	// you don't have to use the error handler, you can just return error to be discarded from
 	// the pipeline
-	step1 := pipelines.NewStepWithErrorHandler("step1", 1, filterOdd, filterErrorHandler)
+	step1 := pip.NewStep[int64](&pip.StepConfig[int64]{
+		Label:        "step1",
+		Replicas:     1,
+		Process:      filterOdd,
+		ErrorHandler: filterErrorHandler,
+	})
 	//step1 := pipelines.NewStep("step1", 1, filterOdd) // filtering without printing error
 
 	// The processing step
-	step2 := pipelines.NewStep("step2", 1, by2)
+	step2 := pip.NewStep[int64](&pip.StepConfig[int64]{
+		Label:    "step2",
+		Replicas: 1,
+		Process:  by2,
+	})
 
 	// The result step
-	resultStep := pipelines.NewStepResult("resultStep", 1, printFilterResult)
+	resultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+		Label:    "resultStep",
+		Replicas: 1,
+		Process:  printFilterResult,
+	})
 
 	// init pipeline
-	pipe := pipelines.NewPipeline[int64](10, step1, step2, resultStep)
-	pipe.Init()
+	pipeline := pip.NewPipeline[int64](10, step1, step2, resultStep)
+	pipeline.Init()
 
 	// Running
 	ctx := context.Background()
-	go pipe.Run(ctx)
+	go pipeline.Run(ctx)
 
 	// Feeding inputs
 	for i := int64(0); i < 10; i++ {
-		pipe.FeedOne(i)
+		pipeline.FeedOne(i)
 	}
 
 	// waiting for all tokens to be processed
-	pipe.WaitTillDone()
+	pipeline.WaitTillDone()
 
 	// terminating the pipeline and clearning resources
-	pipe.Terminate()
+	pipeline.Terminate()
 
 	fmt.Println("Example 4 Done!!!")
 }

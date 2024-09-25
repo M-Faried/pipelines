@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/m-faried/pipelines"
+	pip "github.com/m-faried/pipelines"
 )
 
 func plus5(i int64) (int64, error) {
@@ -20,26 +20,39 @@ func printResult(i int64) error {
 
 func Example1() {
 
-	plus5Step := pipelines.NewStep("plus5", 1, plus5)
-	minus10Step := pipelines.NewStep("minus10", 1, minus10)
-	printResultStep := pipelines.NewStepResult("printResult", 1, printResult)
-	pipe := pipelines.NewPipeline[int64](10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
-	pipe.Init()
+	plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+		Label:    "plus5",
+		Replicas: 1,
+		Process:  plus5,
+	})
+	minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+		Label:    "minus10",
+		Replicas: 1,
+		Process:  minus10,
+	})
+	printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+		Label:    "print",
+		Replicas: 1,
+		Process:  printResult,
+	})
+
+	pipeline := pip.NewPipeline[int64](10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
+	pipeline.Init()
 
 	// Running
 	ctx := context.Background()
-	pipe.Run(ctx)
+	pipeline.Run(ctx)
 
 	// Feeding inputs
 	for i := 0; i <= 500; i++ {
-		pipe.FeedOne(int64(i))
+		pipeline.FeedOne(int64(i))
 	}
 
 	// 	waiting for all tokens to be processed
-	pipe.WaitTillDone()
+	pipeline.WaitTillDone()
 
 	// terminating the pipeline and clearning resources
-	pipe.Terminate()
+	pipeline.Terminate()
 
 	fmt.Println("Example 1 Done!!!")
 }
