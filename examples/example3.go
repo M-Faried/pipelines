@@ -25,9 +25,9 @@ func printBy10Result(i int64) error {
 // Example3 demonstrates how to utilize replicas feature when you have a heavy process.
 func Example3() {
 
-	step1 := pipelines.NewStep("step1", 1, by10)
-	step2 := pipelines.NewStep("step2", 10, by100) // Heavy process so we need 10 replicas
-	resultStep := pipelines.NewStepResult("resultStep", 1, printBy10Result)
+	step1 := pipelines.NewStep[int64](&pipelines.StepConfig[int64]{Label: "step1", Replicas: 1, Process: by10})
+	step2 := pipelines.NewStep[int64](&pipelines.StepConfig[int64]{Label: "step2", Replicas: 10, Process: by100}) // Heavy process so we need 10 replicas
+	resultStep := pipelines.NewStep[int64](&pipelines.StepResultConfig[int64]{Label: "result", Replicas: 1, Process: printBy10Result})
 	pipe := pipelines.NewPipeline[int64](10, step1, step2, resultStep)
 	pipe.Init()
 

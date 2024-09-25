@@ -14,22 +14,6 @@ type stepStandard[I any] struct {
 	process StepProcess[I]
 }
 
-// NewStep creates a new step with the given label, number of replicas and process.
-func NewStep[I any](label string, replicas uint16, process StepProcess[I]) IStep[I] {
-	return &stepStandard[I]{
-		step:    newStep[I](label, replicas, nil),
-		process: process,
-	}
-}
-
-// NewStepWithErrorHandler creates a new step with the given label, number of replicas, process and error handler.
-func NewStepWithErrorHandler[I any](label string, replicas uint16, process StepProcess[I], reportErrorHandler ErrorHandler) IStep[I] {
-	return &stepStandard[I]{
-		step:    newStep[I](label, replicas, reportErrorHandler),
-		process: process,
-	}
-}
-
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *stepStandard[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	for {

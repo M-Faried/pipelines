@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/m-faried/pipelines"
+	pip "github.com/m-faried/pipelines"
 )
 
 type StringToken struct {
@@ -46,25 +46,41 @@ func tokenPrinter(token *StringToken) error {
 // Example5 demonstrates a pipeline with a step that fragments tokens.
 func Example5() {
 
-	splitter := pipelines.NewStepFragmenter("fragmenter", 1, splitter)
-	trim := pipelines.NewStep("trim", 2, trimSpaces)
-	stars := pipelines.NewStep("stars", 2, addStars)
-	result := pipelines.NewStepResult("result", 2, tokenPrinter)
+	splitter := pip.NewStep[*StringToken](&pip.StepFragmenterConfig[*StringToken]{
+		Label:    "fragmenter",
+		Replicas: 1,
+		Process:  splitter,
+	})
+	trim := pip.NewStep[*StringToken](&pip.StepConfig[*StringToken]{
+		Label:    "trim",
+		Replicas: 2,
+		Process:  trimSpaces,
+	})
+	stars := pip.NewStep[*StringToken](&pip.StepConfig[*StringToken]{
+		Label:    "stars",
+		Replicas: 2,
+		Process:  addStars,
+	})
+	result := pip.NewStep[*StringToken](&pip.StepResultConfig[*StringToken]{
+		Label:    "result",
+		Replicas: 2,
+		Process:  tokenPrinter,
+	})
 
-	pipe := pipelines.NewPipeline[*StringToken](10, splitter, trim, stars, result)
-	pipe.Init()
+	pipeline := pip.NewPipeline[*StringToken](10, splitter, trim, stars, result)
+	pipeline.Init()
 
 	ctx := context.Background()
-	pipe.Run(ctx)
+	pipeline.Run(ctx)
 
 	// feeding inputs
-	pipe.FeedOne(&StringToken{Value: "Apples, Oranges , Bananas"})
+	pipeline.FeedOne(&StringToken{Value: "Apples, Oranges , Bananas"})
 
 	// waiting for all tokens to be processed
-	pipe.WaitTillDone()
+	pipeline.WaitTillDone()
 
 	// terminating the pipeline and clearning resources
-	pipe.Terminate()
+	pipeline.Terminate()
 
 	fmt.Println("Example 5 Done !!!")
 }

@@ -29,17 +29,6 @@ type step[I any] struct {
 	incrementTokensCount func()
 }
 
-func newStep[I any](label string, replicas uint16, errorHandler ErrorHandler) step[I] {
-	if replicas == 0 {
-		replicas = 1
-	}
-	return step[I]{
-		label:        label,
-		replicas:     replicas,
-		errorHandler: errorHandler,
-	}
-}
-
 func (s *step[I]) GetLabel() string {
 	return s.label
 }
