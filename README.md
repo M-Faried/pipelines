@@ -147,6 +147,7 @@ You first define all the intermediate steps of your pipeline. The creation of th
 plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
     Process:  plus5,
 })
+
 minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
     Label:    "minus10",
     Replicas: 3,
