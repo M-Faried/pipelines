@@ -1,7 +1,9 @@
 package pipelines
 
+// IStepConfig is an interface that defines the configuration for a step
 type IStepConfig[I any] interface{}
 
+// StepConfig is a struct that defines the configuration for a standard step
 type StepConfig[I any] struct {
 	Label        string
 	Replicas     uint16
@@ -9,6 +11,7 @@ type StepConfig[I any] struct {
 	Process      StepProcess[I]
 }
 
+// StepFragmenterConfig is a struct that defines the configuration for a fragmenter step
 type StepFragmenterConfig[I any] struct {
 	Label        string
 	Replicas     uint16
@@ -16,6 +19,7 @@ type StepFragmenterConfig[I any] struct {
 	Process      StepFragmenterProcess[I]
 }
 
+// StepResultConfig is a struct that defines the configuration for a result step
 type StepResultConfig[I any] struct {
 	Label        string
 	Replicas     uint16
@@ -34,6 +38,7 @@ func createBaseStep[I any](label string, replicas uint16, errorHandler ErrorHand
 	return step
 }
 
+// NewStep creates a new step based on the configuration
 func NewStep[I any](config IStepConfig[I]) IStep[I] {
 
 	if c, ok := config.(*StepConfig[I]); ok {
