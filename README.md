@@ -129,33 +129,33 @@ func main() {
 
 3. **Single Input No Output Step** which is created using **NewStepResult**
 
-You first define all the intermediate steps of your pipeline. The creation of the steps requires 3 arguments at least
+You first define all the intermediate steps of your pipeline. The creation of the steps **requires the core process and will panic if not submitted**, but you can add also optionally:
 
-1. The label of the step
+- Label (empty string by default and needed for error reporting)
 
-2. The number of replicas of the step
+- Replicas count (1 by default)
 
-3. The process to be run in this step
+- Error handler (nil by default and will not be called if not set)
 
 ```go
 // The process type expected by the step
 // type StepProcess[I any] func(I) (I, error)
 
 plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
-    Label:    "plus5",
-    Replicas: 1,
     Process:  plus5,
 })
 minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
     Label:    "minus10",
-    Replicas: 1,
+    Replicas: 3,
     Process:  minus10,
 })
 ```
 
 ### Error Handler
 
-You can add the error handler to the configuration of the step in case you need to handle error. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped. This applies to all configurations of steps.
+You can add the error handler to the configuration of the step in case you need to handle error. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
+
+This applies to all configurations of steps.
 
 ```go
 // The handler type expected as error handler.
@@ -164,9 +164,10 @@ You can add the error handler to the configuration of the step in case you need 
 // To create a step with error handler
 plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
     Label:    "plus5",
-    Replicas: 1,
     Process:  plus5,
-    ErrorHandler: errorHandler,
+    ErrorHandler: func(label string, err error ){
+        // the body of the error handler
+    },
 })
 ```
 
