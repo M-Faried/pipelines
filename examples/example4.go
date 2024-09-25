@@ -30,10 +30,12 @@ func filterErrorHandler(id string, err error) {
 // Example4 demonstrates how to utilize error handling in a pipeline and use steps as filters
 func Example4() {
 
+	builder := &pip.Builder[int64]{}
+
 	// The filter step. It filters out odd numbers and reports the error.
 	// you don't have to use the error handler, you can just return error to be discarded from
 	// the pipeline
-	step1 := pip.NewStep[int64](&pip.StepConfig[int64]{
+	step1 := builder.NewStep(&pip.StepConfig[int64]{
 		Label:        "step1",
 		Replicas:     1,
 		Process:      filterOdd,
@@ -42,21 +44,21 @@ func Example4() {
 	//step1 := pipelines.NewStep("step1", 1, filterOdd) // filtering without printing error
 
 	// The processing step
-	step2 := pip.NewStep[int64](&pip.StepConfig[int64]{
+	step2 := builder.NewStep(&pip.StepConfig[int64]{
 		Label:    "step2",
 		Replicas: 1,
 		Process:  by2,
 	})
 
 	// The result step
-	resultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+	resultStep := builder.NewStep(&pip.StepResultConfig[int64]{
 		Label:    "resultStep",
 		Replicas: 1,
 		Process:  printFilterResult,
 	})
 
 	// init pipeline
-	pipeline := pip.NewPipeline[int64](10, step1, step2, resultStep)
+	pipeline := builder.NewPipeline(10, step1, step2, resultStep)
 	pipeline.Init()
 
 	// Running

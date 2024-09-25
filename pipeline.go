@@ -58,16 +58,6 @@ type pipeline[I any] struct {
 	doneCond *sync.Cond
 }
 
-// NewPipeline creates a new pipeline with the given channel size, result step and steps.
-// The channel size is the buffer size for all channels used to connect steps.
-func NewPipeline[I any](channelSize uint16, steps ...IStep[I]) IPipeline[I] {
-	pipe := &pipeline[I]{}
-	pipe.steps = castToInternalSteps(steps)
-	pipe.channelSize = channelSize
-	pipe.doneCond = sync.NewCond(&pipe.tokensMutex)
-	return pipe
-}
-
 func (p *pipeline[I]) Init() {
 	initOnce.Do(func() {
 

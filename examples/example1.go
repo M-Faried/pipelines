@@ -20,23 +20,25 @@ func printResult(i int64) error {
 
 func Example1() {
 
-	plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+	builder := &pip.Builder[int64]{}
+
+	plus5Step := builder.NewStep(&pip.StepConfig[int64]{
 		Label:    "plus5",
 		Replicas: 1,
 		Process:  plus5,
 	})
-	minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+	minus10Step := builder.NewStep(&pip.StepConfig[int64]{
 		Label:    "minus10",
 		Replicas: 1,
 		Process:  minus10,
 	})
-	printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+	printResultStep := builder.NewStep(&pip.StepResultConfig[int64]{
 		Label:    "print",
 		Replicas: 1,
 		Process:  printResult,
 	})
 
-	pipeline := pip.NewPipeline[int64](10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
+	pipeline := builder.NewPipeline(10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
 	pipeline.Init()
 
 	// Running

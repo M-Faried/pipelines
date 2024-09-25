@@ -69,26 +69,28 @@ func printResult(i int64) error {
 
 func main() {
 
+    builder := &pip.Builder[int64]{}
+
     // Creating steps
-    plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+    plus5Step := builder.NewStep(&pip.StepConfig[int64]{
         Label:    "plus5",
         Replicas: 1,
         Process:  plus5,
     })
 
-    minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+    minus10Step := builder.NewStep(&pip.StepConfig[int64]{
         Label:    "minus10",
         Replicas: 1,
         Process:  minus10,
     })
 
-    filterStep := pip.NewStep[int64](&pip.StepConfig[int64]{
+    filterStep := builder.NewStep(&pip.StepConfig[int64]{
         Label: "filter",
         Replicas: 1,
         Process: filterNegativeValues,
     })
 
-    printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+    printResultStep := builder.NewStep(&pip.StepResultConfig[int64]{
         Label:    "print",
         Replicas: 1,
         Process:  printResult,
@@ -97,7 +99,7 @@ func main() {
 
     // Creating & init the pipeline
     channelsBufferSize := 10
-    pipeline := pip.NewPipeline[int64](channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
+    pipeline := builder.NewPipeline(channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
     pipeline.Init()
 
 
@@ -144,11 +146,11 @@ You first define all the intermediate steps of your pipeline. The creation of th
 // The process type expected by the step
 // type StepProcess[I any] func(I) (I, error)
 
-plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+plus5Step := builder.NewStep(&pip.StepConfig[int64]{
     Process:  plus5,
 })
 
-minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+minus10Step := builder.NewStep(&pip.StepConfig[int64]{
     Label:    "minus10",
     Replicas: 3,
     Process:  minus10,
@@ -166,7 +168,7 @@ This applies to all configurations of steps.
 // type ErrorHandler func(label string, err error)
 
 // To create a step with error handler
-plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+plus5Step := builder.NewStep(&pip.StepConfig[int64]{
     Label:    "plus5",
     Process:  plus5,
     ErrorHandler: func(label string, err error ){
@@ -184,7 +186,7 @@ Result step is the final step in the pipeline and can return errors only. It als
 // type StepResultProcess[I any] func(I) error
 
 // result step
-printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+printResultStep := builder.NewStep(&pip.StepResultConfig[int64]{
     Label:    "print",
     Replicas: 1,
     Process:  printResult,
@@ -199,8 +201,9 @@ Fragmenter step allows users to break down a token into multiple tokens and fed 
 // The fragmenter process type expected by the fragmenter step.
 // type StepFragmenterProcess[I any] func(I) ([]I, error)
 
+builder := &pip.Builder[string]{}
 // fragmenter step
-splitter := pip.NewStep[string](&pip.StepFragmenterConfig[string]{
+splitter := builder.NewStep(&pip.StepFragmenterConfig[string]{
     Label:    "fragmenter",
     Replicas: 1,
     Process:  splitter,
@@ -217,7 +220,7 @@ The pipeline creation requires 2 arguments
 
 ```go
 channelBufferSize := 10
-pipeline := pip.NewPipeline[int64](channelBufferSize, step1, step2, step3, resultStep)
+pipeline := builder.NewPipeline(channelBufferSize, step1, step2, step3, resultStep)
 ```
 
 ### Pipeline Running

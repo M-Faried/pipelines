@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/m-faried/pipelines"
+	pip "github.com/m-faried/pipelines"
 )
 
 func by10(i int64) (int64, error) {
@@ -25,19 +25,34 @@ func printBy10Result(i int64) error {
 // Example3 demonstrates how to utilize replicas feature when you have a heavy process.
 func Example3() {
 
-	step1 := pipelines.NewStep[int64](&pipelines.StepConfig[int64]{Label: "step1", Replicas: 1, Process: by10})
-	step2 := pipelines.NewStep[int64](&pipelines.StepConfig[int64]{Label: "step2", Replicas: 10, Process: by100}) // Heavy process so we need 10 replicas
-	resultStep := pipelines.NewStep[int64](&pipelines.StepResultConfig[int64]{Label: "result", Replicas: 1, Process: printBy10Result})
-	pipe := pipelines.NewPipeline[int64](10, step1, step2, resultStep)
-	pipe.Init()
+	builder := &pip.Builder[int64]{}
+
+	step1 := builder.NewStep(&pip.StepConfig[int64]{
+		Label:    "step1",
+		Replicas: 1,
+		Process:  by10,
+	})
+	step2 := builder.NewStep(&pip.StepConfig[int64]{
+		Label:    "step2",
+		Replicas: 10, // Heavy process so we need 10 replicas
+		Process:  by100,
+	})
+	stepResult := builder.NewStep(&pip.StepResultConfig[int64]{
+		Label:    "result",
+		Replicas: 1,
+		Process:  printBy10Result,
+	})
+
+	pipeline := builder.NewPipeline(10, step1, step2, stepResult)
+	pipeline.Init()
 
 	// Running
 	ctx := context.Background()
-	pipe.Run(ctx)
+	pipeline.Run(ctx)
 
 	// Feeding inputs
 	for i := int64(0); i < 10; i++ {
-		pipe.FeedOne(i)
+		pipeline.FeedOne(i)
 	}
 
 	// Notice that we need only 3 seconds to process all inputs although by100 process takes 2 seconds
@@ -48,7 +63,7 @@ func Example3() {
 	// pipe.WaitTillDone()
 
 	// terminating the pipeline and clearning resources
-	pipe.Terminate()
+	pipeline.Terminate()
 
 	fmt.Println("Example 3 Done!!!")
 }

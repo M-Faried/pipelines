@@ -8,8 +8,16 @@ import (
 // StepFragmenterProcess is a function that converts a token in the pipeline into multiple tokens.
 type StepFragmenterProcess[I any] func(I) ([]I, error)
 
+// StepFragmenterConfig is a struct that defines the configuration for a fragmenter step
+type StepFragmenterConfig[I any] struct {
+	Label        string
+	Replicas     uint16
+	ErrorHandler ErrorHandler
+	Process      StepFragmenterProcess[I]
+}
+
 type stepFragmenter[I any] struct {
-	step[I]
+	stepBase[I]
 	process StepFragmenterProcess[I]
 }
 
