@@ -71,25 +71,28 @@ func main() {
 
     // Creating steps
     plus5Step := pip.NewStep[int64](&pip.StepConfig[int64]{
-		Label:    "plus5",
-		Replicas: 1,
-		Process:  plus5,
-	})
-	minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
-		Label:    "minus10",
-		Replicas: 1,
-		Process:  minus10,
-	})
+        Label:    "plus5",
+        Replicas: 1,
+        Process:  plus5,
+    })
+
+    minus10Step := pip.NewStep[int64](&pip.StepConfig[int64]{
+        Label:    "minus10",
+        Replicas: 1,
+        Process:  minus10,
+    })
+
     filterStep := pip.NewStep[int64](&pip.StepConfig[int64]{
         Label: "filter",
         Replicas: 1,
         Process: filterNegativeValues,
     })
-	printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
-		Label:    "print",
-		Replicas: 1,
-		Process:  printResult,
-	})
+
+    printResultStep := pip.NewStep[int64](&pip.StepResultConfig[int64]{
+        Label:    "print",
+        Replicas: 1,
+        Process:  printResult,
+    })
 
 
     // Creating & init the pipeline
