@@ -5,9 +5,6 @@ import (
 	"sync"
 )
 
-var initOnce sync.Once
-var runOnce sync.Once
-
 // IPipeline is an interface that represents a pipeline.
 type IPipeline[I any] interface {
 
@@ -56,10 +53,18 @@ type pipeline[I any] struct {
 
 	// doneCond is used to wait till all tokens are processed.
 	doneCond *sync.Cond
+
+	// initOnce is used to initialize the pipeline only once.
+	initOnce sync.Once
+
+	// runOnce is used to run the pipeline only once.
+	runOnce sync.Once
 }
 
 func (p *pipeline[I]) Init() {
-	initOnce.Do(func() {
+	p.initOnce.Do(func() {
+		// creating a condition variable for the done condition
+		p.doneCond = sync.NewCond(&p.tokensMutex)
 
 		// getting the number of steps and channels
 		stepsCount := len(p.steps)
@@ -92,7 +97,7 @@ func (p *pipeline[I]) Init() {
 }
 
 func (p *pipeline[I]) Run(ctx context.Context) {
-	runOnce.Do(func() {
+	p.runOnce.Do(func() {
 		// creating a wait group for all the step routines.
 		p.stepsWaitGroup = &sync.WaitGroup{}
 
