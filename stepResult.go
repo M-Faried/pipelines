@@ -29,12 +29,13 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			wg.Done()
 			return
 		case i, ok := <-s.input:
-			if ok {
-				err := s.process(i)
-				s.decrementTokensCount()
-				if err != nil && s.errorHandler != nil {
-					s.errorHandler(s.label, err)
-				}
+			if !ok {
+				return
+			}
+			err := s.process(i)
+			s.decrementTokensCount()
+			if err != nil && s.errorHandler != nil {
+				s.errorHandler(s.label, err)
 			}
 		}
 	}

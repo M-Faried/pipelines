@@ -30,17 +30,18 @@ func (s *stepStandard[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			wg.Done()
 			return
 		case i, ok := <-s.input:
-			if ok {
-				o, err := s.process(i)
-				if err != nil {
-					// since we will not proceed with the current token, we need to decrement the tokens count.
-					s.decrementTokensCount()
-					if s.errorHandler != nil {
-						s.errorHandler(s.label, err)
-					}
-				} else {
-					s.output <- o
+			if !ok {
+				return
+			}
+			o, err := s.process(i)
+			if err != nil {
+				// since we will not proceed with the current token, we need to decrement the tokens count.
+				s.decrementTokensCount()
+				if s.errorHandler != nil {
+					s.errorHandler(s.label, err)
 				}
+			} else {
+				s.output <- o
 			}
 		}
 	}

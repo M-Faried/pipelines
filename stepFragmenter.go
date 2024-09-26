@@ -28,22 +28,23 @@ func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			wg.Done()
 			return
 		case i, ok := <-s.input:
-			if ok {
-				outFragments, err := s.process(i)
-				if err != nil {
-					if s.errorHandler != nil {
-						s.errorHandler(s.label, err)
-					}
-				} else {
-					for _, fragment := range outFragments {
-						// adding fragmented tokens to the count.
-						s.incrementTokensCount()
-						s.output <- fragment
-					}
-				}
-				// whether the token is framented or filtered with error, it is discarded from the pipeline.
-				s.decrementTokensCount()
+			if !ok {
+				return
 			}
+			outFragments, err := s.process(i)
+			if err != nil {
+				if s.errorHandler != nil {
+					s.errorHandler(s.label, err)
+				}
+			} else {
+				for _, fragment := range outFragments {
+					// adding fragmented tokens to the count.
+					s.incrementTokensCount()
+					s.output <- fragment
+				}
+			}
+			// whether the token is framented or filtered with error, it is discarded from the pipeline.
+			s.decrementTokensCount()
 		}
 	}
 }
