@@ -64,3 +64,9 @@ func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) {
 func (s *stepBase[I]) SetReportErrorHanler(handler ErrorHandler) {
 	s.errorHandler = handler
 }
+
+func (s *stepBase[I]) reportError(err error) {
+	if s.errorHandler != nil {
+		s.errorHandler(s.label, err)
+	}
+}

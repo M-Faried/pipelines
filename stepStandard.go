@@ -37,9 +37,7 @@ func (s *stepStandard[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			if err != nil {
 				// since we will not proceed with the current token, we need to decrement the tokens count.
 				s.decrementTokensCount()
-				if s.errorHandler != nil {
-					s.errorHandler(s.label, err)
-				}
+				s.reportError(err)
 			} else {
 				s.output <- o
 			}

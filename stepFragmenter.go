@@ -33,9 +33,7 @@ func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 			outFragments, err := s.process(i)
 			if err != nil {
-				if s.errorHandler != nil {
-					s.errorHandler(s.label, err)
-				}
+				s.reportError(err)
 			} else {
 				for _, fragment := range outFragments {
 					// adding fragmented tokens to the count.

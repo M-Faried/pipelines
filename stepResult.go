@@ -34,8 +34,8 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 			err := s.process(i)
 			s.decrementTokensCount()
-			if err != nil && s.errorHandler != nil {
-				s.errorHandler(s.label, err)
+			if err != nil {
+				s.reportError(err)
 			}
 		}
 	}
