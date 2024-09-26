@@ -1,7 +1,5 @@
 package pipelines
 
-import "sync"
-
 // IStepConfig is an interface that defines the configuration for a step
 type IStepConfig[I any] interface{}
 
@@ -50,7 +48,6 @@ func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipelin
 	pipe := &pipeline[I]{}
 	pipe.steps = castToInternalSteps(steps)
 	pipe.channelSize = channelSize
-	pipe.doneCond = sync.NewCond(&pipe.tokensMutex)
 	return pipe
 }
 
