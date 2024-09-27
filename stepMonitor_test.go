@@ -12,7 +12,7 @@ type mockNotify struct {
 	counter int
 }
 
-func (m *mockNotify) Handle() {
+func (m *mockNotify) Handle(data []int) {
 	m.called = true
 	m.counter++
 }

@@ -6,8 +6,11 @@ import (
 	"time"
 )
 
+// StepMonitorNotifyCriteria is a function that determines whether or not the listener should be notified.
 type StepMonitorNotifyCriteria[I any] func([]I) bool
-type StepMonitorNotify[I any] func()
+
+// StepMonitorNotify is a function that notifies the listener.
+type StepMonitorNotify[I any] func([]I)
 
 type StepMonitorConfig[I any] struct {
 	Label          string
@@ -46,10 +49,10 @@ func (s *stepMonitor[I]) shouldNotify() bool {
 	return s.notifyCriteria(s.buffer)
 }
 
-// processBufferIfNotEmpty applies the processes to the buffer of the aggregator step.
-func (s *stepMonitor[I]) clearBuffer() {
+func (s *stepMonitor[I]) sendNotificationAndClearBuffer() {
 	s.bufferMutex.Lock()
 	defer s.bufferMutex.Unlock()
+	s.notify(s.buffer)
 	s.buffer = make([]I, 0)
 }
 
@@ -74,15 +77,13 @@ func (s *stepMonitor[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			s.addToBuffer(i)
 			// if the buffer reached the required threshould we process it
 			if s.shouldNotify() {
-				s.notify()
-				s.clearBuffer()
+				s.sendNotificationAndClearBuffer()
 				timer.Reset(s.checkInterval)
 			}
 			// passing through the element to the next step
 			s.output <- i
 		case <-timer.C:
-			s.notify()
-			s.clearBuffer()
+			s.sendNotificationAndClearBuffer()
 			timer.Reset(s.checkInterval)
 		}
 	}
