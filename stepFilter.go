@@ -5,20 +5,20 @@ import (
 	"sync"
 )
 
-// StepProcess is a function that processes a single input data and returns a single output data.
-type StepFilterProcess[I any] func(I) bool
+// StepFilterPassCriteria is function that determines if the data should be passed or not.
+type StepFilterPassCriteria[I any] func(I) bool
 
-// StepConfig is a struct that defines the configuration for a standard step
+// StepFilterConfig is a struct that defines the configuration for a filter step. The filter step filters the incoming data based on a certain criteria.
 type StepFilterConfig[I any] struct {
-	Label        string
-	Replicas     uint16
-	PassCriteria StepFilterProcess[I]
+	Label    string
+	Replicas uint16
+	// PassCriteria is a function that determines if the data should be passed or not.
+	PassCriteria StepFilterPassCriteria[I]
 }
 
 type stepFilter[I any] struct {
 	stepBase[I]
-	// passCriteria is a function that will be applied to the incoming data.
-	passCriteria StepFilterProcess[I]
+	passCriteria StepFilterPassCriteria[I]
 }
 
 // run is a method that runs the step process and will be executed in a separate goroutine.
