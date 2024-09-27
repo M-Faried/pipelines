@@ -30,6 +30,7 @@ func (s *stepFilter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			return
 		case i, ok := <-s.input:
 			if !ok {
+				wg.Done()
 				return
 			}
 			if s.passCriteria(i) {
