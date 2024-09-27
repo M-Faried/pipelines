@@ -110,6 +110,7 @@ func (m *mockStep[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			return
 		case item, ok := <-m.inputChannel:
 			if !ok {
+				wg.Done()
 				return
 			}
 			if m.finalStep {
