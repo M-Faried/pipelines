@@ -73,7 +73,7 @@ func (s *stepAggregator[I]) processBufferIfNotEmpty() {
 	item, err := s.process(s.buffer)
 	if err != nil {
 		s.reportError(err)
-		// the whole result of the aggregation is filtered out
+		// the whole result of the aggregation is filtered out so remove the aggregation result token.
 		s.decrementTokensCount()
 	} else {
 		s.output <- item
