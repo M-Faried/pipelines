@@ -39,6 +39,32 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
+	if c, ok := config.(*StepFilterConfig[I]); ok {
+		if c.Process == nil {
+			panic("process is required")
+		}
+		return &stepFilter[I]{
+			stepBase: createBaseStep[I](c.Label, c.Replicas, nil),
+			process:  c.Process,
+		}
+	}
+
+	if c, ok := config.(*StepAggregatorConfig[I]); ok {
+		if c.Process == nil {
+			panic("process is required")
+		}
+		if c.ThresholdCriteria == nil && c.AggregationInterval == 0 {
+			panic("either threshold or time duration must be set criteria is required")
+		}
+		return &stepAggregator[I]{
+			stepBase:            createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
+			process:             c.Process,
+			thresholdCriteria:   c.ThresholdCriteria,
+			aggregationInterval: c.AggregationInterval,
+			buffer:              make([]I, 0),
+		}
+	}
+
 	return nil
 }
 
