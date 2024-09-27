@@ -95,6 +95,7 @@ func (s *stepAggregator[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			return
 		case i, ok := <-s.input:
 			if !ok {
+				wg.Done()
 				return
 			}
 			// if the element is matching the criteria we add it to the buffer.

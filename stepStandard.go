@@ -31,6 +31,7 @@ func (s *stepStandard[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			return
 		case i, ok := <-s.input:
 			if !ok {
+				wg.Done()
 				return
 			}
 			o, err := s.process(i)
