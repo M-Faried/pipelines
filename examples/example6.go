@@ -36,14 +36,13 @@ func Example6() {
 	})
 
 	aggregator := builder.NewStep(&pip.StepAggregatorConfig[int64]{
-		Label:             "aggregator",
-		Replicas:          3,
-		Process:           aggEvenSumProcess,
-		ThresholdCriteria: aggEvenThreshould,
-		// AggregationInterval: 0,
-		// Notice that, since the wait time is not set, you will need to have an
+		Label:    "aggregator",
+		Replicas: 3,
+		Process:  aggEvenSumProcess,
+		// Notice that, since the aggregation interval is not set, you will need to have an
 		// accurate threshould formula to avoid stalling the accumulator for long.
-		// You can use either or both threshold and interval time based on your needs.
+		// You can use either or both threshold and interval time based on your needs in other cases.
+		ThresholdCriteria: aggEvenThreshould,
 	})
 
 	result := builder.NewStep(&pip.StepResultConfig[int64]{

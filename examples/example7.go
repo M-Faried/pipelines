@@ -36,10 +36,9 @@ func Example7() {
 		Label:    "aggregator",
 		Replicas: 3,
 		Process:  aggOddSumProcess,
-		// ThresholdCriteria: func(items []int64) bool { return len(items) >= 10 },
-		// Notice that, since the threshold is not set, you will need to have an
+		// Notice that, since the threshold criteria is not set, you will need to have an
 		// accurate interval time for inputs to avoid stalling the aggregator for long.
-		// You can use either or both threshold and interval time based on your needs.
+		// You can use either or both threshold and interval time based on your needs in other cases.
 		AggregationInterval: 150 * time.Millisecond, //This means the aggregator calculates the result every 150ms
 
 	})
