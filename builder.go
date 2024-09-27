@@ -40,12 +40,12 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 	}
 
 	if c, ok := config.(*StepFilterConfig[I]); ok {
-		if c.Criteria == nil {
+		if c.PassCriteria == nil {
 			panic("process is required")
 		}
 		return &stepFilter[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas, nil),
-			criteria: c.Criteria,
+			stepBase:     createBaseStep[I](c.Label, c.Replicas, nil),
+			passCriteria: c.PassCriteria,
 		}
 	}
 

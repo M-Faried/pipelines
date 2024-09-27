@@ -27,9 +27,9 @@ func Example7() {
 	builder := &pip.Builder[int64]{}
 
 	filter := builder.NewStep(&pip.StepFilterConfig[int64]{
-		Label:    "filter",
-		Replicas: 1,
-		Process:  oddNumberCriteria,
+		Label:        "filter",
+		Replicas:     1,
+		PassCriteria: oddNumberCriteria,
 	})
 
 	aggregator := builder.NewStep(&pip.StepAggregatorConfig[int64]{
