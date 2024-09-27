@@ -81,9 +81,7 @@ func (s *stepMonitor[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			// passing through the element to the next step
 			s.output <- i
 		case <-timer.C:
-			if s.shouldNotify() {
-				s.notify()
-			}
+			s.notify()
 			s.clearBuffer()
 			timer.Reset(s.checkInterval)
 		}
