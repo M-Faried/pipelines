@@ -54,6 +54,7 @@ func TestShouldNotify(t *testing.T) {
 			s := &stepMonitor[int]{
 				notifyCriteria: tt.notifyCriteria,
 				buffer:         tt.buffer,
+				checkInterval:  0,
 			}
 			if got := s.shouldNotify(); got != tt.expected {
 				t.Errorf("shouldNotify() = %v, want %v", got, tt.expected)
@@ -62,7 +63,7 @@ func TestShouldNotify(t *testing.T) {
 	}
 }
 
-func TestStepMonitorNotifyCall(t *testing.T) {
+func TestStepMonitorNotifyPeriodicCall(t *testing.T) {
 
 	mockNotify := &mockNotify{}
 	s := &stepMonitor[int]{
@@ -71,11 +72,9 @@ func TestStepMonitorNotifyCall(t *testing.T) {
 			input:  make(chan int),
 			output: make(chan int),
 		},
-		notifyCriteria: func(buffer []int) bool {
-			return true
-		},
-		notify:        mockNotify.Handle,
-		checkInterval: 100 * time.Millisecond,
+		notifyCriteria: nil,
+		notify:         mockNotify.Handle,
+		checkInterval:  100 * time.Millisecond,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
