@@ -40,12 +40,25 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 	}
 
 	if c, ok := config.(*StepFilterConfig[I]); ok {
-		if c.Process == nil {
+		if c.Criteria == nil {
 			panic("process is required")
 		}
 		return &stepFilter[I]{
 			stepBase: createBaseStep[I](c.Label, c.Replicas, nil),
-			process:  c.Process,
+			criteria: c.Criteria,
+		}
+	}
+
+	if c, ok := config.(*StepMonitorConfig[I]); ok {
+		if c.NotifyCriteria == nil && c.CheckInterval == 0 {
+			panic("either notify criteria or check interval should be set for the monitor step")
+		}
+		return &stepMonitor[I]{
+			stepBase:       createBaseStep[I](c.Label, c.Replicas, nil),
+			notifyCriteria: c.NotifyCriteria,
+			notify:         c.Notify,
+			checkInterval:  c.CheckInterval,
+			buffer:         make([]I, 0),
 		}
 	}
 
@@ -54,7 +67,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("process is required")
 		}
 		if c.ThresholdCriteria == nil && c.AggregationInterval == 0 {
-			panic("either threshold or time duration must be set criteria is required")
+			panic("either threshold or time duration must be set for the aggregation step")
 		}
 		return &stepAggregator[I]{
 			stepBase:            createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
