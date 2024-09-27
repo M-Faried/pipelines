@@ -7,7 +7,7 @@ import (
 	pip "github.com/m-faried/pipelines"
 )
 
-func filterOdd(i int64) bool {
+func isEvenValue(i int64) bool {
 	return i%2 == 0
 }
 
@@ -29,7 +29,7 @@ func Example4() {
 	step1 := builder.NewStep(&pip.StepFilterConfig[int64]{
 		Label:        "step1",
 		Replicas:     1,
-		PassCriteria: filterOdd,
+		PassCriteria: isEvenValue,
 	})
 
 	// The processing step

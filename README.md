@@ -26,9 +26,9 @@ go get github.com/m-faried/pipelines
 
 # Usage
 
-A couple of examples are submitted in the examples folder in addition to the following example.
+More complex examples are submitted in the examples folder in addition to the following simple one.
 
-#### Exampe Description:
+#### Simple Example:
 
 1. Add 5 to the number
 
@@ -55,11 +55,8 @@ func minus10(i int64) (int64, error) {
     return i - 10, nil
 }
 
-func filterNegativeValues(i int64) (int64, error) {
-    if i < 0 {
-        return 0, fmt.Errorf("filtering: %d", i)
-    }
-    return i, nil
+func isPositiveValue(i int64) bool {
+    return i >= 0
 }
 
 func printResult(i int64) error {
@@ -84,10 +81,10 @@ func main() {
         Process:  minus10,
     })
 
-    filterStep := builder.NewStep(&pip.StepConfig[int64]{
+    filterStep := builder.NewStep(&pip.StepFilterConfig[int64]{
         Label: "filter",
         Replicas: 1,
-        Process: filterNegativeValues,
+        Process: isPositiveValue,
     })
 
     printResultStep := builder.NewStep(&pip.StepResultConfig[int64]{
