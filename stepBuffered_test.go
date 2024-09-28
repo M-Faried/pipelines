@@ -152,7 +152,6 @@ func TestStepBuffered_Run_InputTriggered_FlushBuffer(t *testing.T) {
 	if decrementTokens.counter != -3 {
 		t.Errorf("expected decrementTokens to be called 3 times, got %d", decrementTokens.counter)
 	}
-
 }
 
 func TestStepBuffered_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
