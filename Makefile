@@ -17,10 +17,10 @@ test:
 # 	go tool cover -func=$(COVERAGE_FILE)
 
 # Generate coverage report in HTML format
-html: test
+show-html: test
 	go tool cover -html=$(COVERAGE_FILE)
 
-htmlWithOutput: test
+gen-html-output: test
 	go tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML)
 
 # Clean up coverage files
