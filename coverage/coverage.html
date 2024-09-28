@@ -142,8 +142,9 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] <span class="cov8" 
                         panic("process is required")</span>
                 }
                 <span class="cov8" title="1">return &amp;stepStandard[I]{
-                        stepBase: createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
-                        process:  c.Process,
+                        stepBase:     createBaseStep[I](c.Label, c.Replicas),
+                        errorHandler: c.ErrorHandler,
+                        process:      c.Process,
                 }</span>
         }
 
@@ -152,7 +153,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] <span class="cov8" 
                         panic("process is required")</span>
                 }
                 <span class="cov8" title="1">return &amp;stepFragmenter[I]{
-                        stepBase: createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
+                        stepBase: createBaseStep[I](c.Label, c.Replicas),
                         process:  c.Process,
                 }</span>
         }
@@ -162,7 +163,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] <span class="cov8" 
                         panic("process is required")</span>
                 }
                 <span class="cov8" title="1">return &amp;stepResult[I]{
-                        stepBase: createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
+                        stepBase: createBaseStep[I](c.Label, c.Replicas),
                         process:  c.Process,
                 }</span>
         }
@@ -172,12 +173,12 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] <span class="cov8" 
                         panic("process is required")</span>
                 }
                 <span class="cov8" title="1">return &amp;stepFilter[I]{
-                        stepBase:     createBaseStep[I](c.Label, c.Replicas, nil),
+                        stepBase:     createBaseStep[I](c.Label, c.Replicas),
                         passCriteria: c.PassCriteria,
                 }</span>
         }
 
-        <span class="cov8" title="1">if c, ok := config.(*StepBuffered[I]); ok </span><span class="cov8" title="1">{
+        <span class="cov8" title="1">if c, ok := config.(*StepBufferedConfig[I]); ok </span><span class="cov8" title="1">{
                 if c.InputTriggeredProcess == nil &amp;&amp; c.TimeTriggeredProcess == nil </span><span class="cov8" title="1">{
                         panic("either time triggered or input process is required")</span>
                 }
@@ -188,7 +189,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] <span class="cov8" 
                         panic("buffer size must be greater than or equal to 0")</span>
                 }
                 <span class="cov8" title="1">return &amp;stepBuffered[I]{
-                        stepBase:                     createBaseStep[I](c.Label, c.Replicas, nil),
+                        stepBase:                     createBaseStep[I](c.Label, c.Replicas),
                         bufferSize:                   c.BufferSize,
                         inputTriggeredProcess:        c.InputTriggeredProcess,
                         timeTriggeredProcess:         c.TimeTriggeredProcess,
@@ -210,14 +211,13 @@ func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipelin
         return pipe
 }</span>
 
-func createBaseStep[I any](label string, replicas uint16, errorHandler ErrorHandler) stepBase[I] <span class="cov8" title="1">{
+func createBaseStep[I any](label string, replicas uint16) stepBase[I] <span class="cov8" title="1">{
         if replicas == 0 </span><span class="cov8" title="1">{
                 replicas = 1
         }</span>
         <span class="cov8" title="1">step := stepBase[I]{}
         step.label = label
         step.replicas = replicas
-        step.errorHandler = errorHandler
         return step</span>
 }
 </pre>
@@ -423,9 +423,6 @@ type stepBase[I any] struct {
         // replicas is a number of goroutines that will be running the step.
         replicas uint16
 
-        // errorHandler is the function called when an error occurs in the step.
-        errorHandler ErrorHandler
-
         // decrementTokensCount is a function that decrements the number of tokens in the pipeline.
         decrementTokensCount func()
 
@@ -464,16 +461,6 @@ func (s *stepBase[I]) SetDecrementTokensCountHandler(handler func()) <span class
 func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) <span class="cov8" title="1">{
         s.incrementTokensCount = handler
 }</span>
-
-func (s *stepBase[I]) SetReportErrorHanler(handler ErrorHandler) <span class="cov8" title="1">{
-        s.errorHandler = handler
-}</span>
-
-func (s *stepBase[I]) reportError(err error) <span class="cov8" title="1">{
-        if s.errorHandler != nil </span><span class="cov8" title="1">{
-                s.errorHandler(s.label, err)
-        }</span>
-}
 </pre>
 		
 		<pre class="file" id="file4" style="display: none">package pipelines
@@ -500,7 +487,7 @@ type StepBufferedProcessOutput[I any] struct {
 // StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
 type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I]
 
-type StepBuffered[I any] struct {
+type StepBufferedConfig[I any] struct {
 
         // Label is the name of the step.
         Label string
@@ -698,7 +685,7 @@ import (
 )
 
 // StepFragmenterProcess is a function that converts a token in the pipeline into multiple tokens.
-type StepFragmenterProcess[I any] func(I) ([]I, error)
+type StepFragmenterProcess[I any] func(I) []I
 
 // StepFragmenterConfig is a struct that defines the configuration for a fragmenter step
 type StepFragmenterConfig[I any] struct {
@@ -732,16 +719,12 @@ func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span c
                                 wg.Done()
                                 return
                         }</span>
-                        <span class="cov8" title="1">outFragments, err := s.process(i)
-                        if err != nil </span><span class="cov8" title="1">{
-                                s.reportError(err)
-                        }</span> else<span class="cov8" title="1"> {
-                                for _, fragment := range outFragments </span><span class="cov8" title="1">{
-                                        // adding fragmented tokens to the count.
-                                        s.incrementTokensCount()
-                                        s.output &lt;- fragment
-                                }</span>
-                        }
+                        <span class="cov8" title="1">outFragments := s.process(i)
+                        for _, fragment := range outFragments </span><span class="cov8" title="1">{
+                                // adding fragmented tokens to the count.
+                                s.incrementTokensCount()
+                                s.output &lt;- fragment
+                        }</span>
                         // whether the token is framented or filtered with error, it is discarded from the pipeline.
                         <span class="cov8" title="1">s.decrementTokensCount()</span>
                 }
@@ -757,7 +740,7 @@ import (
 )
 
 // StepResultProcess is a function that processes the input data and does not return any data.
-type StepResultProcess[I any] func(I) error
+type StepResultProcess[I any] func(I)
 
 // StepResultConfig is a struct that defines the configuration for a result step
 type StepResultConfig[I any] struct {
@@ -767,9 +750,6 @@ type StepResultConfig[I any] struct {
 
         // Replicas is the number of replicas (go routines) created to run the step.
         Replicas uint16
-
-        // ErrorHandler is the function that handles the error occurred during the processing of the token.
-        ErrorHandler ErrorHandler
 
         // Process is the function that processes the input data and does not return any data.
         Process StepResultProcess[I]
@@ -792,11 +772,8 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class
                                 wg.Done()
                                 return
                         }</span>
-                        <span class="cov8" title="1">err := s.process(i)
-                        s.decrementTokensCount()
-                        if err != nil </span><span class="cov8" title="1">{
-                                s.reportError(err)
-                        }</span>
+                        <span class="cov8" title="1">s.process(i)
+                        s.decrementTokensCount()</span>
                 }
         }
 }
@@ -814,16 +791,33 @@ type StepProcess[I any] func(I) (I, error)
 
 // StepConfig is a struct that defines the configuration for a standard step
 type StepConfig[I any] struct {
-        Label        string
-        Replicas     uint16
+        // Label is a human-readable label for the step
+        Label string
+
+        // Replicas is the number of replicas of the step that should be run in parallel
+        Replicas uint16
+
+        // ErrorHandler is a function that will be called when an error occurs in the step
         ErrorHandler ErrorHandler
-        Process      StepProcess[I]
+
+        // Process is a function that will be applied to the incoming data
+        Process StepProcess[I]
 }
 
 type stepStandard[I any] struct {
         stepBase[I]
+
+        // errorHandler is the function called when an error occurs in the step.
+        errorHandler ErrorHandler
+
         // process is a function that will be applied to the incoming data.
         process StepProcess[I]
+}
+
+func (s *stepStandard[I]) reportError(err error) <span class="cov8" title="1">{
+        if s.errorHandler != nil </span><span class="cov8" title="1">{
+                s.errorHandler(s.label, err)
+        }</span>
 }
 
 // run is a method that runs the step process and will be executed in a separate goroutine.
