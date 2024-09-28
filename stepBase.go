@@ -19,9 +19,6 @@ type stepBase[I any] struct {
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint16
 
-	// errorHandler is the function called when an error occurs in the step.
-	errorHandler ErrorHandler
-
 	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
 	decrementTokensCount func()
 
@@ -59,14 +56,4 @@ func (s *stepBase[I]) SetDecrementTokensCountHandler(handler func()) {
 
 func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) {
 	s.incrementTokensCount = handler
-}
-
-func (s *stepBase[I]) SetReportErrorHanler(handler ErrorHandler) {
-	s.errorHandler = handler
-}
-
-func (s *stepBase[I]) reportError(err error) {
-	if s.errorHandler != nil {
-		s.errorHandler(s.label, err)
-	}
 }

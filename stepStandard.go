@@ -18,8 +18,18 @@ type StepConfig[I any] struct {
 
 type stepStandard[I any] struct {
 	stepBase[I]
+
+	// errorHandler is the function called when an error occurs in the step.
+	errorHandler ErrorHandler
+
 	// process is a function that will be applied to the incoming data.
 	process StepProcess[I]
+}
+
+func (s *stepStandard[I]) reportError(err error) {
+	if s.errorHandler != nil {
+		s.errorHandler(s.label, err)
+	}
 }
 
 // run is a method that runs the step process and will be executed in a separate goroutine.

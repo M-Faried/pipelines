@@ -19,10 +19,10 @@ func TestStepStandard_SuccessfullProcess(t *testing.T) {
 		stepBase: stepBase[int]{
 			input:                make(chan int, 1),
 			output:               make(chan int, 1),
-			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementHandler.Handle,
 			incrementTokensCount: incrementHandler.Handle,
 		},
+		errorHandler: errorHandler.Handle,
 		// Define a simple process function that just returns the input as output
 		process: func(input int) (int, error) {
 			return input, nil
@@ -92,11 +92,11 @@ func TestStepStandard_ProcessWithError(t *testing.T) {
 		stepBase: stepBase[int]{
 			input:                make(chan int, 1),
 			output:               make(chan int, 1),
-			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementHandler.Handle,
 			incrementTokensCount: incrementHandler.Handle,
 		},
-		process: process,
+		errorHandler: errorHandler.Handle,
+		process:      process,
 	}
 
 	// Create a context with cancel
@@ -156,10 +156,10 @@ func TestStepStandard_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 		stepBase: stepBase[int]{
 			input:                make(chan int, 1),
 			output:               make(chan int, 1),
-			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementHandler.Handle,
 			incrementTokensCount: incrementHandler.Handle,
 		},
+		errorHandler: errorHandler.Handle,
 		// Define a simple process function that just returns the input as output
 		process: func(input int) (int, error) {
 			return input, nil

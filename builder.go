@@ -14,8 +14,9 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("process is required")
 		}
 		return &stepStandard[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
-			process:  c.Process,
+			stepBase:     createBaseStep[I](c.Label, c.Replicas),
+			errorHandler: c.ErrorHandler,
+			process:      c.Process,
 		}
 	}
 
@@ -24,7 +25,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("process is required")
 		}
 		return &stepFragmenter[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
+			stepBase: createBaseStep[I](c.Label, c.Replicas),
 			process:  c.Process,
 		}
 	}
@@ -34,7 +35,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("process is required")
 		}
 		return &stepResult[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas, nil),
+			stepBase: createBaseStep[I](c.Label, c.Replicas),
 			process:  c.Process,
 		}
 	}
@@ -44,7 +45,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("process is required")
 		}
 		return &stepFilter[I]{
-			stepBase:     createBaseStep[I](c.Label, c.Replicas, nil),
+			stepBase:     createBaseStep[I](c.Label, c.Replicas),
 			passCriteria: c.PassCriteria,
 		}
 	}
@@ -60,7 +61,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("buffer size must be greater than or equal to 0")
 		}
 		return &stepBuffered[I]{
-			stepBase:                     createBaseStep[I](c.Label, c.Replicas, nil),
+			stepBase:                     createBaseStep[I](c.Label, c.Replicas),
 			bufferSize:                   c.BufferSize,
 			inputTriggeredProcess:        c.InputTriggeredProcess,
 			timeTriggeredProcess:         c.TimeTriggeredProcess,
@@ -82,13 +83,12 @@ func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipelin
 	return pipe
 }
 
-func createBaseStep[I any](label string, replicas uint16, errorHandler ErrorHandler) stepBase[I] {
+func createBaseStep[I any](label string, replicas uint16) stepBase[I] {
 	if replicas == 0 {
 		replicas = 1
 	}
 	step := stepBase[I]{}
 	step.label = label
 	step.replicas = replicas
-	step.errorHandler = errorHandler
 	return step
 }

@@ -72,7 +72,7 @@ func TestStepFragmenter_SuccessfulProcess(t *testing.T) {
 }
 
 func TestStepFragmenter_ClosingChannelShouldTerminateTheStep(t *testing.T) {
-	errorHandler := &mockErrorHandler{}
+
 	decrementTokens := &mockDecrementTokensHandler{}
 	incrementTokens := &mockIncrementTokensHandler{}
 
@@ -89,7 +89,6 @@ func TestStepFragmenter_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 			label:                "testFragmenter",
 			input:                make(chan int, 1),
 			output:               make(chan int, 1),
-			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementTokens.Handle,
 			incrementTokensCount: incrementTokens.Handle,
 		},

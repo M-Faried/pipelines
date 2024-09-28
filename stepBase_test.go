@@ -1,7 +1,6 @@
 package pipelines
 
 import (
-	"errors"
 	"testing"
 )
 
@@ -56,24 +55,5 @@ func TestSetIncrementTokensCountHandler(t *testing.T) {
 	step.incrementTokensCount()
 	if !called {
 		t.Errorf("expected incrementTokensCount handler to be called")
-	}
-}
-
-func TestSetReportErrorHandler(t *testing.T) {
-	var reportedLabel string
-	var reportedError error
-	handler := func(label string, err error) {
-		reportedLabel = label
-		reportedError = err
-	}
-	step := stepBase[int]{label: "testLabel"}
-	step.SetReportErrorHanler(handler)
-	testError := errors.New("test error")
-	step.reportError(testError)
-	if reportedLabel != "testLabel" {
-		t.Errorf("expected reported label to be 'testLabel', got '%s'", reportedLabel)
-	}
-	if reportedError != testError {
-		t.Errorf("expected reported error to be 'test error', got '%v'", reportedError)
 	}
 }
