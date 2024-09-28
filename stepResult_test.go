@@ -13,6 +13,7 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 	errorHandler := &mockErrorHandler{}
 	processHandler := &mockResultProcessHandler[int]{}
 	decrementTokensHandler := &mockDecrementTokensHandler{}
+	incrementTokensHandler := &mockIncrementTokensHandler{}
 
 	step := &stepResult[int]{
 		stepBase: stepBase[int]{
@@ -20,6 +21,7 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 			input:                make(chan int, 1),
 			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementTokensHandler.Handle,
+			incrementTokensCount: incrementTokensHandler.Handle,
 		},
 		process: processHandler.Handle,
 	}
@@ -41,6 +43,10 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 		t.Errorf("expected decrement tokens handler to be called")
 	}
 
+	if incrementTokensHandler.called {
+		t.Errorf("did not expect increment tokens handler to be called")
+	}
+
 	if errorHandler.called {
 		t.Errorf("did not expect error handler to be called")
 	}
@@ -53,6 +59,7 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 func TestStepResult_ProcessWithError(t *testing.T) {
 
 	decrementHandler := &mockDecrementTokensHandler{}
+	incrementHandler := &mockIncrementTokensHandler{}
 	errorHandler := &mockErrorHandler{}
 
 	step := &stepResult[int]{
@@ -61,6 +68,7 @@ func TestStepResult_ProcessWithError(t *testing.T) {
 			input:                make(chan int, 3),
 			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementHandler.Handle,
+			incrementTokensCount: incrementHandler.Handle,
 		},
 		process: func(i int) error {
 			if i == 2 {
@@ -93,8 +101,45 @@ func TestStepResult_ProcessWithError(t *testing.T) {
 	if !decrementHandler.called {
 		t.Errorf("expected decrement handler to be called")
 	}
+	if incrementHandler.called {
+		t.Errorf("did not expect increment handler to be called")
+	}
 
 	cancel()
 	wg.Wait()
 	close(step.input)
+}
+
+func TestStepResult_ClosingInputChannel(t *testing.T) {
+
+	errorHandler := &mockErrorHandler{}
+	processHandler := &mockResultProcessHandler[int]{}
+	decrementTokensHandler := &mockDecrementTokensHandler{}
+
+	step := &stepResult[int]{
+		stepBase: stepBase[int]{
+			label:                "testStep",
+			input:                make(chan int, 1),
+			errorHandler:         errorHandler.Handle,
+			decrementTokensCount: decrementTokensHandler.Handle,
+		},
+		process: processHandler.Handle,
+	}
+
+	ctx := context.Background()
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+
+	go step.Run(ctx, wg)
+
+	step.input <- 42
+
+	close(step.input)
+	before := time.Now().Unix()
+	wg.Wait()
+	after := time.Now().Unix()
+
+	if after-before > 1 {
+		t.Errorf("expected less than 1 second, got %d", after-before)
+	}
 }

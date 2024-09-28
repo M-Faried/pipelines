@@ -144,3 +144,58 @@ func TestStepStandard_ProcessWithError(t *testing.T) {
 	close(step.input)
 	close(step.output)
 }
+
+func TestStepStandard_ClosingChannel(t *testing.T) {
+
+	errorHandler := &mockErrorHandler{}
+	decrementHandler := &mockDecrementTokensHandler{}
+	incrementHandler := &mockIncrementTokensHandler{}
+
+	// Create a stepStandard instance
+	step := &stepStandard[int]{
+		stepBase: stepBase[int]{
+			input:                make(chan int, 1),
+			output:               make(chan int, 1),
+			errorHandler:         errorHandler.Handle,
+			decrementTokensCount: decrementHandler.Handle,
+			incrementTokensCount: incrementHandler.Handle,
+		},
+		// Define a simple process function that just returns the input as output
+		process: func(input int) (int, error) {
+			return input, nil
+		},
+	}
+
+	// Create a context with a timeout to ensure the test doesn't run indefinitely
+	ctx := context.Background()
+
+	// Create a WaitGroup to wait for the goroutine to finish
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// Run the step in a separate goroutine
+	go step.Run(ctx, &wg)
+
+	// Send an input value to the step
+	step.input <- 42
+
+	// Check the output value
+	select {
+	case output := <-step.output:
+		if output != 42 {
+			t.Errorf("expected output 42, got %d", output)
+		}
+	case <-time.After(1 * time.Second):
+		t.Error("timeout waiting for output")
+	}
+
+	close(step.input)
+	close(step.output)
+	before := time.Now().Unix()
+	wg.Wait()
+	after := time.Now().Unix()
+
+	if after-before > 1 {
+		t.Errorf("expected less than 1 second, got %d", after-before)
+	}
+}
