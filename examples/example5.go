@@ -38,9 +38,8 @@ func addStars(token *StringToken) (*StringToken, error) {
 	return token, nil
 }
 
-func tokenPrinter(token *StringToken) error {
+func tokenPrinter(token *StringToken) {
 	fmt.Println("Result:", token.Value, "\tOriginal:", token.Original)
-	return nil
 }
 
 // Example5 demonstrates a pipeline with a step that fragments tokens.

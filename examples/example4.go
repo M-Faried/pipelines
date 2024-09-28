@@ -15,9 +15,8 @@ func by2(i int64) (int64, error) {
 	return i * 2, nil
 }
 
-func printFilterResult(i int64) error {
+func printFilterResult(i int64) {
 	fmt.Printf("Result: %d \n", i)
-	return nil
 }
 
 // Example4 demonstrates how to utilize error handling in a pipeline and use steps as filters

@@ -17,9 +17,8 @@ func by100(i int64) (int64, error) {
 	return i * 100, nil
 }
 
-func printBy10Result(i int64) error {
+func printBy10Result(i int64) {
 	fmt.Printf("Result: %d \n", i)
-	return nil
 }
 
 // Example3 demonstrates how to utilize replicas feature when you have a heavy process.

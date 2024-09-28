@@ -20,9 +20,8 @@ func processToken(t *Token) (*Token, error) {
 	return t, nil
 }
 
-func printToken(t *Token) error {
+func printToken(t *Token) {
 	fmt.Println("Result:", t.currValue)
-	return nil
 }
 
 // Example2 demonstrates how to use pipelines with custom struct as input and output.

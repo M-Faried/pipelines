@@ -25,10 +25,9 @@ type mockResultProcessHandler[I any] struct {
 	input  I
 }
 
-func (m *mockResultProcessHandler[I]) Handle(input I) error {
+func (m *mockResultProcessHandler[I]) Handle(input I) {
 	m.called = true
 	m.input = input
-	return nil
 }
 
 // mockDecrementTokensHandler is a mock implementation of the decrement tokens handler

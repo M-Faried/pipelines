@@ -314,15 +314,13 @@ func TestNewStep_BufferStep_MissingBufferSize(t *testing.T) {
 func TestNewStep_ResultStep(t *testing.T) {
 	builder := &Builder[int]{}
 
-	process := func(input int) error { return nil }
-	errorHandler := func(label string, err error) {}
+	process := func(input int) {}
 
 	// Test with StepConfig
 	stepConfig := &StepResultConfig[int]{
-		Label:        "fragmenterStep",
-		Replicas:     5,
-		ErrorHandler: errorHandler,
-		Process:      process,
+		Label:    "fragmenterStep",
+		Replicas: 5,
+		Process:  process,
 	}
 
 	step := builder.NewStep(stepConfig)
@@ -343,9 +341,6 @@ func TestNewStep_ResultStep(t *testing.T) {
 		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
 	}
 
-	if concreteStep.errorHandler == nil {
-		t.Error("Expected error handler to be set, got nil")
-	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}

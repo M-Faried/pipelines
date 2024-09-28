@@ -34,7 +34,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			panic("process is required")
 		}
 		return &stepResult[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
+			stepBase: createBaseStep[I](c.Label, c.Replicas, nil),
 			process:  c.Process,
 		}
 	}

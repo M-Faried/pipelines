@@ -6,7 +6,7 @@ import (
 )
 
 // StepResultProcess is a function that processes the input data and does not return any data.
-type StepResultProcess[I any] func(I) error
+type StepResultProcess[I any] func(I)
 
 // StepResultConfig is a struct that defines the configuration for a result step
 type StepResultConfig[I any] struct {
@@ -16,9 +16,6 @@ type StepResultConfig[I any] struct {
 
 	// Replicas is the number of replicas (go routines) created to run the step.
 	Replicas uint16
-
-	// ErrorHandler is the function that handles the error occurred during the processing of the token.
-	ErrorHandler ErrorHandler
 
 	// Process is the function that processes the input data and does not return any data.
 	Process StepResultProcess[I]
@@ -41,11 +38,8 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				wg.Done()
 				return
 			}
-			err := s.process(i)
+			s.process(i)
 			s.decrementTokensCount()
-			if err != nil {
-				s.reportError(err)
-			}
 		}
 	}
 }
