@@ -141,6 +141,10 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 
 func (s *stepBuffered[I]) handleTimeTriggeredProcess() {
 
+	if s.timeTriggeredProcess == nil {
+		return
+	}
+
 	s.bufferMutex.Lock()
 	defer s.bufferMutex.Unlock()
 
