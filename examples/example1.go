@@ -45,7 +45,7 @@ func Example1() {
 	pipeline.Run(ctx)
 
 	// Feeding inputs
-	for i := 0; i <= 500; i++ {
+	for i := 0; i <= 25; i++ {
 		pipeline.FeedOne(int64(i))
 	}
 
