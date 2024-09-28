@@ -22,7 +22,7 @@ type StepBufferedProcessOutput[I any] struct {
 // StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
 type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I]
 
-type StepBuffered[I any] struct {
+type StepBufferedConfig[I any] struct {
 
 	// Label is the name of the step.
 	Label string

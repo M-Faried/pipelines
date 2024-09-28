@@ -192,7 +192,7 @@ func TestNewStep_BufferStep(t *testing.T) {
 	}
 
 	// Test with StepConfig
-	stepConfig := &StepBuffered[int]{
+	stepConfig := &StepBufferedConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		BufferSize:                   20,
@@ -252,7 +252,7 @@ func TestNewStep_BufferStep_MissingTimeAndInputTriggeres(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepBuffered[int]{
+	stepConfig := &StepBufferedConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		TimeTriggeredProcessInterval: 10 * time.Second,
@@ -273,7 +273,7 @@ func TestNewStep_BufferStep_TimeTriggeredWithoutInterval(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepBuffered[int]{
+	stepConfig := &StepBufferedConfig[int]{
 		Label:                "testStep",
 		Replicas:             1,
 		TimeTriggeredProcess: func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
@@ -294,7 +294,7 @@ func TestNewStep_BufferStep_MissingBufferSize(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepBuffered[int]{
+	stepConfig := &StepBufferedConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		TimeTriggeredProcess:         func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },

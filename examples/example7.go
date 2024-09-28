@@ -47,7 +47,7 @@ func Example7() {
 		PassCriteria: evenNumberCriteria,
 	})
 
-	aggregator := builder.NewStep(&pip.StepBuffered[int64]{
+	aggregator := builder.NewStep(&pip.StepBufferedConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   5,
 		BufferSize: 10,

@@ -49,7 +49,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
-	if c, ok := config.(*StepBuffered[I]); ok {
+	if c, ok := config.(*StepBufferedConfig[I]); ok {
 		if c.InputTriggeredProcess == nil && c.TimeTriggeredProcess == nil {
 			panic("either time triggered or input process is required")
 		}

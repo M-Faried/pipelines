@@ -46,7 +46,7 @@ func Example6() {
 		PassCriteria: oddNumberCriteria,
 	})
 
-	aggregator := builder.NewStep(&pip.StepBuffered[int64]{
+	aggregator := builder.NewStep(&pip.StepBufferedConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   2,
 		BufferSize: 5,
