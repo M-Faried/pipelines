@@ -184,11 +184,11 @@ func TestNewStep_FragmenterStep_MissingProcess(t *testing.T) {
 func TestNewStep_BufferStep(t *testing.T) {
 	builder := &Builder[int]{}
 
-	processInputTriggered := func(input []int) InputTriggeredProcessOutput[int] {
-		return InputTriggeredProcessOutput[int]{}
+	processInputTriggered := func(input []int) StepBufferedProcessOutput[int] {
+		return StepBufferedProcessOutput[int]{}
 	}
-	processTimeTriggered := func(input []int) TimeTriggeredProcessOutput[int] {
-		return TimeTriggeredProcessOutput[int]{}
+	processTimeTriggered := func(input []int) StepBufferedProcessOutput[int] {
+		return StepBufferedProcessOutput[int]{}
 	}
 
 	// Test with StepConfig
@@ -196,6 +196,7 @@ func TestNewStep_BufferStep(t *testing.T) {
 		Label:                        "testStep",
 		Replicas:                     1,
 		BufferSize:                   20,
+		PassThrough:                  true,
 		InputTriggeredProcess:        processInputTriggered,
 		TimeTriggeredProcess:         processTimeTriggered,
 		TimeTriggeredProcessInterval: 10 * time.Second,
@@ -237,6 +238,10 @@ func TestNewStep_BufferStep(t *testing.T) {
 		t.Errorf("Expected time triggered process interval to be 10s, got %s", concreteStep.timeTriggeredProcessInterval)
 	}
 
+	if !concreteStep.passThrough {
+		t.Error("Expected pass through to be true, got false")
+	}
+
 	if cap(concreteStep.buffer) != 20 {
 		t.Errorf("Expected buffer capacity to be 20, got %d", cap(concreteStep.buffer))
 	}
@@ -271,7 +276,7 @@ func TestNewStep_BufferStep_TimeTriggeredWithoutInterval(t *testing.T) {
 	stepConfig := &StepBuffered[int]{
 		Label:                "testStep",
 		Replicas:             1,
-		TimeTriggeredProcess: func(input []int) TimeTriggeredProcessOutput[int] { return TimeTriggeredProcessOutput[int]{} },
+		TimeTriggeredProcess: func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
 		BufferSize:           10,
 	}
 
@@ -292,8 +297,8 @@ func TestNewStep_BufferStep_MissingBufferSize(t *testing.T) {
 	stepConfig := &StepBuffered[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
-		TimeTriggeredProcess:         func(input []int) TimeTriggeredProcessOutput[int] { return TimeTriggeredProcessOutput[int]{} },
-		InputTriggeredProcess:        func(input []int) InputTriggeredProcessOutput[int] { return InputTriggeredProcessOutput[int]{} },
+		TimeTriggeredProcess:         func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
+		InputTriggeredProcess:        func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
 		TimeTriggeredProcessInterval: 10 * time.Second,
 	}
 

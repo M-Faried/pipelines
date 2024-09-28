@@ -65,6 +65,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			inputTriggeredProcess:        c.InputTriggeredProcess,
 			timeTriggeredProcess:         c.TimeTriggeredProcess,
 			timeTriggeredProcessInterval: c.TimeTriggeredProcessInterval,
+			passThrough:                  c.PassThrough,
 			buffer:                       make([]I, 0, c.BufferSize),
 		}
 	}
