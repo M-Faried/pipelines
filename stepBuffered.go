@@ -60,9 +60,8 @@ type stepBuffered[I any] struct {
 }
 
 func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
-	// s.initBuffer()
 	if s.timeTriggeredProcessInterval == 0 {
-		// 10 hours is to cover the case where the time is not set. The buffer in this case will be input triggered.
+		// 1000 hours is to cover the case where the time is not set. The buffer in this case will be input triggered.
 		// this is needed to keep the thread alive as well inc case there is a long delay in the input.
 		s.timeTriggeredProcessInterval = 1000 * time.Hour
 	}
@@ -77,7 +76,6 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				wg.Done()
 				return
 			}
-			// s.addToBuffer(i)
 			s.handleInputTriggeredProcess(i)
 			timer.Reset(s.timeTriggeredProcessInterval)
 		case <-timer.C:
