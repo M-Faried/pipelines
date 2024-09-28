@@ -49,32 +49,23 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
-	if c, ok := config.(*StepMonitorConfig[I]); ok {
-		if c.NotifyCriteria == nil && c.CheckInterval == 0 {
-			panic("either notify criteria or check interval should be set for the monitor step")
+	if c, ok := config.(*StepBuffered[I]); ok {
+		if c.InputTriggeredProcess == nil && c.TimeTriggeredProcess == nil {
+			panic("either time triggered or input process is required")
 		}
-		return &stepMonitor[I]{
-			stepBase:       createBaseStep[I](c.Label, c.Replicas, nil),
-			notifyCriteria: c.NotifyCriteria,
-			notify:         c.Notify,
-			checkInterval:  c.CheckInterval,
-			buffer:         make([]I, 0),
+		if c.TimeTriggeredProcess != nil && c.TimeTriggeredProcessInterval == 0 {
+			panic("time triggered process interval is required to be used with time triggered process")
 		}
-	}
-
-	if c, ok := config.(*StepAggregatorConfig[I]); ok {
-		if c.Process == nil {
-			panic("process is required")
+		if c.BufferSize <= 0 {
+			panic("buffer size must be greater than or equal to 0")
 		}
-		if c.ThresholdCriteria == nil && c.AggregationInterval == 0 {
-			panic("either threshold or time duration must be set for the aggregation step")
-		}
-		return &stepAggregator[I]{
-			stepBase:            createBaseStep[I](c.Label, c.Replicas, c.ErrorHandler),
-			process:             c.Process,
-			thresholdCriteria:   c.ThresholdCriteria,
-			aggregationInterval: c.AggregationInterval,
-			buffer:              make([]I, 0),
+		return &stepBuffered[I]{
+			stepBase:                     createBaseStep[I](c.Label, c.Replicas, nil),
+			bufferSize:                   c.BufferSize,
+			inputTriggeredProcess:        c.InputTriggeredProcess,
+			timeTriggeredProcess:         c.TimeTriggeredProcess,
+			timeTriggeredProcessInterval: c.TimeTriggeredProcessInterval,
+			buffer:                       make([]I, 0, c.BufferSize),
 		}
 	}
 
