@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"testing"
+	"time"
 )
 
 func TestNewStep_StandardStep(t *testing.T) {
@@ -44,6 +45,43 @@ func TestNewStep_StandardStep(t *testing.T) {
 	}
 }
 
+func TestNewStep_FilterStep(t *testing.T) {
+	builder := &Builder[int]{}
+
+	process := func(input int) bool { return true }
+
+	// Test with StepConfig
+	stepConfig := &StepFilterConfig[int]{
+		Label:        "testStep",
+		Replicas:     1,
+		PassCriteria: process,
+	}
+
+	step := builder.NewStep(stepConfig)
+
+	var concreteStep *stepFilter[int]
+	var ok bool
+
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepFilter[int]); !ok {
+		t.Error("Expected step to be of type stepStandard")
+	}
+
+	if step.GetLabel() != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", step.GetLabel())
+	}
+
+	if step.GetReplicas() != 1 {
+		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.passCriteria == nil {
+		t.Error("Expected process to be set, got nil")
+	}
+}
+
 func TestNewStep_FragmenterStep(t *testing.T) {
 	builder := &Builder[int]{}
 
@@ -81,6 +119,67 @@ func TestNewStep_FragmenterStep(t *testing.T) {
 	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
+	}
+}
+
+func TestNewStep_BufferStep(t *testing.T) {
+	builder := &Builder[int]{}
+
+	processInputTriggered := func(input []int) InputTriggeredProcessOutput[int] {
+		return InputTriggeredProcessOutput[int]{}
+	}
+	processTimeTriggered := func(input []int) TimeTriggeredProcessOutput[int] {
+		return TimeTriggeredProcessOutput[int]{}
+	}
+
+	// Test with StepConfig
+	stepConfig := &StepBuffered[int]{
+		Label:                        "testStep",
+		Replicas:                     1,
+		BufferSize:                   20,
+		InputTriggeredProcess:        processInputTriggered,
+		TimeTriggeredProcess:         processTimeTriggered,
+		TimeTriggeredProcessInterval: 10 * time.Second,
+	}
+
+	step := builder.NewStep(stepConfig)
+
+	var concreteStep *stepBuffered[int]
+	var ok bool
+
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepBuffered[int]); !ok {
+		t.Error("Expected step to be of type stepStandard")
+	}
+
+	if concreteStep.label != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", step.GetLabel())
+	}
+
+	if concreteStep.replicas != 1 {
+		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.bufferSize != 20 {
+		t.Errorf("Expected buffer size to be 20, got %d", concreteStep.bufferSize)
+	}
+
+	if concreteStep.timeTriggeredProcess == nil {
+		t.Error("Expected time triggered process to be set, got nil")
+	}
+
+	if concreteStep.inputTriggeredProcess == nil {
+		t.Error("Expected input triggered process to be set, got nil")
+	}
+
+	if concreteStep.timeTriggeredProcessInterval != 10*time.Second {
+		t.Errorf("Expected time triggered process interval to be 10s, got %s", concreteStep.timeTriggeredProcessInterval)
+	}
+
+	if cap(concreteStep.buffer) != 20 {
+		t.Errorf("Expected buffer capacity to be 20, got %d", cap(concreteStep.buffer))
 	}
 }
 

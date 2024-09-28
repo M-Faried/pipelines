@@ -128,3 +128,48 @@ func TestStepFragmenter_ProcessWithError(t *testing.T) {
 	close(step.input)
 	close(step.output)
 }
+
+func TestStepFragmenter_ClosingChannelShouldTerminateTheStep(t *testing.T) {
+	errorHandler := &mockErrorHandler{}
+	decrementTokens := &mockDecrementTokensHandler{}
+	incrementTokens := &mockIncrementTokensHandler{}
+
+	process := func(input int) ([]int, error) {
+		res := make([]int, input)
+		for i := 0; i < input; i++ {
+			res[i] = i
+		}
+		return res, nil
+	}
+
+	step := &stepFragmenter[int]{
+		stepBase: stepBase[int]{
+			label:                "testFragmenter",
+			input:                make(chan int, 1),
+			output:               make(chan int, 1),
+			errorHandler:         errorHandler.Handle,
+			decrementTokensCount: decrementTokens.Handle,
+			incrementTokensCount: incrementTokens.Handle,
+		},
+		process: process,
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go step.Run(ctx, &wg)
+
+	close(step.input)
+
+	before := time.Now()
+	wg.Wait()
+	after := time.Now()
+
+	if after.Sub(before) > 1*time.Second {
+		t.Error("expected step to stop immediately after context is cancelled")
+	}
+	close(step.output)
+}

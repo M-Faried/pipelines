@@ -125,5 +125,4 @@ func TestStepFilter_ClosingWithParentContext(t *testing.T) {
 
 	close(step.input)
 	close(step.output)
-
 }

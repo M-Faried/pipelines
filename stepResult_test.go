@@ -135,11 +135,11 @@ func TestStepResult_ClosingInputChannel(t *testing.T) {
 	step.input <- 42
 
 	close(step.input)
-	before := time.Now().Unix()
+	before := time.Now()
 	wg.Wait()
-	after := time.Now().Unix()
+	after := time.Now()
 
-	if after-before > 1 {
-		t.Errorf("expected less than 1 second, got %d", after-before)
+	if after.Sub(before) > 10*time.Millisecond {
+		t.Error("expected step to stop immediately after context is cancelled")
 	}
 }

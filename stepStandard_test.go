@@ -145,7 +145,7 @@ func TestStepStandard_ProcessWithError(t *testing.T) {
 	close(step.output)
 }
 
-func TestStepStandard_ClosingChannel(t *testing.T) {
+func TestStepStandard_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 
 	errorHandler := &mockErrorHandler{}
 	decrementHandler := &mockDecrementTokensHandler{}
@@ -191,11 +191,11 @@ func TestStepStandard_ClosingChannel(t *testing.T) {
 
 	close(step.input)
 	close(step.output)
-	before := time.Now().Unix()
+	before := time.Now()
 	wg.Wait()
-	after := time.Now().Unix()
+	after := time.Now()
 
-	if after-before > 1 {
-		t.Errorf("expected less than 1 second, got %d", after-before)
+	if after.Sub(before) > 10*time.Millisecond {
+		t.Error("expected step to stop immediately after context is cancelled")
 	}
 }
