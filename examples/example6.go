@@ -3,28 +3,39 @@ package examples
 import (
 	"context"
 	"fmt"
+	"time"
 
 	pip "github.com/m-faried/pipelines"
 )
 
-func evenNumberCriteria(i int64) bool {
-	return i%2 == 0
+func oddNumberCriteria(i int64) bool {
+	return i%2 != 0
 }
 
-func aggEvenThreshould(i []int64) bool {
-	return len(i) >= 10
-}
+func calculateOddSum(i []int64) pip.TimeTriggeredProcessOutput[int64] {
 
-func aggEvenSumProcess(i []int64) (int64, error) {
+	fmt.Println("calculateOddSum Input: ", i)
+
+	// The following is just for illustrating the default values of the output
+	result := pip.TimeTriggeredProcessOutput[int64]{
+		HasResult: false,
+		Result:    0,
+		Flush:     false,
+	}
+
 	var sum int64
 	for _, v := range i {
 		sum += v
 	}
-	return sum, nil
+
+	result.HasResult = true
+	result.Result = sum
+	result.Flush = false //without flush since it will be time triggered process.
+
+	return result
 }
 
-// Example6 demonstrates a pipeline with an aggregator step.
-// The aggregator step accumulates the even number and calculates their summation.
+// Example 6 calclulates the sum of the most recently received 5 odd numbers every 100ms.
 func Example6() {
 
 	builder := &pip.Builder[int64]{}
@@ -32,17 +43,19 @@ func Example6() {
 	filter := builder.NewStep(&pip.StepFilterConfig[int64]{
 		Label:        "filter",
 		Replicas:     1,
-		PassCriteria: evenNumberCriteria,
+		PassCriteria: oddNumberCriteria,
 	})
 
-	aggregator := builder.NewStep(&pip.StepAggregatorConfig[int64]{
-		Label:    "aggregator",
-		Replicas: 3,
-		Process:  aggEvenSumProcess,
-		// Notice that, since the aggregation interval is not set, you will need to have an
-		// accurate threshould formula to avoid stalling the accumulator for long.
+	aggregator := builder.NewStep(&pip.StepBuffered[int64]{
+		Label:      "aggregator",
+		Replicas:   2,
+		BufferSize: 5,
+		// Notice that, since the InputTriggeredProcess is not set, you will need to have an
+		// accurate interval time for inputs to avoid stalling pipeline for long.
 		// You can use either or both threshold and interval time based on your needs in other cases.
-		ThresholdCriteria: aggEvenThreshould,
+		TimeTriggeredProcess:         calculateOddSum,
+		TimeTriggeredProcessInterval: 100 * time.Millisecond, //This means the buffer calculates the result from the buffer every 500ms
+
 	})
 
 	result := builder.NewStep(&pip.StepResultConfig[int64]{
@@ -57,12 +70,13 @@ func Example6() {
 	ctx := context.Background()
 	pipeline.Run(ctx)
 
-	for i := 0; i < 20; i++ {
+	for i := 1; i <= 20; i++ {
 		pipeline.FeedOne(int64(i))
+		time.Sleep(500 * time.Millisecond)
 	}
 
-	// waiting for all tokens to be processed
-	pipeline.WaitTillDone()
+	// since the values of the buffere are not flushed, using WaitTillDone will keep your pipeline running forever
+	// pipeline.WaitTillDone()
 
 	// terminating the pipeline and clearning resources
 	pipeline.Terminate()
