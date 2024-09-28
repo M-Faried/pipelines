@@ -33,24 +33,24 @@ func (m *mockResultProcessHandler[I]) Handle(input I) error {
 
 // mockDecrementTokensHandler is a mock implementation of the decrement tokens handler
 type mockDecrementTokensHandler struct {
-	called bool
-	value  int
+	called  bool
+	counter int
 }
 
 func (m *mockDecrementTokensHandler) Handle() {
 	m.called = true
-	m.value--
+	m.counter--
 }
 
 // mockIncrementTokensHandler is a mock implementation of the increment tokens handler
 type mockIncrementTokensHandler struct {
-	called bool
-	value  int
+	called  bool
+	counter int
 }
 
 func (m *mockIncrementTokensHandler) Handle() {
 	m.called = true
-	m.value++
+	m.counter++
 }
 
 // mockStep is a mock implementation of the step

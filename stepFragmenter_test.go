@@ -58,14 +58,14 @@ func TestStepFragmenter_SuccessfulProcess(t *testing.T) {
 	if !decrementTokens.called {
 		t.Error("expected decrement handler to be called")
 	}
-	if decrementTokens.value != -1 {
-		t.Errorf("expected value -1, got %d", decrementTokens.value)
+	if decrementTokens.counter != -1 {
+		t.Errorf("expected value -1, got %d", decrementTokens.counter)
 	}
 	if !incrementTokens.called {
 		t.Error("expected increment handler to be called")
 	}
-	if incrementTokens.value != 42 {
-		t.Errorf("expected value 42, got %d", incrementTokens.value)
+	if incrementTokens.counter != 42 {
+		t.Errorf("expected value 42, got %d", incrementTokens.counter)
 	}
 	if errorHandler.called {
 		t.Errorf("expected error handler not to be called")
@@ -119,8 +119,8 @@ func TestStepFragmenter_ProcessWithError(t *testing.T) {
 	if !decrementTokens.called {
 		t.Error("expected decrement handler to be called")
 	}
-	if decrementTokens.value != -1 {
-		t.Errorf("expected value -1, got %d", decrementTokens.value)
+	if decrementTokens.counter != -1 {
+		t.Errorf("expected value -1, got %d", decrementTokens.counter)
 	}
 
 	cancel()

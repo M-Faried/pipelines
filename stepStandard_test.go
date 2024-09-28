@@ -64,8 +64,8 @@ func TestStepStandard_SuccessfullProcess(t *testing.T) {
 	if incrementHandler.called {
 		t.Error("did not expect increment handler to be called")
 	}
-	if incrementHandler.value != 0 {
-		t.Errorf("expected value 0, got %d", incrementHandler.value)
+	if incrementHandler.counter != 0 {
+		t.Errorf("expected value 0, got %d", incrementHandler.counter)
 	}
 
 	// Wait for the goroutine to finish
@@ -129,14 +129,14 @@ func TestStepStandard_ProcessWithError(t *testing.T) {
 	if !decrementHandler.called {
 		t.Error("expected decrement handler to be called")
 	}
-	if decrementHandler.value != -1 {
-		t.Errorf("expected value -1, got %d", decrementHandler.value)
+	if decrementHandler.counter != -1 {
+		t.Errorf("expected value -1, got %d", decrementHandler.counter)
 	}
 	if incrementHandler.called {
 		t.Error("did not expect increment handler to be called")
 	}
-	if incrementHandler.value != 0 {
-		t.Errorf("expected value 0, got %d", incrementHandler.value)
+	if incrementHandler.counter != 0 {
+		t.Errorf("expected value 0, got %d", incrementHandler.counter)
 	}
 
 	cancel()

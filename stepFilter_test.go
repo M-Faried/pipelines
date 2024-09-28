@@ -78,8 +78,8 @@ func TestStepFilter_Run(t *testing.T) {
 	if !decrementHandler.called {
 		t.Errorf("expect decrement handler to be called")
 	}
-	if decrementHandler.value != -5 {
-		t.Errorf("expected value -5, got %d", decrementHandler.value)
+	if decrementHandler.counter != -5 {
+		t.Errorf("expected value -5, got %d", decrementHandler.counter)
 	}
 }
 
