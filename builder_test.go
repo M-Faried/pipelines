@@ -125,15 +125,13 @@ func TestNewStep_FilterStep_MissingProcess(t *testing.T) {
 func TestNewStep_FragmenterStep(t *testing.T) {
 	builder := &Builder[int]{}
 
-	process := func(input int) ([]int, error) { return []int{input}, nil }
-	errorHandler := func(label string, err error) {}
+	process := func(input int) []int { return []int{input} }
 
 	// Test with StepConfig
 	stepConfig := &StepFragmenterConfig[int]{
-		Label:        "fragmenterStep",
-		Replicas:     1,
-		ErrorHandler: errorHandler,
-		Process:      process,
+		Label:    "fragmenterStep",
+		Replicas: 1,
+		Process:  process,
 	}
 
 	step := builder.NewStep(stepConfig)
@@ -154,9 +152,6 @@ func TestNewStep_FragmenterStep(t *testing.T) {
 		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
 	}
 
-	if concreteStep.errorHandler == nil {
-		t.Error("Expected error handler to be set, got nil")
-	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}

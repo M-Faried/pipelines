@@ -13,7 +13,7 @@ type StringToken struct {
 	Original string
 }
 
-func splitter(token *StringToken) ([]*StringToken, error) {
+func splitter(token *StringToken) []*StringToken {
 	// Split the Value field by comma
 	parts := strings.Split(token.Value, ",")
 
@@ -25,7 +25,7 @@ func splitter(token *StringToken) ([]*StringToken, error) {
 		result[i] = &StringToken{Value: part, Original: token.Value}
 	}
 
-	return result, nil
+	return result
 }
 
 func trimSpaces(token *StringToken) (*StringToken, error) {
