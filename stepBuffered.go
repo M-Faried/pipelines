@@ -85,6 +85,16 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
+func (s *stepBuffered[I]) addToBuffer(i I) bool {
+	overwriteOccurred := false
+	if len(s.buffer) == s.bufferSize {
+		s.buffer = s.buffer[1:]
+		overwriteOccurred = true
+	}
+	s.buffer = append(s.buffer, i)
+	return overwriteOccurred
+}
+
 func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 
 	// All the following has to be done in during the same mutex lock.
@@ -92,16 +102,16 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 	defer s.bufferMutex.Unlock()
 
 	// Adding the input to buffer.
-	if len(s.buffer) == s.bufferSize {
-		s.buffer = s.buffer[1:]
-	}
-	s.buffer = append(s.buffer, i)
+	overwriteOccurred := s.addToBuffer(i)
 
 	// Checking if the passThrough is set and passing the input if it is.
 	if s.passThrough {
 		// since it was already stored the token in the buffer and will be passed in the next steps,
-		// we need to increment the tokens count by one.
-		s.incrementTokensCount()
+		// we need to increment the tokens count by one if it is stored in the buffer.
+		// In other words, the max increments are going to be the buffer size.
+		if !overwriteOccurred {
+			s.incrementTokensCount()
+		}
 		s.output <- i
 	}
 
