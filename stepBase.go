@@ -1,9 +1,5 @@
 package pipelines
 
-// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
-// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type ErrorHandler func(string, error)
-
 // stepBase is a base struct for all steps
 type stepBase[I any] struct {
 

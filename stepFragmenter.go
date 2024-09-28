@@ -17,9 +17,6 @@ type StepFragmenterConfig[I any] struct {
 	// Replicas is the number of replicas (go routines) created to run the step.
 	Replicas uint16
 
-	// ErrorHandler is the function that handles the error occurred during the processing of the token.
-	ErrorHandler ErrorHandler
-
 	// Process is the function that converts a token in the pipeline into multiple tokens.
 	Process StepFragmenterProcess[I]
 }

@@ -5,6 +5,10 @@ import (
 	"sync"
 )
 
+// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
+// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
+type ErrorHandler func(string, error)
+
 // StepProcess is a function that processes a single input data and returns a single output data.
 type StepProcess[I any] func(I) (I, error)
 
