@@ -6,23 +6,44 @@ import (
 	"time"
 )
 
+// StepBufferedProcessOutput is the output of the StepBufferedProcess.
 type StepBufferedProcessOutput[I any] struct {
+
+	// HasResult is a flag to indicate if the process has a result or not.
 	HasResult bool
-	Result    I
-	Flush     bool
+
+	// Result is the result of the process.
+	Result I
+
+	// FlushBuffer signals the step to flush all the values stored in the buffer.
+	FlushBuffer bool
 }
 
-type StepBufferedTimeTiggeredProcess[I any] func([]I) StepBufferedProcessOutput[I]
-type StepBufferedInputTiggeredProcess[I any] func([]I) StepBufferedProcessOutput[I]
+// StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
+type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I]
 
 type StepBuffered[I any] struct {
-	Label       string
-	Replicas    uint16
-	BufferSize  int
+
+	// Label is the name of the step.
+	Label string
+
+	// Replicas is the number of replicas (go routines) created to run the step.
+	Replicas uint16
+
+	// BufferSize is the max size of the buffer. If the buffer is full, the oldest element will be removed.
+	BufferSize int
+
+	// PassThrough is a flag to pass the input to the following step or not in addition to adding it to the buffer.
+	// If PassThrough is set to false, the buffer will retain all the elements in the buffer.
 	PassThrough bool
 
-	InputTriggeredProcess        StepBufferedInputTiggeredProcess[I]
-	TimeTriggeredProcess         StepBufferedTimeTiggeredProcess[I]
+	// The process which is called when the input is received and added to the buffer.
+	InputTriggeredProcess StepBufferedProcess[I]
+
+	// The process which is called periodically based on the interval.
+	TimeTriggeredProcess StepBufferedProcess[I]
+
+	// TimeTriggeredProcessInterval is the interval at which the TimeTriggeredProcess is called.
 	TimeTriggeredProcessInterval time.Duration
 }
 
@@ -33,8 +54,8 @@ type stepBuffered[I any] struct {
 	bufferMutex sync.Mutex
 	passThrough bool
 
-	inputTriggeredProcess        StepBufferedInputTiggeredProcess[I]
-	timeTriggeredProcess         StepBufferedTimeTiggeredProcess[I]
+	inputTriggeredProcess        StepBufferedProcess[I]
+	timeTriggeredProcess         StepBufferedProcess[I]
 	timeTriggeredProcessInterval time.Duration
 }
 
@@ -101,7 +122,7 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 	}
 
 	// Check if the buffer should be flushed or not.
-	if processOutput.Flush {
+	if processOutput.FlushBuffer {
 		length := len(s.buffer)
 		for range length {
 			s.decrementTokensCount()
@@ -123,7 +144,7 @@ func (s *stepBuffered[I]) handleTimeTriggeredProcess() {
 	}
 
 	// Check if the buffer should be flushed or not.
-	if processOutput.Flush {
+	if processOutput.FlushBuffer {
 		length := len(s.buffer)
 		for range length {
 			s.decrementTokensCount()

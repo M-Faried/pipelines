@@ -17,9 +17,9 @@ func calculateEvenSum(i []int64) pip.StepBufferedProcessOutput[int64] {
 
 	// The following is just for illustrating the default values of the output
 	ouput := pip.StepBufferedProcessOutput[int64]{
-		HasResult: false,
-		Result:    0,
-		Flush:     false,
+		HasResult:   false,
+		Result:      0,
+		FlushBuffer: false,
 	}
 
 	// checking the threshold to start calculation
@@ -30,7 +30,7 @@ func calculateEvenSum(i []int64) pip.StepBufferedProcessOutput[int64] {
 		}
 		ouput.HasResult = true
 		ouput.Result = sum
-		ouput.Flush = true
+		ouput.FlushBuffer = true
 	}
 
 	return ouput

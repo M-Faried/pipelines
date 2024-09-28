@@ -10,10 +10,18 @@ type StepFragmenterProcess[I any] func(I) ([]I, error)
 
 // StepFragmenterConfig is a struct that defines the configuration for a fragmenter step
 type StepFragmenterConfig[I any] struct {
-	Label        string
-	Replicas     uint16
+
+	// Label is the name of the step.
+	Label string
+
+	// Replicas is the number of replicas (go routines) created to run the step.
+	Replicas uint16
+
+	// ErrorHandler is the function that handles the error occurred during the processing of the token.
 	ErrorHandler ErrorHandler
-	Process      StepFragmenterProcess[I]
+
+	// Process is the function that converts a token in the pipeline into multiple tokens.
+	Process StepFragmenterProcess[I]
 }
 
 type stepFragmenter[I any] struct {

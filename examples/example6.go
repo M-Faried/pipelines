@@ -18,9 +18,9 @@ func calculateOddSum(i []int64) pip.StepBufferedProcessOutput[int64] {
 
 	// The following is just for illustrating the default values of the output
 	result := pip.StepBufferedProcessOutput[int64]{
-		HasResult: false,
-		Result:    0,
-		Flush:     false,
+		HasResult:   false,
+		Result:      0,
+		FlushBuffer: false,
 	}
 
 	var sum int64
@@ -30,7 +30,7 @@ func calculateOddSum(i []int64) pip.StepBufferedProcessOutput[int64] {
 
 	result.HasResult = true
 	result.Result = sum
-	result.Flush = false //without flush since it will be time triggered process.
+	result.FlushBuffer = false //without flush since it will be time triggered process.
 
 	return result
 }

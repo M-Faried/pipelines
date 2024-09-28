@@ -10,8 +10,13 @@ type StepFilterPassCriteria[I any] func(I) bool
 
 // StepFilterConfig is a struct that defines the configuration for a filter step. The filter step filters the incoming data based on a certain criteria.
 type StepFilterConfig[I any] struct {
-	Label    string
+
+	// Label is the name of the step.
+	Label string
+
+	// Replicas is the number of replicas (go routines) created to run the step.
 	Replicas uint16
+
 	// PassCriteria is a function that determines if the data should be passed or not.
 	PassCriteria StepFilterPassCriteria[I]
 }
