@@ -2,8 +2,8 @@
 
 # Variables
 PACKAGE = .
-COVERAGE_FILE = coverage.out
-COVERAGE_HTML = coverage.html
+COVERAGE_FILE = ./coverage/coverage.out
+COVERAGE_HTML = ./coverage/coverage.html
 
 # Default target
 all: test coverage html
