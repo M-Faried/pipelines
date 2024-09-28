@@ -102,6 +102,7 @@ func TestStepBuffered_Run_InputTriggered_FlushBuffer(t *testing.T) {
 				FlushBuffer: true,
 			}
 		},
+		timeTriggeredProcessInterval: 50 * time.Millisecond,
 	}
 
 	ctx, cancelCtx := context.WithCancel(context.Background())

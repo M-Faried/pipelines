@@ -404,10 +404,6 @@ func (p *pipeline[I]) decrementTokensCount() <span class="cov8" title="1">{
 		
 		<pre class="file" id="file3" style="display: none">package pipelines
 
-// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
-// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type ErrorHandler func(string, error)
-
 // stepBase is a base struct for all steps
 type stepBase[I any] struct {
 
@@ -606,7 +602,11 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) <span class="cov8" ti
 
 func (s *stepBuffered[I]) handleTimeTriggeredProcess() <span class="cov8" title="1">{
 
-        s.bufferMutex.Lock()
+        if s.timeTriggeredProcess == nil </span><span class="cov8" title="1">{
+                return
+        }</span>
+
+        <span class="cov8" title="1">s.bufferMutex.Lock()
         defer s.bufferMutex.Unlock()
 
         processOutput := s.timeTriggeredProcess(s.buffer)
@@ -696,9 +696,6 @@ type StepFragmenterConfig[I any] struct {
         // Replicas is the number of replicas (go routines) created to run the step.
         Replicas uint16
 
-        // ErrorHandler is the function that handles the error occurred during the processing of the token.
-        ErrorHandler ErrorHandler
-
         // Process is the function that converts a token in the pipeline into multiple tokens.
         Process StepFragmenterProcess[I]
 }
@@ -785,6 +782,10 @@ import (
         "context"
         "sync"
 )
+
+// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
+// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
+type ErrorHandler func(string, error)
 
 // StepProcess is a function that processes a single input data and returns a single output data.
 type StepProcess[I any] func(I) (I, error)
