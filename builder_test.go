@@ -14,7 +14,7 @@ func TestNewStep_StandardStep(t *testing.T) {
 	// Test with StepConfig
 	stepConfig := &StepConfig[int]{
 		Label:        "testStep",
-		Replicas:     1,
+		Replicas:     0, //should be rectified to 1
 		ErrorHandler: errorHandler,
 		Process:      process,
 	}
@@ -43,6 +43,27 @@ func TestNewStep_StandardStep(t *testing.T) {
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}
+}
+
+func TestNewStep_StandardStep_MissingProcess(t *testing.T) {
+
+	builder := &Builder[int]{}
+	errorHandler := func(label string, err error) {}
+
+	// Test with StepConfig
+	stepConfig := &StepConfig[int]{
+		Label:        "testStep",
+		Replicas:     1,
+		ErrorHandler: errorHandler,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
 }
 
 func TestNewStep_FilterStep(t *testing.T) {
@@ -80,6 +101,25 @@ func TestNewStep_FilterStep(t *testing.T) {
 	if concreteStep.passCriteria == nil {
 		t.Error("Expected process to be set, got nil")
 	}
+}
+
+func TestNewStep_FilterStep_MissingProcess(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := &StepFilterConfig[int]{
+		Label:    "testStep",
+		Replicas: 1,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
 }
 
 func TestNewStep_FragmenterStep(t *testing.T) {
@@ -120,6 +160,25 @@ func TestNewStep_FragmenterStep(t *testing.T) {
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}
+}
+
+func TestNewStep_FragmenterStep_MissingProcess(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := &StepFragmenterConfig[int]{
+		Label:    "testStep",
+		Replicas: 1,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
 }
 
 func TestNewStep_BufferStep(t *testing.T) {
@@ -183,6 +242,70 @@ func TestNewStep_BufferStep(t *testing.T) {
 	}
 }
 
+func TestNewStep_BufferStep_MissingTimeAndInputTriggeres(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := &StepBuffered[int]{
+		Label:                        "testStep",
+		Replicas:                     1,
+		TimeTriggeredProcessInterval: 10 * time.Second,
+		BufferSize:                   10,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
+}
+
+func TestNewStep_BufferStep_TimeTriggeredWithoutInterval(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := &StepBuffered[int]{
+		Label:                "testStep",
+		Replicas:             1,
+		TimeTriggeredProcess: func(input []int) TimeTriggeredProcessOutput[int] { return TimeTriggeredProcessOutput[int]{} },
+		BufferSize:           10,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
+}
+
+func TestNewStep_BufferStep_MissingBufferSize(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := &StepBuffered[int]{
+		Label:                        "testStep",
+		Replicas:                     1,
+		TimeTriggeredProcess:         func(input []int) TimeTriggeredProcessOutput[int] { return TimeTriggeredProcessOutput[int]{} },
+		InputTriggeredProcess:        func(input []int) InputTriggeredProcessOutput[int] { return InputTriggeredProcessOutput[int]{} },
+		TimeTriggeredProcessInterval: 10 * time.Second,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
+}
+
 func TestNewStep_ResultStep(t *testing.T) {
 	builder := &Builder[int]{}
 
@@ -220,6 +343,39 @@ func TestNewStep_ResultStep(t *testing.T) {
 	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
+	}
+}
+
+func TestNewStep_ResultStep_MissingProcess(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := &StepResultConfig[int]{
+		Label:    "testStep",
+		Replicas: 1,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
+}
+
+func TestNewStep_InvalidConfig(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := builder
+
+	step := builder.NewStep(stepConfig)
+
+	if step != nil {
+		t.Error("Expected step to be nil, got something")
 	}
 }
 
