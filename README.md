@@ -93,23 +93,19 @@ func main() {
         Process:  printResult,
     })
 
-
     // Creating & init the pipeline
     channelsBufferSize := 10
     pipeline := builder.NewPipeline(channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
     pipeline.Init()
 
-
     // Running
     ctx := context.Background()
     pipeline.Run(ctx)
-
 
     // Feeding inputs
     for i := 0; i <= 50; i++ {
         pipeline.FeedOne(int64(i))
     }
-
 
     // Waiting for all tokens to be processed
     pipeline.WaitTillDone()
@@ -247,21 +243,109 @@ splitter := builder.NewStep(&pip.StepFragmenterConfig[string]{
 
 ## Buffered Step (Examples 6 & 7)
 
-### Input Triggered Buffer Step
+Buffered step is a step that doesn't apply an operation on a single token, but buffers multiple items and act on them accordingly. The **collected tokens span** can be of 2 types:
 
-// todo
+1. Received Inputs Count Span
+2. Periodic Time Span (The received token over a period of time)
 
-### Time Triggered Buffer Step
+The buffered step supports either or both of the 2 kinds of span. It also supports the pass through feature which allows users of the package to control whether the buffered pipeline tokens are sent to the following steps after being buffered or not.
 
-// todo
+You have also the option to flush the buffer any time you like.
+
+### Time Triggered Buffer Step (Example 6)
+
+In the time triggered step, every input is added to the buffer, but the process **TimeTriggeredProcess** is called with the current buffer value every **TimeTriggeredProcessInterval** set in the step configuration.
+
+In the following example, the moving sum is calculated with window of size 10.
+
+```go
+
+// StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
+type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I] // Don't redefine
+
+func periodicCalculateSum(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+	var sum int64
+	for _, v := range buffer {
+		sum += v
+	}
+	return pip.StepBufferedProcessOutput[int64]{
+		HasResult:   true,
+		Result:      sum,
+		FlushBuffer: false,
+	}
+}
+
+bufferStep := builder.NewStep(&pip.StepBufferedConfig[int64]{
+    Label:      "periodic buffer",
+    Replicas:   2,
+    BufferSize: 5,
+    PassThrough:                    false,// This means the buffer is going to retain all elements.
+    TimeTriggeredProcess:           periodicCalculateSum, // The process which is called periodically with the current buffer value.
+    TimeTriggeredProcessInterval:   100 * time.Millisecond, //This means the buffer calculates the result from the buffer every 500ms
+
+})
+```
+
+### Input Triggered Buffer Step (Example 7)
+
+For the input triggered buffer, every input received is added to the buffer and then **InputTriggeredProcess** is called with the most recent buffer value.
+
+In the following example, process waits till the buffer is full and calculates the sum with flushing the elements already added to the buffer.
+
+```go
+// StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
+type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I] // Don't redefine
+
+func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+	// checking the threshold to start calculation
+	if len(buffer) >= 10 {
+		var sum int64
+		for _, v := range buffer {
+			sum += v
+		}
+		return pip.StepBufferedProcessOutput[int64]{
+			HasResult:   true,
+			Result:      sum,
+			FlushBuffer: true, // This instructs the buffer to flush the data it retains not to affect the length threshold.
+		}
+	}
+	return pip.StepBufferedProcessOutput[int64]{
+		HasResult:   false,
+		Result:      0,
+		FlushBuffer: false,
+	}
+}
+
+bufferStep := builder.NewStep(&pip.StepBufferedConfig[int64]{
+    Label:      "buffer",
+    Replicas:   5,
+    BufferSize: 10,
+    PassThrough:            false,// This means the buffer is going to retain all elements.
+    InputTriggeredProcess:  calculateSumOnBufferCountThreshold,
+})
+```
+
+### Important Notes
+
+- The buffer size remains fixed, and when it is full the **oldest data is overwritten**. You will find the oldest data at index 0 and the most recent at the last element of the array.
+
+- Although you can set replicas, but all operating on the concurrent safe buffer.
+
+- The InputTriggered and the TimeTriggered processes are implemented in a concurrent safe context so the buffer will not change during their execution.
+
+- When you set the **PassThrough** to true and the input triggered process returns a valid result. The received input will be sent first to the following steps then the new result.
+
+- Again, you can set both time triggered and input triggered processes for the buffer step and they will be both be executed by their triggeres.
 
 ## Pipeline
+
+Although the pipeline can operate on one type, but you can create a container structure to have a separate field for every step to set if you want to accumulate results of different types.
 
 The pipeline creation requires 2 arguments
 
 1. The buffer size of the channels used to communication among the pipeline. Configure it depending on your needs.
 
-2. Steps in the order of execution
+2. Steps in the order of execution.
 
 ```go
 channelBufferSize := 10
@@ -303,11 +387,3 @@ When you want to terminate the pipeline use the following function. Note that it
 ```go
 pipeline.Terminate()
 ```
-
-# Notes
-
-- The error handler function **should NOT** block the implementation for long or else it will block and delay the execution through the pipeline. The error can be transferred to another function or process to be handled if it is going to take long.
-
-- The pipeline can operate on on type, but you can create a container structure to have a separate field for every step to set if you want to accumulate results of different types.
-
-- To filter an item and discontinue its processing, you need to return error.
