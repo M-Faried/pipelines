@@ -82,3 +82,48 @@ func TestStepFilter_Run(t *testing.T) {
 		t.Errorf("expected value -5, got %d", decrementHandler.value)
 	}
 }
+
+func TestStepFilter_ClosingWithParentContext(t *testing.T) {
+
+	decrementHandler := &mockDecrementTokensHandler{}
+	incrementHandler := &mockIncrementTokensHandler{}
+
+	step := &stepFilter[int]{
+		stepBase: stepBase[int]{
+			input:                make(chan int),
+			output:               make(chan int),
+			decrementTokensCount: decrementHandler.Handle,
+			incrementTokensCount: incrementHandler.Handle,
+		},
+		passCriteria: func(i int) bool {
+			return i%2 == 0
+		},
+	}
+
+	// Create a context with a timeout to ensure the test doesn't run indefinitely
+	ctx, cancelCtx := context.WithCancel(context.Background())
+
+	// Create a WaitGroup to wait for the goroutine to finish
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// Run the step in a separate goroutine
+	go step.Run(ctx, &wg)
+
+	// step.input <- 42
+
+	time.Sleep(100 * time.Millisecond)
+
+	cancelCtx()
+	before := time.Now()
+	wg.Wait()
+	after := time.Now()
+
+	if after.Sub(before) > 1*time.Second {
+		t.Error("expected step to stop immediately after context is cancelled")
+	}
+
+	close(step.input)
+	close(step.output)
+
+}
