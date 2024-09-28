@@ -1,7 +1,7 @@
 # Makefile for running tests with coverage and generating an HTML report
 
 # Variables
-PACKAGE = ./...
+PACKAGE = .
 COVERAGE_FILE = coverage.out
 COVERAGE_HTML = coverage.html
 
