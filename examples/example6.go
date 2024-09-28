@@ -12,27 +12,19 @@ func oddNumberCriteria(i int64) bool {
 	return i%2 != 0
 }
 
-func calculateOddSum(i []int64) pip.StepBufferedProcessOutput[int64] {
-
-	fmt.Println("calculateOddSum Input: ", i)
-
-	// The following is just for illustrating the default values of the output
-	result := pip.StepBufferedProcessOutput[int64]{
-		HasResult:   false,
-		Result:      0,
-		FlushBuffer: false,
-	}
+func periodicCalculateSum(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+	fmt.Println("calculateOddSum Input: ", buffer)
 
 	var sum int64
-	for _, v := range i {
+	for _, v := range buffer {
 		sum += v
 	}
 
-	result.HasResult = true
-	result.Result = sum
-	result.FlushBuffer = false //without flush since it will be time triggered process.
-
-	return result
+	return pip.StepBufferedProcessOutput[int64]{
+		HasResult:   true,
+		Result:      sum,
+		FlushBuffer: false,
+	}
 }
 
 // Example 6 calclulates the sum of the most recently received 5 odd numbers every 100ms.
@@ -55,7 +47,7 @@ func Example6() {
 		// Notice that, since the InputTriggeredProcess is not set, you will need to have an
 		// accurate interval time for inputs to avoid stalling pipeline for long.
 		// You can use either or both threshold and interval time based on your needs in other cases.
-		TimeTriggeredProcess:         calculateOddSum,
+		TimeTriggeredProcess:         periodicCalculateSum,
 		TimeTriggeredProcessInterval: 100 * time.Millisecond, //This means the buffer calculates the result from the buffer every 500ms
 
 	})
