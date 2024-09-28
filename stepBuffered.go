@@ -6,26 +6,20 @@ import (
 	"time"
 )
 
-type TimeTriggeredProcessOutput[I any] struct {
+type StepBufferedProcessOutput[I any] struct {
 	HasResult bool
 	Result    I
 	Flush     bool
 }
 
-type InputTriggeredProcessOutput[I any] struct {
-	HasResult     bool
-	Result        I
-	Flush         bool
-	PassSameToken bool
-}
-
-type StepBufferedTimeTiggeredProcess[I any] func([]I) TimeTriggeredProcessOutput[I]
-type StepBufferedInputTiggeredProcess[I any] func([]I) InputTriggeredProcessOutput[I]
+type StepBufferedTimeTiggeredProcess[I any] func([]I) StepBufferedProcessOutput[I]
+type StepBufferedInputTiggeredProcess[I any] func([]I) StepBufferedProcessOutput[I]
 
 type StepBuffered[I any] struct {
-	Label      string
-	Replicas   uint16
-	BufferSize int
+	Label       string
+	Replicas    uint16
+	BufferSize  int
+	PassThrough bool
 
 	InputTriggeredProcess        StepBufferedInputTiggeredProcess[I]
 	TimeTriggeredProcess         StepBufferedTimeTiggeredProcess[I]
@@ -37,29 +31,12 @@ type stepBuffered[I any] struct {
 	buffer      []I
 	bufferSize  int
 	bufferMutex sync.Mutex
-	// bufferTokensCount int
+	passThrough bool
 
 	inputTriggeredProcess        StepBufferedInputTiggeredProcess[I]
 	timeTriggeredProcess         StepBufferedTimeTiggeredProcess[I]
 	timeTriggeredProcessInterval time.Duration
 }
-
-// func (s *stepBuffered[I]) addToBuffer(i I) {
-// 	s.bufferMutex.Lock()
-// 	defer s.bufferMutex.Unlock()
-// 	// this means the newes element will always be at the end of the
-// 	if len(s.buffer) == s.bufferSize {
-// 		s.buffer = s.buffer[1:]
-// 	}
-// 	s.buffer = append(s.buffer, i)
-
-// }
-
-// func (s *stepBuffered[I]) initBuffer() {
-// 	s.bufferMutex.Lock()
-// 	defer s.bufferMutex.Unlock()
-// 	s.buffer = make([]I, 0, s.bufferSize)
-// }
 
 func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	// s.initBuffer()
@@ -90,14 +67,24 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 }
 
 func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
+
+	// All the following has to be done in during the same mutex lock.
 	s.bufferMutex.Lock()
 	defer s.bufferMutex.Unlock()
 
-	// Adding to buffer
+	// Adding the input to buffer.
 	if len(s.buffer) == s.bufferSize {
 		s.buffer = s.buffer[1:]
 	}
 	s.buffer = append(s.buffer, i)
+
+	// Checking if the passThrough is set and passing the input if it is.
+	if s.passThrough {
+		// since it was already stored the token in the buffer and will be passed in the next steps,
+		// we need to increment the tokens count by one.
+		s.incrementTokensCount()
+		s.output <- i
+	}
 
 	// Checking if the input triggered process is set.
 	if s.inputTriggeredProcess == nil {
@@ -111,13 +98,6 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 		// Since this is a new result, we need to increment the tokens count.
 		s.incrementTokensCount()
 		s.output <- processOutput.Result
-	}
-
-	if processOutput.PassSameToken {
-		// since it was already stored in the buffer and will be passed in the next step,
-		// we need to increment the tokens count.
-		s.incrementTokensCount()
-		s.output <- i
 	}
 
 	// Check if the buffer should be flushed or not.

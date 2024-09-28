@@ -12,12 +12,12 @@ func oddNumberCriteria(i int64) bool {
 	return i%2 != 0
 }
 
-func calculateOddSum(i []int64) pip.TimeTriggeredProcessOutput[int64] {
+func calculateOddSum(i []int64) pip.StepBufferedProcessOutput[int64] {
 
 	fmt.Println("calculateOddSum Input: ", i)
 
 	// The following is just for illustrating the default values of the output
-	result := pip.TimeTriggeredProcessOutput[int64]{
+	result := pip.StepBufferedProcessOutput[int64]{
 		HasResult: false,
 		Result:    0,
 		Flush:     false,
@@ -50,6 +50,8 @@ func Example6() {
 		Label:      "aggregator",
 		Replicas:   2,
 		BufferSize: 5,
+		// This means the buffer is going to retain all elements.
+		PassThrough: false,
 		// Notice that, since the InputTriggeredProcess is not set, you will need to have an
 		// accurate interval time for inputs to avoid stalling pipeline for long.
 		// You can use either or both threshold and interval time based on your needs in other cases.

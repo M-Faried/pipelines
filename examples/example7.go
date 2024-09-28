@@ -11,17 +11,15 @@ func evenNumberCriteria(i int64) bool {
 	return i%2 == 0
 }
 
-func calculateEvenSum(i []int64) pip.InputTriggeredProcessOutput[int64] {
+func calculateEvenSum(i []int64) pip.StepBufferedProcessOutput[int64] {
 
 	fmt.Println("calculateEvenSum Input: ", i)
 
 	// The following is just for illustrating the default values of the output
-	ouput := pip.InputTriggeredProcessOutput[int64]{
+	ouput := pip.StepBufferedProcessOutput[int64]{
 		HasResult: false,
 		Result:    0,
 		Flush:     false,
-		// This means the buffer is going to retain all elements in all cases.
-		PassSameToken: false,
 	}
 
 	// checking the threshold to start calculation
@@ -53,6 +51,8 @@ func Example7() {
 		Label:      "aggregator",
 		Replicas:   5,
 		BufferSize: 10,
+		// This means the buffer is going to retain all elements.
+		PassThrough: false,
 		// Notice that, since the aggregation interval is not set, you will need to have an
 		// accurate threshould formula to avoid stalling the accumulator for long.
 		// You can use either or both threshold and interval time based on your needs in other cases.
