@@ -539,8 +539,7 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span cla
                                 wg.Done()
                                 return
                         }</span>
-                        <span class="cov8" title="1">s.handleInputTriggeredProcess(i)
-                        timer.Reset(s.timeTriggeredProcessInterval)</span>
+                        <span class="cov8" title="1">s.handleInputTriggeredProcess(i)</span>
                 case &lt;-timer.C:<span class="cov8" title="1">
                         s.handleTimeTriggeredProcess()
                         timer.Reset(s.timeTriggeredProcessInterval)</span>

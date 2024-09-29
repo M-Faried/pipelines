@@ -77,7 +77,6 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			}
 			s.handleInputTriggeredProcess(i)
-			timer.Reset(s.timeTriggeredProcessInterval)
 		case <-timer.C:
 			s.handleTimeTriggeredProcess()
 			timer.Reset(s.timeTriggeredProcessInterval)
