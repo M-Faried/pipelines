@@ -19,11 +19,15 @@ type StepFragmenterConfig[I any] struct {
 
 	// Process is the function that converts a token in the pipeline into multiple tokens.
 	Process StepFragmenterProcess[I]
+
+	// ReverseProcess is the funtion that converts token in pipeline in the reverse direction.
+	ReverseProcess StepFragmenterProcess[I]
 }
 
 type stepFragmenter[I any] struct {
 	stepBase[I]
-	process StepFragmenterProcess[I]
+	process        StepFragmenterProcess[I]
+	reverseProcess StepFragmenterProcess[I]
 }
 
 func newStepFragmenter[I any](config StepFragmenterConfig[I]) IStep[I] {
@@ -51,6 +55,28 @@ func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				// adding fragmented tokens to the count.
 				s.incrementTokensCount()
 				s.output <- fragment
+			}
+			// whether the token is framented or filtered with error, it is discarded from the pipeline.
+			s.decrementTokensCount()
+		}
+	}
+}
+
+func (s *stepFragmenter[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case o, ok := <-s.output:
+			if !ok {
+				return
+			}
+			outFragments := s.reverseProcess(o)
+			for _, fragment := range outFragments {
+				// adding fragmented tokens to the count.
+				s.incrementTokensCount()
+				s.input <- fragment
 			}
 			// whether the token is framented or filtered with error, it is discarded from the pipeline.
 			s.decrementTokensCount()
