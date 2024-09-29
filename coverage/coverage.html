@@ -274,8 +274,8 @@ type pipeline[I any] struct {
         // tokensCount is the number of tokens being processed by the pipeline.
         tokensCount uint64
 
-        // tokensMutex is protect tokensCount from race conditions.
-        tokensMutex sync.Mutex
+        // tokensCountMutex is protect tokensCount from race conditions.
+        tokensCountMutex sync.Mutex
 
         // doneCond is used to wait till all tokens are processed.
         doneCond *sync.Cond
@@ -285,12 +285,15 @@ type pipeline[I any] struct {
 
         // runOnce is used to run the pipeline only once.
         runOnce sync.Once
+
+        // channelsClosed is used to signal that all channels are closed.
+        channelsClosed bool
 }
 
 func (p *pipeline[I]) Init() <span class="cov8" title="1">{
         p.initOnce.Do(func() </span><span class="cov8" title="1">{
                 // creating a condition variable for the done condition
-                p.doneCond = sync.NewCond(&amp;p.tokensMutex)
+                p.doneCond = sync.NewCond(&amp;p.tokensCountMutex)
 
                 // getting the number of steps and channels
                 stepsCount := len(p.steps)
@@ -363,6 +366,9 @@ func (p *pipeline[I]) Terminate() <span class="cov8" title="1">{
         // wait for step routines to be done
         p.stepsWaitGroup.Wait()
 
+        // setting closed channel signal.
+        p.channelsClosed = true
+
         // closing all channels
         for _, step := range p.steps </span><span class="cov8" title="1">{
                 close(step.GetInputChannel())
@@ -373,32 +379,38 @@ func (p *pipeline[I]) Terminate() <span class="cov8" title="1">{
 }
 
 func (p *pipeline[I]) FeedOne(item I) <span class="cov8" title="1">{
-        p.incrementTokensCount()
-        p.steps[0].GetInputChannel() &lt;- item
-}</span>
+        if p.channelsClosed </span><span class="cov8" title="1">{
+                return
+        }</span>
+        <span class="cov8" title="1">p.incrementTokensCount()
+        p.steps[0].GetInputChannel() &lt;- item</span>
+}
 
 func (p *pipeline[I]) FeedMany(items []I) <span class="cov8" title="1">{
         for _, item := range items </span><span class="cov8" title="1">{
-                p.incrementTokensCount()
-                p.steps[0].GetInputChannel() &lt;- item
-        }</span>
+                if p.channelsClosed </span><span class="cov8" title="1">{
+                        return
+                }</span>
+                <span class="cov8" title="1">p.incrementTokensCount()
+                p.steps[0].GetInputChannel() &lt;- item</span>
+        }
 }
 
 func (p *pipeline[I]) TokensCount() uint64 <span class="cov8" title="1">{
-        p.tokensMutex.Lock()
-        defer p.tokensMutex.Unlock()
+        p.tokensCountMutex.Lock()
+        defer p.tokensCountMutex.Unlock()
         return p.tokensCount
 }</span>
 
 func (p *pipeline[I]) incrementTokensCount() <span class="cov8" title="1">{
-        p.tokensMutex.Lock()
-        defer p.tokensMutex.Unlock()
+        p.tokensCountMutex.Lock()
+        defer p.tokensCountMutex.Unlock()
         p.tokensCount++
 }</span>
 
 func (p *pipeline[I]) decrementTokensCount() <span class="cov8" title="1">{
-        p.tokensMutex.Lock()
-        defer p.tokensMutex.Unlock()
+        p.tokensCountMutex.Lock()
+        defer p.tokensCountMutex.Unlock()
         p.tokensCount--
         p.doneCond.Signal()
 }</span>
