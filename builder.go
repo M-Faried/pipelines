@@ -1,7 +1,5 @@
 package pipelines
 
-import "fmt"
-
 // IStepConfig is an interface that defines the configuration for a step
 type IStepConfig[I any] interface{}
 
@@ -72,8 +70,6 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			buffer:                       make([]I, 0, c.BufferSize),
 		}
 	}
-
-	fmt.Println("Here is config %v", config)
 
 	return nil
 }

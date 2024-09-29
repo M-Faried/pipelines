@@ -12,7 +12,7 @@ func TestNewStep_StandardStep(t *testing.T) {
 	errorHandler := func(label string, err error) {}
 
 	// Test with StepConfig
-	stepConfig := &StepConfig[int]{
+	stepConfig := StepConfig[int]{
 		Label:        "testStep",
 		Replicas:     0, //should be rectified to 1
 		ErrorHandler: errorHandler,
@@ -51,7 +51,7 @@ func TestNewStep_StandardStep_MissingProcess(t *testing.T) {
 	errorHandler := func(label string, err error) {}
 
 	// Test with StepConfig
-	stepConfig := &StepConfig[int]{
+	stepConfig := StepConfig[int]{
 		Label:        "testStep",
 		Replicas:     1,
 		ErrorHandler: errorHandler,
@@ -72,7 +72,7 @@ func TestNewStep_FilterStep(t *testing.T) {
 	process := func(input int) bool { return true }
 
 	// Test with StepConfig
-	stepConfig := &StepFilterConfig[int]{
+	stepConfig := StepFilterConfig[int]{
 		Label:        "testStep",
 		Replicas:     1,
 		PassCriteria: process,
@@ -108,7 +108,7 @@ func TestNewStep_FilterStep_MissingProcess(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepFilterConfig[int]{
+	stepConfig := StepFilterConfig[int]{
 		Label:    "testStep",
 		Replicas: 1,
 	}
@@ -128,7 +128,7 @@ func TestNewStep_FragmenterStep(t *testing.T) {
 	process := func(input int) []int { return []int{input} }
 
 	// Test with StepConfig
-	stepConfig := &StepFragmenterConfig[int]{
+	stepConfig := StepFragmenterConfig[int]{
 		Label:    "fragmenterStep",
 		Replicas: 1,
 		Process:  process,
@@ -162,7 +162,7 @@ func TestNewStep_FragmenterStep_MissingProcess(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepFragmenterConfig[int]{
+	stepConfig := StepFragmenterConfig[int]{
 		Label:    "testStep",
 		Replicas: 1,
 	}
@@ -187,7 +187,7 @@ func TestNewStep_BufferStep(t *testing.T) {
 	}
 
 	// Test with StepConfig
-	stepConfig := &StepBufferedConfig[int]{
+	stepConfig := StepBufferedConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		BufferSize:                   20,
@@ -247,7 +247,7 @@ func TestNewStep_BufferStep_MissingTimeAndInputTriggeres(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepBufferedConfig[int]{
+	stepConfig := StepBufferedConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		TimeTriggeredProcessInterval: 10 * time.Second,
@@ -268,7 +268,7 @@ func TestNewStep_BufferStep_TimeTriggeredWithoutInterval(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepBufferedConfig[int]{
+	stepConfig := StepBufferedConfig[int]{
 		Label:                "testStep",
 		Replicas:             1,
 		TimeTriggeredProcess: func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
@@ -289,7 +289,7 @@ func TestNewStep_BufferStep_MissingBufferSize(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepBufferedConfig[int]{
+	stepConfig := StepBufferedConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		TimeTriggeredProcess:         func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
@@ -312,7 +312,7 @@ func TestNewStep_ResultStep(t *testing.T) {
 	process := func(input int) {}
 
 	// Test with StepConfig
-	stepConfig := &StepResultConfig[int]{
+	stepConfig := StepResultConfig[int]{
 		Label:    "fragmenterStep",
 		Replicas: 5,
 		Process:  process,
@@ -346,7 +346,7 @@ func TestNewStep_ResultStep_MissingProcess(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := &StepResultConfig[int]{
+	stepConfig := StepResultConfig[int]{
 		Label:    "testStep",
 		Replicas: 1,
 	}
