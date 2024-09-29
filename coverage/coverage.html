@@ -63,15 +63,15 @@
 				
 				<option value="file3">github.com/m-faried/pipelines/stepBase.go (100.0%)</option>
 				
-				<option value="file4">github.com/m-faried/pipelines/stepBuffered.go (100.0%)</option>
+				<option value="file4">github.com/m-faried/pipelines/stepBasic.go (100.0%)</option>
 				
-				<option value="file5">github.com/m-faried/pipelines/stepFilter.go (100.0%)</option>
+				<option value="file5">github.com/m-faried/pipelines/stepBuffered.go (100.0%)</option>
 				
-				<option value="file6">github.com/m-faried/pipelines/stepFragmenter.go (100.0%)</option>
+				<option value="file6">github.com/m-faried/pipelines/stepFilter.go (100.0%)</option>
 				
-				<option value="file7">github.com/m-faried/pipelines/stepResult.go (100.0%)</option>
+				<option value="file7">github.com/m-faried/pipelines/stepFragmenter.go (100.0%)</option>
 				
-				<option value="file8">github.com/m-faried/pipelines/stepStandard.go (100.0%)</option>
+				<option value="file8">github.com/m-faried/pipelines/stepResult.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -478,6 +478,76 @@ func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) <span class
 import (
         "context"
         "sync"
+)
+
+// StepBasicErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
+// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
+type StepBasicErrorHandler func(string, error)
+
+// StepBasicProcess is a function that processes a single input data and returns a single output data.
+type StepBasicProcess[I any] func(I) (I, error)
+
+// StepBasicConfig is a struct that defines the configuration for a standard step
+type StepBasicConfig[I any] struct {
+        // Label is a human-readable label for the step
+        Label string
+
+        // Replicas is the number of replicas of the step that should be run in parallel
+        Replicas uint16
+
+        // ErrorHandler is a function that will be called when an error occurs in the step
+        ErrorHandler StepBasicErrorHandler
+
+        // Process is a function that will be applied to the incoming data
+        Process StepBasicProcess[I]
+}
+
+type stepBasic[I any] struct {
+        stepBase[I]
+
+        // errorHandler is the function called when an error occurs in the step.
+        errorHandler StepBasicErrorHandler
+
+        // process is a function that will be applied to the incoming data.
+        process StepBasicProcess[I]
+}
+
+func (s *stepBasic[I]) reportError(err error) <span class="cov8" title="1">{
+        if s.errorHandler != nil </span><span class="cov8" title="1">{
+                s.errorHandler(s.label, err)
+        }</span>
+}
+
+// run is a method that runs the step process and will be executed in a separate goroutine.
+func (s *stepBasic[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
+        for </span><span class="cov8" title="1">{
+                select </span>{
+                case &lt;-ctx.Done():<span class="cov8" title="1">
+                        wg.Done()
+                        return</span>
+                case i, ok := &lt;-s.input:<span class="cov8" title="1">
+                        if !ok </span><span class="cov8" title="1">{
+                                wg.Done()
+                                return
+                        }</span>
+                        <span class="cov8" title="1">o, err := s.process(i)
+                        if err != nil </span><span class="cov8" title="1">{
+                                // since we will not proceed with the current token, we need to decrement the tokens count.
+                                s.decrementTokensCount()
+                                s.reportError(err)
+                        }</span> else<span class="cov8" title="1"> {
+                                s.output &lt;- o
+                        }</span>
+                }
+        }
+}
+</pre>
+		
+		<pre class="file" id="file5" style="display: none">package pipelines
+
+import (
+        "context"
+        "sync"
         "time"
 )
 
@@ -640,7 +710,7 @@ func (s *stepBuffered[I]) handleTimeTriggeredProcess() <span class="cov8" title=
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package pipelines
+		<pre class="file" id="file6" style="display: none">package pipelines
 
 import (
         "context"
@@ -690,7 +760,7 @@ func (s *stepFilter[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class
 }
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package pipelines
+		<pre class="file" id="file7" style="display: none">package pipelines
 
 import (
         "context"
@@ -742,7 +812,7 @@ func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span c
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package pipelines
+		<pre class="file" id="file8" style="display: none">package pipelines
 
 import (
         "context"
@@ -784,76 +854,6 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class
                         }</span>
                         <span class="cov8" title="1">s.process(i)
                         s.decrementTokensCount()</span>
-                }
-        }
-}
-</pre>
-		
-		<pre class="file" id="file8" style="display: none">package pipelines
-
-import (
-        "context"
-        "sync"
-)
-
-// StepBasicErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
-// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type StepBasicErrorHandler func(string, error)
-
-// StepBasicProcess is a function that processes a single input data and returns a single output data.
-type StepBasicProcess[I any] func(I) (I, error)
-
-// StepBasicConfig is a struct that defines the configuration for a standard step
-type StepBasicConfig[I any] struct {
-        // Label is a human-readable label for the step
-        Label string
-
-        // Replicas is the number of replicas of the step that should be run in parallel
-        Replicas uint16
-
-        // ErrorHandler is a function that will be called when an error occurs in the step
-        ErrorHandler StepBasicErrorHandler
-
-        // Process is a function that will be applied to the incoming data
-        Process StepBasicProcess[I]
-}
-
-type stepBasic[I any] struct {
-        stepBase[I]
-
-        // errorHandler is the function called when an error occurs in the step.
-        errorHandler StepBasicErrorHandler
-
-        // process is a function that will be applied to the incoming data.
-        process StepBasicProcess[I]
-}
-
-func (s *stepBasic[I]) reportError(err error) <span class="cov8" title="1">{
-        if s.errorHandler != nil </span><span class="cov8" title="1">{
-                s.errorHandler(s.label, err)
-        }</span>
-}
-
-// run is a method that runs the step process and will be executed in a separate goroutine.
-func (s *stepBasic[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
-        for </span><span class="cov8" title="1">{
-                select </span>{
-                case &lt;-ctx.Done():<span class="cov8" title="1">
-                        wg.Done()
-                        return</span>
-                case i, ok := &lt;-s.input:<span class="cov8" title="1">
-                        if !ok </span><span class="cov8" title="1">{
-                                wg.Done()
-                                return
-                        }</span>
-                        <span class="cov8" title="1">o, err := s.process(i)
-                        if err != nil </span><span class="cov8" title="1">{
-                                // since we will not proceed with the current token, we need to decrement the tokens count.
-                                s.decrementTokensCount()
-                                s.reportError(err)
-                        }</span> else<span class="cov8" title="1"> {
-                                s.output &lt;- o
-                        }</span>
                 }
         }
 }
