@@ -65,10 +65,11 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 		// this is needed to keep the thread alive as well inc case there is a long delay in the input.
 		s.timeTriggeredProcessInterval = 1000 * time.Hour
 	}
-	timer := time.NewTimer(s.timeTriggeredProcessInterval)
+	ticker := time.NewTicker(s.timeTriggeredProcessInterval)
 	for {
 		select {
 		case <-ctx.Done():
+			ticker.Stop()
 			wg.Done()
 			return
 		case i, ok := <-s.input:
@@ -77,9 +78,8 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			}
 			s.handleInputTriggeredProcess(i)
-		case <-timer.C:
+		case <-ticker.C:
 			s.handleTimeTriggeredProcess()
-			timer.Reset(s.timeTriggeredProcessInterval)
 		}
 	}
 }
