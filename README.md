@@ -335,6 +335,8 @@ bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
 
 - When you set the **PassThrough** to true and the input triggered process returns a valid result. The received input will be sent first to the following steps then the new result.
 
+- When using buffered channels don't use **pipeline.WaitTillDone()** unless you have a finite number of data and you flush the data in the buffer regularly. Other wise wait till done will stall your application.
+
 - Again, you can set both time triggered and input triggered processes for the buffer step and they will be both be executed by their triggeres.
 
 ## Pipeline
