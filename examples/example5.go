@@ -52,12 +52,12 @@ func Example5() {
 		Replicas: 1,
 		Process:  splitter,
 	})
-	trim := builder.NewStep(pip.StepConfig[*StringToken]{
+	trim := builder.NewStep(pip.StepBasicConfig[*StringToken]{
 		Label:    "trim",
 		Replicas: 2,
 		Process:  trimSpaces,
 	})
-	stars := builder.NewStep(pip.StepConfig[*StringToken]{
+	stars := builder.NewStep(pip.StepBasicConfig[*StringToken]{
 		Label:    "stars",
 		Replicas: 2,
 		Process:  addStars,

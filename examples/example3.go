@@ -26,12 +26,12 @@ func Example3() {
 
 	builder := &pip.Builder[int64]{}
 
-	step1 := builder.NewStep(pip.StepConfig[int64]{
+	step1 := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "step1",
 		Replicas: 1,
 		Process:  by10,
 	})
-	step2 := builder.NewStep(pip.StepConfig[int64]{
+	step2 := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "step2",
 		Replicas: 10, // Heavy process so we need 10 replicas
 		Process:  by100,

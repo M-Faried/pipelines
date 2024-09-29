@@ -12,7 +12,7 @@ func TestNewStep_StandardStep(t *testing.T) {
 	errorHandler := func(label string, err error) {}
 
 	// Test with StepConfig
-	stepConfig := StepConfig[int]{
+	stepConfig := StepBasicConfig[int]{
 		Label:        "testStep",
 		Replicas:     0, //should be rectified to 1
 		ErrorHandler: errorHandler,
@@ -20,12 +20,12 @@ func TestNewStep_StandardStep(t *testing.T) {
 	}
 
 	step := builder.NewStep(stepConfig)
-	var concreteStep *stepStandard[int]
+	var concreteStep *stepBasic[int]
 	var ok bool
 	if step == nil {
 		t.Error("Expected step to be created, got nil")
 	}
-	if concreteStep, ok = step.(*stepStandard[int]); !ok {
+	if concreteStep, ok = step.(*stepBasic[int]); !ok {
 		t.Error("Expected step to be of type stepStandard")
 	}
 
@@ -51,7 +51,7 @@ func TestNewStep_StandardStep_MissingProcess(t *testing.T) {
 	errorHandler := func(label string, err error) {}
 
 	// Test with StepConfig
-	stepConfig := StepConfig[int]{
+	stepConfig := StepBasicConfig[int]{
 		Label:        "testStep",
 		Replicas:     1,
 		ErrorHandler: errorHandler,

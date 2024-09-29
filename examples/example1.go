@@ -21,12 +21,12 @@ func Example1() {
 
 	builder := &pip.Builder[int64]{}
 
-	plus5Step := builder.NewStep(pip.StepConfig[int64]{
+	plus5Step := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "plus5",
 		Replicas: 1,
 		Process:  plus5,
 	})
-	minus10Step := builder.NewStep(pip.StepConfig[int64]{
+	minus10Step := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "minus10",
 		Replicas: 1,
 		Process:  minus10,

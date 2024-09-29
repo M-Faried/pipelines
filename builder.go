@@ -1,19 +1,19 @@
 package pipelines
 
-// IStepConfig is an interface that defines the configuration for a step
-type IStepConfig[I any] interface{}
+// StepConfig is an interface that defines the configuration for a step
+type StepConfig[I any] interface{}
 
 // Builder is a struct that represents a builder for the pipeline parts.
 type Builder[I any] struct{}
 
 // NewStep creates a new step based on the configuration
-func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
+func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
 
-	if c, ok := config.(StepConfig[I]); ok {
+	if c, ok := config.(StepBasicConfig[I]); ok {
 		if c.Process == nil {
 			panic("process is required")
 		}
-		return &stepStandard[I]{
+		return &stepBasic[I]{
 			stepBase:     createBaseStep[I](c.Label, c.Replicas),
 			errorHandler: c.ErrorHandler,
 			process:      c.Process,

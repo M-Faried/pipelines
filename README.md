@@ -69,13 +69,13 @@ func main() {
     builder := &pip.Builder[int64]{}
 
     // Creating steps
-    plus5Step := builder.NewStep(pip.StepConfig[int64]{
+    plus5Step := builder.NewStep(pip.StepBasicConfig[int64]{
         Label:    "plus5",
         Replicas: 1,
         Process:  plus5,
     })
 
-    minus10Step := builder.NewStep(pip.StepConfig[int64]{
+    minus10Step := builder.NewStep(pip.StepBasicConfig[int64]{
         Label:    "minus10",
         Replicas: 1,
         Process:  minus10,
@@ -155,9 +155,9 @@ Carries on a transformation on a single token in the pipeline and pushes it forw
 
 ```go
 // The process type expected by the step
-type StepProcess[I any] func(I) (I, error) // Don't redefine
+type StepBasicProcess[I any] func(I) (I, error) // Don't redefine
 
-step := builder.NewStep(pip.StepConfig[int64]{
+step := builder.NewStep(pip.StepBasicConfig[int64]{
     Replicas: 3,
     Label:    "minus10",
     Process:  func(token int64) (int64, error) {
@@ -171,12 +171,12 @@ step := builder.NewStep(pip.StepConfig[int64]{
 You can add the error handler to the configuration of the basic step in case you need to handle errors. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
 
 ```go
-// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
+// StepBasicErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
 // The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type ErrorHandler func(string, error) // Don't redefine
+type StepBasicErrorHandler func(string, error) // Don't redefine
 
 // To create a step with error handler
-step := builder.NewStep(pip.StepConfig[int64]{
+step := builder.NewStep(pip.StepBasicConfig[int64]{
     Replicas:       4,
     Label:          "plus5",
     Process:        plus5,

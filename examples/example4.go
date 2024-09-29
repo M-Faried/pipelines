@@ -32,7 +32,7 @@ func Example4() {
 	})
 
 	// The processing step
-	step2 := builder.NewStep(pip.StepConfig[int64]{
+	step2 := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "step2",
 		Replicas: 1,
 		Process:  by2,
