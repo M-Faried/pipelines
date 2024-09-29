@@ -40,13 +40,13 @@ func Example7() {
 
 	builder := &pip.Builder[int64]{}
 
-	filter := builder.NewStep(&pip.StepFilterConfig[int64]{
+	filter := builder.NewStep(pip.StepFilterConfig[int64]{
 		Label:        "filter",
 		Replicas:     1,
 		PassCriteria: evenNumberCriteria,
 	})
 
-	buffer := builder.NewStep(&pip.StepBufferedConfig[int64]{
+	buffer := builder.NewStep(pip.StepBufferedConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   5,
 		BufferSize: 10,
@@ -58,7 +58,7 @@ func Example7() {
 		InputTriggeredProcess: calculateSumOnBufferCountThreshold,
 	})
 
-	result := builder.NewStep(&pip.StepResultConfig[int64]{
+	result := builder.NewStep(pip.StepResultConfig[int64]{
 		Label:    "result",
 		Replicas: 1,
 		Process:  printResult,

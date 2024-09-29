@@ -69,25 +69,25 @@ func main() {
     builder := &pip.Builder[int64]{}
 
     // Creating steps
-    plus5Step := builder.NewStep(&pip.StepConfig[int64]{
+    plus5Step := builder.NewStep(pip.StepConfig[int64]{
         Label:    "plus5",
         Replicas: 1,
         Process:  plus5,
     })
 
-    minus10Step := builder.NewStep(&pip.StepConfig[int64]{
+    minus10Step := builder.NewStep(pip.StepConfig[int64]{
         Label:    "minus10",
         Replicas: 1,
         Process:  minus10,
     })
 
-    filterStep := builder.NewStep(&pip.StepFilterConfig[int64]{
+    filterStep := builder.NewStep(pip.StepFilterConfig[int64]{
         Label: "filter",
         Replicas: 1,
         PassCriteria: isPositiveValue,
     })
 
-    printResultStep := builder.NewStep(&pip.StepResultConfig[int64]{
+    printResultStep := builder.NewStep(pip.StepResultConfig[int64]{
         Label:    "print",
         Replicas: 1,
         Process:  printResult,
@@ -157,7 +157,7 @@ Carries on a transformation on a single token in the pipeline and pushes it forw
 // The process type expected by the step
 type StepProcess[I any] func(I) (I, error) // Don't redefine
 
-step := builder.NewStep(&pip.StepConfig[int64]{
+step := builder.NewStep(pip.StepConfig[int64]{
     Replicas: 3,
     Label:    "minus10",
     Process:  func(token int64) (int64, error) {
@@ -176,7 +176,7 @@ You can add the error handler to the configuration of the basic step in case you
 type ErrorHandler func(string, error) // Don't redefine
 
 // To create a step with error handler
-step := builder.NewStep(&pip.StepConfig[int64]{
+step := builder.NewStep(pip.StepConfig[int64]{
     Replicas:       4,
     Label:          "plus5",
     Process:        plus5,
@@ -194,7 +194,7 @@ Used to get rid of any undesired tokens from the pipelines
 // StepFilterPassCriteria is function that determines if the data should be passed or not.
 type StepFilterPassCriteria[I any] func(I) bool // Don't redefine
 
-step := builder.NewStep(&pip.StepFilterConfig[int64]{
+step := builder.NewStep(pip.StepFilterConfig[int64]{
     Replicas:     1,
     Label:        "filterEven",
     PassCriteria: func(token int64) bool {
@@ -212,7 +212,7 @@ Result step is the final step in the pipeline and can return errors only. It als
 type StepResultProcess[I any] func(I) // Don't redefine
 
 // result step
-resultStep := builder.NewStep(&pip.StepResultConfig[int64]{
+resultStep := builder.NewStep(pip.StepResultConfig[int64]{
     Replicas: 1,
     Label:    "print",
     Process:  func(token int64) {
@@ -230,7 +230,7 @@ Fragmenter step allows users to break down a token into multiple tokens and fed 
 type StepFragmenterProcess[I any] func(I) []I // Don't redefine
 
 // fragmenter step
-splitter := builder.NewStep(&pip.StepFragmenterConfig[string]{
+splitter := builder.NewStep(pip.StepFragmenterConfig[string]{
     Label:    "fragmenter",
     Replicas: 1,
     Process:  func(token string) []string {
@@ -275,7 +275,7 @@ func periodicCalculateSum(buffer []int64) pip.StepBufferedProcessOutput[int64] {
 	}
 }
 
-bufferStep := builder.NewStep(&pip.StepBufferedConfig[int64]{
+bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
     Label:      "periodic buffer",
     Replicas:   2,
     BufferSize: 5,
@@ -316,7 +316,7 @@ func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessO
 	}
 }
 
-bufferStep := builder.NewStep(&pip.StepBufferedConfig[int64]{
+bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
     Label:      "buffer",
     Replicas:   5,
     BufferSize: 10,

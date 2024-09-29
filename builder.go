@@ -1,5 +1,7 @@
 package pipelines
 
+import "fmt"
+
 // IStepConfig is an interface that defines the configuration for a step
 type IStepConfig[I any] interface{}
 
@@ -9,7 +11,7 @@ type Builder[I any] struct{}
 // NewStep creates a new step based on the configuration
 func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 
-	if c, ok := config.(*StepConfig[I]); ok {
+	if c, ok := config.(StepConfig[I]); ok {
 		if c.Process == nil {
 			panic("process is required")
 		}
@@ -20,7 +22,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
-	if c, ok := config.(*StepFragmenterConfig[I]); ok {
+	if c, ok := config.(StepFragmenterConfig[I]); ok {
 		if c.Process == nil {
 			panic("process is required")
 		}
@@ -30,7 +32,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
-	if c, ok := config.(*StepResultConfig[I]); ok {
+	if c, ok := config.(StepResultConfig[I]); ok {
 		if c.Process == nil {
 			panic("process is required")
 		}
@@ -40,7 +42,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
-	if c, ok := config.(*StepFilterConfig[I]); ok {
+	if c, ok := config.(StepFilterConfig[I]); ok {
 		if c.PassCriteria == nil {
 			panic("process is required")
 		}
@@ -50,7 +52,7 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 		}
 	}
 
-	if c, ok := config.(*StepBufferedConfig[I]); ok {
+	if c, ok := config.(StepBufferedConfig[I]); ok {
 		if c.InputTriggeredProcess == nil && c.TimeTriggeredProcess == nil {
 			panic("either time triggered or input process is required")
 		}
@@ -70,6 +72,8 @@ func (s *Builder[I]) NewStep(config IStepConfig[I]) IStep[I] {
 			buffer:                       make([]I, 0, c.BufferSize),
 		}
 	}
+
+	fmt.Println("Here is config %v", config)
 
 	return nil
 }

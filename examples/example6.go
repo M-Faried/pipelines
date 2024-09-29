@@ -32,13 +32,13 @@ func Example6() {
 
 	builder := &pip.Builder[int64]{}
 
-	filter := builder.NewStep(&pip.StepFilterConfig[int64]{
+	filter := builder.NewStep(pip.StepFilterConfig[int64]{
 		Label:        "filter",
 		Replicas:     1,
 		PassCriteria: oddNumberCriteria,
 	})
 
-	aggregator := builder.NewStep(&pip.StepBufferedConfig[int64]{
+	aggregator := builder.NewStep(pip.StepBufferedConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   2,
 		BufferSize: 5,
@@ -52,7 +52,7 @@ func Example6() {
 
 	})
 
-	result := builder.NewStep(&pip.StepResultConfig[int64]{
+	result := builder.NewStep(pip.StepResultConfig[int64]{
 		Label:    "result",
 		Replicas: 1,
 		Process:  printResult,

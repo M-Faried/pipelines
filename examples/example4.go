@@ -25,21 +25,21 @@ func Example4() {
 	builder := &pip.Builder[int64]{}
 
 	// the filter step
-	step1 := builder.NewStep(&pip.StepFilterConfig[int64]{
+	step1 := builder.NewStep(pip.StepFilterConfig[int64]{
 		Label:        "step1",
 		Replicas:     1,
 		PassCriteria: isEvenValue,
 	})
 
 	// The processing step
-	step2 := builder.NewStep(&pip.StepConfig[int64]{
+	step2 := builder.NewStep(pip.StepConfig[int64]{
 		Label:    "step2",
 		Replicas: 1,
 		Process:  by2,
 	})
 
 	// The result step
-	resultStep := builder.NewStep(&pip.StepResultConfig[int64]{
+	resultStep := builder.NewStep(pip.StepResultConfig[int64]{
 		Label:    "resultStep",
 		Replicas: 1,
 		Process:  printFilterResult,

@@ -47,22 +47,22 @@ func Example5() {
 
 	builder := &pip.Builder[*StringToken]{}
 
-	splitter := builder.NewStep(&pip.StepFragmenterConfig[*StringToken]{
+	splitter := builder.NewStep(pip.StepFragmenterConfig[*StringToken]{
 		Label:    "fragmenter",
 		Replicas: 1,
 		Process:  splitter,
 	})
-	trim := builder.NewStep(&pip.StepConfig[*StringToken]{
+	trim := builder.NewStep(pip.StepConfig[*StringToken]{
 		Label:    "trim",
 		Replicas: 2,
 		Process:  trimSpaces,
 	})
-	stars := builder.NewStep(&pip.StepConfig[*StringToken]{
+	stars := builder.NewStep(pip.StepConfig[*StringToken]{
 		Label:    "stars",
 		Replicas: 2,
 		Process:  addStars,
 	})
-	result := builder.NewStep(&pip.StepResultConfig[*StringToken]{
+	result := builder.NewStep(pip.StepResultConfig[*StringToken]{
 		Label:    "result",
 		Replicas: 2,
 		Process:  tokenPrinter,
