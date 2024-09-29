@@ -62,7 +62,7 @@ func Example5() {
 		Replicas: 2,
 		Process:  addStars,
 	})
-	result := builder.NewStep(pip.StepResultConfig[*StringToken]{
+	result := builder.NewStep(pip.StepTerminalConfig[*StringToken]{
 		Label:    "result",
 		Replicas: 2,
 		Process:  tokenPrinter,

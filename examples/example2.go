@@ -45,7 +45,7 @@ func Example2() {
 		Replicas: 1,
 		Process:  processToken,
 	})
-	resultStep := builder.NewStep(pip.StepResultConfig[*Token]{
+	resultStep := builder.NewStep(pip.StepTerminalConfig[*Token]{
 		Label:    "result",
 		Replicas: 1,
 		Process:  printToken,

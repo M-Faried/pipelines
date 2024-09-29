@@ -197,7 +197,7 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 		TimeTriggeredProcessInterval: SENSOR_DATA_AVG_INTERVAL,
 	})
 
-	saveInDBStep := builder.NewStep(pip.StepResultConfig[*SensorData]{
+	saveInDBStep := builder.NewStep(pip.StepTerminalConfig[*SensorData]{
 		Label:    "saveInDB",
 		Replicas: REPLICAS_SAVE_DB_STEP,
 		Process:  saveInDB,

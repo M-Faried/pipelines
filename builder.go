@@ -15,8 +15,8 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
 		return newStepBasic(c)
 	case StepFragmenterConfig[I]:
 		return newStepFragmenter(c)
-	case StepResultConfig[I]:
-		return newStepResult(c)
+	case StepTerminalConfig[I]:
+		return newStepTerminal(c)
 	case StepFilterConfig[I]:
 		return newStepFilter(c)
 	case StepBufferedConfig[I]:

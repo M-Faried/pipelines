@@ -5,11 +5,11 @@ import (
 	"sync"
 )
 
-// StepResultProcess is a function that processes the input data and does not return any data.
-type StepResultProcess[I any] func(I)
+// StepTerminalProcess is a function that processes the input data and does not return any data.
+type StepTerminalProcess[I any] func(I)
 
-// StepResultConfig is a struct that defines the configuration for a result step
-type StepResultConfig[I any] struct {
+// StepTerminalConfig is a struct that defines the configuration for a result step
+type StepTerminalConfig[I any] struct {
 
 	// Label is the name of the step.
 	Label string
@@ -18,29 +18,29 @@ type StepResultConfig[I any] struct {
 	Replicas uint16
 
 	// Process is the function that processes the input data and does not return any data.
-	Process        StepResultProcess[I]
-	ReverseProcess StepResultProcess[I]
+	Process        StepTerminalProcess[I]
+	ReverseProcess StepTerminalProcess[I]
 }
 
-// stepResult is a struct that represents a step in the pipeline that does not return any data.
-type stepResult[I any] struct {
+// stepTerminal is a struct that represents a step in the pipeline that does not return any data.
+type stepTerminal[I any] struct {
 	stepBase[I]
-	process        StepResultProcess[I]
-	reverseProcess StepResultProcess[I]
+	process        StepTerminalProcess[I]
+	reverseProcess StepTerminalProcess[I]
 }
 
-func newStepResult[I any](config StepResultConfig[I]) IStep[I] {
+func newStepTerminal[I any](config StepTerminalConfig[I]) IStep[I] {
 	if config.Process == nil {
 		panic("process is required")
 	}
-	return &stepResult[I]{
+	return &stepTerminal[I]{
 		stepBase:       newBaseStep[I](config.Label, config.Replicas),
 		process:        config.Process,
 		reverseProcess: config.ReverseProcess,
 	}
 }
 
-func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
+func (s *stepTerminal[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		select {
@@ -56,7 +56,7 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-func (s *stepResult[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
+func (s *stepTerminal[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
 	for {
 		select {

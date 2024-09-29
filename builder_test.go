@@ -306,25 +306,25 @@ func TestNewStep_BufferStep_MissingBufferSize(t *testing.T) {
 	builder.NewStep(stepConfig)
 }
 
-func TestNewStep_ResultStep(t *testing.T) {
+func TestNewStep_TerminalStep(t *testing.T) {
 	builder := &Builder[int]{}
 
 	process := func(input int) {}
 
 	// Test with StepConfig
-	stepConfig := StepResultConfig[int]{
+	stepConfig := StepTerminalConfig[int]{
 		Label:    "fragmenterStep",
 		Replicas: 5,
 		Process:  process,
 	}
 
 	step := builder.NewStep(stepConfig)
-	var concreteStep *stepResult[int]
+	var concreteStep *stepTerminal[int]
 	var ok bool
 	if step == nil {
 		t.Error("Expected step to be created, got nil")
 	}
-	if concreteStep, ok = step.(*stepResult[int]); !ok {
+	if concreteStep, ok = step.(*stepTerminal[int]); !ok {
 		t.Error("Expected step to be of type stepStandard")
 	}
 
@@ -346,7 +346,7 @@ func TestNewStep_ResultStep_MissingProcess(t *testing.T) {
 	builder := &Builder[int]{}
 
 	// Test with StepConfig
-	stepConfig := StepResultConfig[int]{
+	stepConfig := StepTerminalConfig[int]{
 		Label:    "testStep",
 		Replicas: 1,
 	}

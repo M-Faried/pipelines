@@ -39,7 +39,7 @@ func Example4() {
 	})
 
 	// The result step
-	resultStep := builder.NewStep(pip.StepResultConfig[int64]{
+	resultStep := builder.NewStep(pip.StepTerminalConfig[int64]{
 		Label:    "resultStep",
 		Replicas: 1,
 		Process:  printFilterResult,

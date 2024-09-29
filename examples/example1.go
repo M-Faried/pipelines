@@ -31,7 +31,7 @@ func Example1() {
 		Replicas: 1,
 		Process:  minus10,
 	})
-	printResultStep := builder.NewStep(pip.StepResultConfig[int64]{
+	printResultStep := builder.NewStep(pip.StepTerminalConfig[int64]{
 		Label:    "print",
 		Replicas: 1,
 		Process:  printResult,

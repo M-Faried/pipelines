@@ -52,7 +52,7 @@ func Example6() {
 
 	})
 
-	result := builder.NewStep(pip.StepResultConfig[int64]{
+	result := builder.NewStep(pip.StepTerminalConfig[int64]{
 		Label:    "result",
 		Replicas: 1,
 		Process:  printResult,

@@ -36,7 +36,7 @@ func Example3() {
 		Replicas: 10, // Heavy process so we need 10 replicas
 		Process:  by100,
 	})
-	stepResult := builder.NewStep(pip.StepResultConfig[int64]{
+	stepResult := builder.NewStep(pip.StepTerminalConfig[int64]{
 		Label:    "result",
 		Replicas: 1,
 		Process:  printBy10Result,

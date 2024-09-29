@@ -7,13 +7,13 @@ import (
 	"time"
 )
 
-func TestStepResult_SuccessfulProcess(t *testing.T) {
+func TestStepTerminal_SuccessfulProcess(t *testing.T) {
 
 	processHandler := &mockResultProcessHandler[int]{}
 	decrementTokensHandler := &mockDecrementTokensHandler{}
 	incrementTokensHandler := &mockIncrementTokensHandler{}
 
-	step := &stepResult[int]{
+	step := &stepTerminal[int]{
 		stepBase: stepBase[int]{
 			label:                "testStep",
 			input:                make(chan int, 1),
@@ -49,11 +49,11 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 	close(step.input)
 }
 
-func TestStepResult_ClosingInputChannel(t *testing.T) {
+func TestStepTerminal_ClosingInputChannel(t *testing.T) {
 	processHandler := &mockResultProcessHandler[int]{}
 	decrementTokensHandler := &mockDecrementTokensHandler{}
 
-	step := &stepResult[int]{
+	step := &stepTerminal[int]{
 		stepBase: stepBase[int]{
 			label:                "testStep",
 			input:                make(chan int, 1),
