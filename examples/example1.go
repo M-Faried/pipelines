@@ -13,26 +13,25 @@ func plus5(i int64) (int64, error) {
 func minus10(i int64) (int64, error) {
 	return i - 10, nil
 }
-func printResult(i int64) error {
+func printResult(i int64) {
 	fmt.Printf("Result: %d \n", i)
-	return nil
 }
 
 func Example1() {
 
 	builder := &pip.Builder[int64]{}
 
-	plus5Step := builder.NewStep(&pip.StepConfig[int64]{
+	plus5Step := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "plus5",
 		Replicas: 1,
 		Process:  plus5,
 	})
-	minus10Step := builder.NewStep(&pip.StepConfig[int64]{
+	minus10Step := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "minus10",
 		Replicas: 1,
 		Process:  minus10,
 	})
-	printResultStep := builder.NewStep(&pip.StepResultConfig[int64]{
+	printResultStep := builder.NewStep(pip.StepResultConfig[int64]{
 		Label:    "print",
 		Replicas: 1,
 		Process:  printResult,
@@ -46,7 +45,7 @@ func Example1() {
 	pipeline.Run(ctx)
 
 	// Feeding inputs
-	for i := 0; i <= 500; i++ {
+	for i := 0; i <= 25; i++ {
 		pipeline.FeedOne(int64(i))
 	}
 

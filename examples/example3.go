@@ -17,9 +17,8 @@ func by100(i int64) (int64, error) {
 	return i * 100, nil
 }
 
-func printBy10Result(i int64) error {
+func printBy10Result(i int64) {
 	fmt.Printf("Result: %d \n", i)
-	return nil
 }
 
 // Example3 demonstrates how to utilize replicas feature when you have a heavy process.
@@ -27,17 +26,17 @@ func Example3() {
 
 	builder := &pip.Builder[int64]{}
 
-	step1 := builder.NewStep(&pip.StepConfig[int64]{
+	step1 := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "step1",
 		Replicas: 1,
 		Process:  by10,
 	})
-	step2 := builder.NewStep(&pip.StepConfig[int64]{
+	step2 := builder.NewStep(pip.StepBasicConfig[int64]{
 		Label:    "step2",
 		Replicas: 10, // Heavy process so we need 10 replicas
 		Process:  by100,
 	})
-	stepResult := builder.NewStep(&pip.StepResultConfig[int64]{
+	stepResult := builder.NewStep(pip.StepResultConfig[int64]{
 		Label:    "result",
 		Replicas: 1,
 		Process:  printBy10Result,

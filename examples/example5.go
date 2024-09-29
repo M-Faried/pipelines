@@ -13,7 +13,7 @@ type StringToken struct {
 	Original string
 }
 
-func splitter(token *StringToken) ([]*StringToken, error) {
+func splitter(token *StringToken) []*StringToken {
 	// Split the Value field by comma
 	parts := strings.Split(token.Value, ",")
 
@@ -25,7 +25,7 @@ func splitter(token *StringToken) ([]*StringToken, error) {
 		result[i] = &StringToken{Value: part, Original: token.Value}
 	}
 
-	return result, nil
+	return result
 }
 
 func trimSpaces(token *StringToken) (*StringToken, error) {
@@ -38,9 +38,8 @@ func addStars(token *StringToken) (*StringToken, error) {
 	return token, nil
 }
 
-func tokenPrinter(token *StringToken) error {
+func tokenPrinter(token *StringToken) {
 	fmt.Println("Result:", token.Value, "\tOriginal:", token.Original)
-	return nil
 }
 
 // Example5 demonstrates a pipeline with a step that fragments tokens.
@@ -48,22 +47,22 @@ func Example5() {
 
 	builder := &pip.Builder[*StringToken]{}
 
-	splitter := builder.NewStep(&pip.StepFragmenterConfig[*StringToken]{
+	splitter := builder.NewStep(pip.StepFragmenterConfig[*StringToken]{
 		Label:    "fragmenter",
 		Replicas: 1,
 		Process:  splitter,
 	})
-	trim := builder.NewStep(&pip.StepConfig[*StringToken]{
+	trim := builder.NewStep(pip.StepBasicConfig[*StringToken]{
 		Label:    "trim",
 		Replicas: 2,
 		Process:  trimSpaces,
 	})
-	stars := builder.NewStep(&pip.StepConfig[*StringToken]{
+	stars := builder.NewStep(pip.StepBasicConfig[*StringToken]{
 		Label:    "stars",
 		Replicas: 2,
 		Process:  addStars,
 	})
-	result := builder.NewStep(&pip.StepResultConfig[*StringToken]{
+	result := builder.NewStep(pip.StepResultConfig[*StringToken]{
 		Label:    "result",
 		Replicas: 2,
 		Process:  tokenPrinter,

@@ -1,9 +1,5 @@
 package pipelines
 
-// ErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
-// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type ErrorHandler func(string, error)
-
 // stepBase is a base struct for all steps
 type stepBase[I any] struct {
 
@@ -18,9 +14,6 @@ type stepBase[I any] struct {
 
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint16
-
-	// errorHandler is the function called when an error occurs in the step.
-	errorHandler ErrorHandler
 
 	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
 	decrementTokensCount func()
@@ -59,8 +52,4 @@ func (s *stepBase[I]) SetDecrementTokensCountHandler(handler func()) {
 
 func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) {
 	s.incrementTokensCount = handler
-}
-
-func (s *stepBase[I]) SetReportErrorHanler(handler ErrorHandler) {
-	s.errorHandler = handler
 }

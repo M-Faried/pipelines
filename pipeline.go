@@ -48,8 +48,8 @@ type pipeline[I any] struct {
 	// tokensCount is the number of tokens being processed by the pipeline.
 	tokensCount uint64
 
-	// tokensMutex is protect tokensCount from race conditions.
-	tokensMutex sync.Mutex
+	// tokensCountMutex is protect tokensCount from race conditions.
+	tokensCountMutex sync.Mutex
 
 	// doneCond is used to wait till all tokens are processed.
 	doneCond *sync.Cond
@@ -59,12 +59,15 @@ type pipeline[I any] struct {
 
 	// runOnce is used to run the pipeline only once.
 	runOnce sync.Once
+
+	// channelsClosed is used to signal that all channels are closed.
+	channelsClosed bool
 }
 
 func (p *pipeline[I]) Init() {
 	p.initOnce.Do(func() {
 		// creating a condition variable for the done condition
-		p.doneCond = sync.NewCond(&p.tokensMutex)
+		p.doneCond = sync.NewCond(&p.tokensCountMutex)
 
 		// getting the number of steps and channels
 		stepsCount := len(p.steps)
@@ -137,6 +140,9 @@ func (p *pipeline[I]) Terminate() {
 	// wait for step routines to be done
 	p.stepsWaitGroup.Wait()
 
+	// setting closed channel signal.
+	p.channelsClosed = true
+
 	// closing all channels
 	for _, step := range p.steps {
 		close(step.GetInputChannel())
@@ -147,32 +153,38 @@ func (p *pipeline[I]) Terminate() {
 }
 
 func (p *pipeline[I]) FeedOne(item I) {
+	if p.channelsClosed {
+		return
+	}
 	p.incrementTokensCount()
 	p.steps[0].GetInputChannel() <- item
 }
 
 func (p *pipeline[I]) FeedMany(items []I) {
 	for _, item := range items {
+		if p.channelsClosed {
+			return
+		}
 		p.incrementTokensCount()
 		p.steps[0].GetInputChannel() <- item
 	}
 }
 
 func (p *pipeline[I]) TokensCount() uint64 {
-	p.tokensMutex.Lock()
-	defer p.tokensMutex.Unlock()
+	p.tokensCountMutex.Lock()
+	defer p.tokensCountMutex.Unlock()
 	return p.tokensCount
 }
 
 func (p *pipeline[I]) incrementTokensCount() {
-	p.tokensMutex.Lock()
-	defer p.tokensMutex.Unlock()
+	p.tokensCountMutex.Lock()
+	defer p.tokensCountMutex.Unlock()
 	p.tokensCount++
 }
 
 func (p *pipeline[I]) decrementTokensCount() {
-	p.tokensMutex.Lock()
-	defer p.tokensMutex.Unlock()
+	p.tokensCountMutex.Lock()
+	defer p.tokensCountMutex.Unlock()
 	p.tokensCount--
 	p.doneCond.Signal()
 }

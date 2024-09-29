@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"context"
-	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -10,16 +9,16 @@ import (
 
 func TestStepResult_SuccessfulProcess(t *testing.T) {
 
-	errorHandler := &mockErrorHandler{}
 	processHandler := &mockResultProcessHandler[int]{}
 	decrementTokensHandler := &mockDecrementTokensHandler{}
+	incrementTokensHandler := &mockIncrementTokensHandler{}
 
 	step := &stepResult[int]{
 		stepBase: stepBase[int]{
 			label:                "testStep",
 			input:                make(chan int, 1),
-			errorHandler:         errorHandler.Handle,
 			decrementTokensCount: decrementTokensHandler.Handle,
+			incrementTokensCount: incrementTokensHandler.Handle,
 		},
 		process: processHandler.Handle,
 	}
@@ -41,8 +40,8 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 		t.Errorf("expected decrement tokens handler to be called")
 	}
 
-	if errorHandler.called {
-		t.Errorf("did not expect error handler to be called")
+	if incrementTokensHandler.called {
+		t.Errorf("did not expect increment tokens handler to be called")
 	}
 
 	cancel()
@@ -50,51 +49,33 @@ func TestStepResult_SuccessfulProcess(t *testing.T) {
 	close(step.input)
 }
 
-func TestStepResult_ProcessWithError(t *testing.T) {
-
-	decrementHandler := &mockDecrementTokensHandler{}
-	errorHandler := &mockErrorHandler{}
+func TestStepResult_ClosingInputChannel(t *testing.T) {
+	processHandler := &mockResultProcessHandler[int]{}
+	decrementTokensHandler := &mockDecrementTokensHandler{}
 
 	step := &stepResult[int]{
 		stepBase: stepBase[int]{
 			label:                "testStep",
-			input:                make(chan int, 3),
-			errorHandler:         errorHandler.Handle,
-			decrementTokensCount: decrementHandler.Handle,
+			input:                make(chan int, 1),
+			decrementTokensCount: decrementTokensHandler.Handle,
 		},
-		process: func(i int) error {
-			if i == 2 {
-				return errors.New("process error")
-			}
-			return nil
-		},
+		process: processHandler.Handle,
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx := context.Background()
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
+
 	go step.Run(ctx, wg)
 
-	step.input <- 1
-	step.input <- 2
-	step.input <- 3
+	step.input <- 42
 
-	time.Sleep(100 * time.Millisecond) // Give some time for the goroutine to process
-
-	if !errorHandler.called {
-		t.Errorf("expected error handler to be called")
-	}
-	if errorHandler.label != "testStep" {
-		t.Errorf("expected label %v, got %v", "testStep", errorHandler.label)
-	}
-	if errorHandler.err == nil || errorHandler.err.Error() != "process error" {
-		t.Errorf("expected error %v, got %v", "process error", errorHandler.err)
-	}
-	if !decrementHandler.called {
-		t.Errorf("expected decrement handler to be called")
-	}
-
-	cancel()
-	wg.Wait()
 	close(step.input)
+	before := time.Now()
+	wg.Wait()
+	after := time.Now()
+
+	if after.Sub(before) > 10*time.Millisecond {
+		t.Error("expected step to stop immediately after context is cancelled")
+	}
 }

@@ -97,6 +97,12 @@ func TestPipeline_FeedOne(t *testing.T) {
 
 	p.WaitTillDone()
 	p.Terminate()
+
+	// Test feeding after termination
+	p.FeedOne(5)
+	if p.TokensCount() != 0 {
+		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
+	}
 }
 
 func TestPipeline_FeedMany(t *testing.T) {
@@ -129,6 +135,12 @@ func TestPipeline_FeedMany(t *testing.T) {
 
 	p.WaitTillDone()
 	p.Terminate()
+
+	// Test feeding after termination
+	p.FeedMany([]int{1, 2, 3})
+	if p.TokensCount() != 0 {
+		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
+	}
 }
 
 func TestPipeline_Terminate(t *testing.T) {
