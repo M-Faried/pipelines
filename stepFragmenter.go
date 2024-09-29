@@ -26,15 +26,24 @@ type stepFragmenter[I any] struct {
 	process StepFragmenterProcess[I]
 }
 
+func newStepFragmenter[I any](config StepFragmenterConfig[I]) IStep[I] {
+	if config.Process == nil {
+		panic("process is required")
+	}
+	return &stepFragmenter[I]{
+		stepBase: newBaseStep[I](config.Label, config.Replicas),
+		process:  config.Process,
+	}
+}
+
 func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
-			wg.Done()
 			return
 		case i, ok := <-s.input:
 			if !ok {
-				wg.Done()
 				return
 			}
 			outFragments := s.process(i)

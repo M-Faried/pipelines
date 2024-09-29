@@ -138,70 +138,20 @@ type Builder[I any] struct{}
 
 // NewStep creates a new step based on the configuration
 func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] <span class="cov8" title="1">{
-
-        if c, ok := config.(StepBasicConfig[I]); ok </span><span class="cov8" title="1">{
-                if c.Process == nil </span><span class="cov8" title="1">{
-                        panic("process is required")</span>
-                }
-                <span class="cov8" title="1">return &amp;stepBasic[I]{
-                        stepBase:     createBaseStep[I](c.Label, c.Replicas),
-                        errorHandler: c.ErrorHandler,
-                        process:      c.Process,
-                }</span>
+        switch c := config.(type) </span>{
+        case StepBasicConfig[I]:<span class="cov8" title="1">
+                return newStepBasic(c)</span>
+        case StepFragmenterConfig[I]:<span class="cov8" title="1">
+                return newStepFragmenter(c)</span>
+        case StepResultConfig[I]:<span class="cov8" title="1">
+                return newStepResult(c)</span>
+        case StepFilterConfig[I]:<span class="cov8" title="1">
+                return newStepFilter(c)</span>
+        case StepBufferedConfig[I]:<span class="cov8" title="1">
+                return newStepBuffered(c)</span>
+        default:<span class="cov8" title="1">
+                panic(fmt.Sprintf("unknown step configuration: %v", config))</span>
         }
-
-        <span class="cov8" title="1">if c, ok := config.(StepFragmenterConfig[I]); ok </span><span class="cov8" title="1">{
-                if c.Process == nil </span><span class="cov8" title="1">{
-                        panic("process is required")</span>
-                }
-                <span class="cov8" title="1">return &amp;stepFragmenter[I]{
-                        stepBase: createBaseStep[I](c.Label, c.Replicas),
-                        process:  c.Process,
-                }</span>
-        }
-
-        <span class="cov8" title="1">if c, ok := config.(StepResultConfig[I]); ok </span><span class="cov8" title="1">{
-                if c.Process == nil </span><span class="cov8" title="1">{
-                        panic("process is required")</span>
-                }
-                <span class="cov8" title="1">return &amp;stepResult[I]{
-                        stepBase: createBaseStep[I](c.Label, c.Replicas),
-                        process:  c.Process,
-                }</span>
-        }
-
-        <span class="cov8" title="1">if c, ok := config.(StepFilterConfig[I]); ok </span><span class="cov8" title="1">{
-                if c.PassCriteria == nil </span><span class="cov8" title="1">{
-                        panic("process is required")</span>
-                }
-                <span class="cov8" title="1">return &amp;stepFilter[I]{
-                        stepBase:     createBaseStep[I](c.Label, c.Replicas),
-                        passCriteria: c.PassCriteria,
-                }</span>
-        }
-
-        <span class="cov8" title="1">if c, ok := config.(StepBufferedConfig[I]); ok </span><span class="cov8" title="1">{
-                if c.InputTriggeredProcess == nil &amp;&amp; c.TimeTriggeredProcess == nil </span><span class="cov8" title="1">{
-                        panic("either time triggered or input process is required")</span>
-                }
-                <span class="cov8" title="1">if c.TimeTriggeredProcess != nil &amp;&amp; c.TimeTriggeredProcessInterval == 0 </span><span class="cov8" title="1">{
-                        panic("time triggered process interval is required to be used with time triggered process")</span>
-                }
-                <span class="cov8" title="1">if c.BufferSize &lt;= 0 </span><span class="cov8" title="1">{
-                        panic("buffer size must be greater than or equal to 0")</span>
-                }
-                <span class="cov8" title="1">return &amp;stepBuffered[I]{
-                        stepBase:                     createBaseStep[I](c.Label, c.Replicas),
-                        bufferSize:                   c.BufferSize,
-                        inputTriggeredProcess:        c.InputTriggeredProcess,
-                        timeTriggeredProcess:         c.TimeTriggeredProcess,
-                        timeTriggeredProcessInterval: c.TimeTriggeredProcessInterval,
-                        passThrough:                  c.PassThrough,
-                        buffer:                       make([]I, 0, c.BufferSize),
-                }</span>
-        }
-
-        <span class="cov8" title="1">panic(fmt.Sprintf("unknown step configuration: %v", config))</span>
 }
 
 // NewPipeline creates a new pipeline with the given channel size and steps.
@@ -212,16 +162,6 @@ func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipelin
         pipe.channelSize = channelSize
         return pipe
 }</span>
-
-func createBaseStep[I any](label string, replicas uint16) stepBase[I] <span class="cov8" title="1">{
-        if replicas == 0 </span><span class="cov8" title="1">{
-                replicas = 1
-        }</span>
-        <span class="cov8" title="1">step := stepBase[I]{}
-        step.label = label
-        step.replicas = replicas
-        return step</span>
-}
 </pre>
 		
 		<pre class="file" id="file2" style="display: none">package pipelines
@@ -360,14 +300,14 @@ func (p *pipeline[I]) Terminate() <span class="cov8" title="1">{
                 return
         }</span>
 
+        // setting closed channel signal immediately so that the input stops.
+        <span class="cov8" title="1">p.channelsClosed = true
+
         // canceling the context in case the parent context is not cancelled.
-        <span class="cov8" title="1">p.stepsCtxCancel()
+        p.stepsCtxCancel()
 
         // wait for step routines to be done
         p.stepsWaitGroup.Wait()
-
-        // setting closed channel signal.
-        p.channelsClosed = true
 
         // closing all channels
         for _, step := range p.steps </span><span class="cov8" title="1">{
@@ -438,6 +378,16 @@ type stepBase[I any] struct {
 
         // incrementTokensCount is a function that increments the number of tokens in the pipeline.
         incrementTokensCount func()
+}
+
+func newBaseStep[I any](label string, replicas uint16) stepBase[I] <span class="cov8" title="1">{
+        if replicas == 0 </span><span class="cov8" title="1">{
+                replicas = 1
+        }</span>
+        <span class="cov8" title="1">step := stepBase[I]{}
+        step.label = label
+        step.replicas = replicas
+        return step</span>
 }
 
 func (s *stepBase[I]) GetLabel() string <span class="cov8" title="1">{
@@ -512,6 +462,17 @@ type stepBasic[I any] struct {
         process StepBasicProcess[I]
 }
 
+func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] <span class="cov8" title="1">{
+        if config.Process == nil </span><span class="cov8" title="1">{
+                panic("process is required")</span>
+        }
+        <span class="cov8" title="1">return &amp;stepBasic[I]{
+                stepBase:     newBaseStep[I](config.Label, config.Replicas),
+                errorHandler: config.ErrorHandler,
+                process:      config.Process,
+        }</span>
+}
+
 func (s *stepBasic[I]) reportError(err error) <span class="cov8" title="1">{
         if s.errorHandler != nil </span><span class="cov8" title="1">{
                 s.errorHandler(s.label, err)
@@ -520,14 +481,13 @@ func (s *stepBasic[I]) reportError(err error) <span class="cov8" title="1">{
 
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *stepBasic[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
+        defer wg.Done()
         for </span><span class="cov8" title="1">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov8" title="1">
-                        wg.Done()
                         return</span>
                 case i, ok := &lt;-s.input:<span class="cov8" title="1">
                         if !ok </span><span class="cov8" title="1">{
-                                wg.Done()
                                 return
                         }</span>
                         <span class="cov8" title="1">o, err := s.process(i)
@@ -604,6 +564,27 @@ type stepBuffered[I any] struct {
         timeTriggeredProcessInterval time.Duration
 }
 
+func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] <span class="cov8" title="1">{
+        if config.InputTriggeredProcess == nil &amp;&amp; config.TimeTriggeredProcess == nil </span><span class="cov8" title="1">{
+                panic("either time triggered or input process is required")</span>
+        }
+        <span class="cov8" title="1">if config.TimeTriggeredProcess != nil &amp;&amp; config.TimeTriggeredProcessInterval == 0 </span><span class="cov8" title="1">{
+                panic("time triggered process interval is required to be used with time triggered process")</span>
+        }
+        <span class="cov8" title="1">if config.BufferSize &lt;= 0 </span><span class="cov8" title="1">{
+                panic("buffer size must be greater than or equal to 0")</span>
+        }
+        <span class="cov8" title="1">return &amp;stepBuffered[I]{
+                stepBase:                     newBaseStep[I](config.Label, config.Replicas),
+                bufferSize:                   config.BufferSize,
+                inputTriggeredProcess:        config.InputTriggeredProcess,
+                timeTriggeredProcess:         config.TimeTriggeredProcess,
+                timeTriggeredProcessInterval: config.TimeTriggeredProcessInterval,
+                passThrough:                  config.PassThrough,
+                buffer:                       make([]I, 0, config.BufferSize),
+        }</span>
+}
+
 func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
         if s.timeTriggeredProcessInterval == 0 </span><span class="cov8" title="1">{
                 // 1000 hours is to cover the case where the time is not set. The buffer in this case will be input triggered.
@@ -611,15 +592,14 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span cla
                 s.timeTriggeredProcessInterval = 1000 * time.Hour
         }</span>
         <span class="cov8" title="1">ticker := time.NewTicker(s.timeTriggeredProcessInterval)
+        defer ticker.Stop()
+        defer wg.Done()
         for </span><span class="cov8" title="1">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov8" title="1">
-                        ticker.Stop()
-                        wg.Done()
                         return</span>
                 case i, ok := &lt;-s.input:<span class="cov8" title="1">
                         if !ok </span><span class="cov8" title="1">{
-                                wg.Done()
                                 return
                         }</span>
                         <span class="cov8" title="1">s.handleInputTriggeredProcess(i)</span>
@@ -738,16 +718,25 @@ type stepFilter[I any] struct {
         passCriteria StepFilterPassCriteria[I]
 }
 
+func newStepFilter[I any](config StepFilterConfig[I]) IStep[I] <span class="cov8" title="1">{
+        if config.PassCriteria == nil </span><span class="cov8" title="1">{
+                panic("process is required")</span>
+        }
+        <span class="cov8" title="1">return &amp;stepFilter[I]{
+                stepBase:     newBaseStep[I](config.Label, config.Replicas),
+                passCriteria: config.PassCriteria,
+        }</span>
+}
+
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *stepFilter[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
+        defer wg.Done()
         for </span><span class="cov8" title="1">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov8" title="1">
-                        wg.Done()
                         return</span>
                 case i, ok := &lt;-s.input:<span class="cov8" title="1">
                         if !ok </span><span class="cov8" title="1">{
-                                wg.Done()
                                 return
                         }</span>
                         <span class="cov8" title="1">if s.passCriteria(i) </span><span class="cov8" title="1">{
@@ -788,15 +777,24 @@ type stepFragmenter[I any] struct {
         process StepFragmenterProcess[I]
 }
 
+func newStepFragmenter[I any](config StepFragmenterConfig[I]) IStep[I] <span class="cov8" title="1">{
+        if config.Process == nil </span><span class="cov8" title="1">{
+                panic("process is required")</span>
+        }
+        <span class="cov8" title="1">return &amp;stepFragmenter[I]{
+                stepBase: newBaseStep[I](config.Label, config.Replicas),
+                process:  config.Process,
+        }</span>
+}
+
 func (s *stepFragmenter[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
+        defer wg.Done()
         for </span><span class="cov8" title="1">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov8" title="1">
-                        wg.Done()
                         return</span>
                 case i, ok := &lt;-s.input:<span class="cov8" title="1">
                         if !ok </span><span class="cov8" title="1">{
-                                wg.Done()
                                 return
                         }</span>
                         <span class="cov8" title="1">outFragments := s.process(i)
@@ -841,15 +839,24 @@ type stepResult[I any] struct {
         process StepResultProcess[I]
 }
 
+func newStepResult[I any](config StepResultConfig[I]) IStep[I] <span class="cov8" title="1">{
+        if config.Process == nil </span><span class="cov8" title="1">{
+                panic("process is required")</span>
+        }
+        <span class="cov8" title="1">return &amp;stepResult[I]{
+                stepBase: newBaseStep[I](config.Label, config.Replicas),
+                process:  config.Process,
+        }</span>
+}
+
 func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
+        defer wg.Done()
         for </span><span class="cov8" title="1">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov8" title="1">
-                        wg.Done()
                         return</span>
                 case i, ok := &lt;-s.input:<span class="cov8" title="1">
                         if !ok </span><span class="cov8" title="1">{
-                                wg.Done()
                                 return
                         }</span>
                         <span class="cov8" title="1">s.process(i)

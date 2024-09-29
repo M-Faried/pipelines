@@ -134,14 +134,14 @@ func (p *pipeline[I]) Terminate() {
 		return
 	}
 
+	// setting closed channel signal immediately so that the input stops.
+	p.channelsClosed = true
+
 	// canceling the context in case the parent context is not cancelled.
 	p.stepsCtxCancel()
 
 	// wait for step routines to be done
 	p.stepsWaitGroup.Wait()
-
-	// setting closed channel signal.
-	p.channelsClosed = true
 
 	// closing all channels
 	for _, step := range p.steps {

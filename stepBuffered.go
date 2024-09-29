@@ -59,6 +59,27 @@ type stepBuffered[I any] struct {
 	timeTriggeredProcessInterval time.Duration
 }
 
+func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] {
+	if config.InputTriggeredProcess == nil && config.TimeTriggeredProcess == nil {
+		panic("either time triggered or input process is required")
+	}
+	if config.TimeTriggeredProcess != nil && config.TimeTriggeredProcessInterval == 0 {
+		panic("time triggered process interval is required to be used with time triggered process")
+	}
+	if config.BufferSize <= 0 {
+		panic("buffer size must be greater than or equal to 0")
+	}
+	return &stepBuffered[I]{
+		stepBase:                     newBaseStep[I](config.Label, config.Replicas),
+		bufferSize:                   config.BufferSize,
+		inputTriggeredProcess:        config.InputTriggeredProcess,
+		timeTriggeredProcess:         config.TimeTriggeredProcess,
+		timeTriggeredProcessInterval: config.TimeTriggeredProcessInterval,
+		passThrough:                  config.PassThrough,
+		buffer:                       make([]I, 0, config.BufferSize),
+	}
+}
+
 func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	if s.timeTriggeredProcessInterval == 0 {
 		// 1000 hours is to cover the case where the time is not set. The buffer in this case will be input triggered.
@@ -66,15 +87,14 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 		s.timeTriggeredProcessInterval = 1000 * time.Hour
 	}
 	ticker := time.NewTicker(s.timeTriggeredProcessInterval)
+	defer ticker.Stop()
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
-			ticker.Stop()
-			wg.Done()
 			return
 		case i, ok := <-s.input:
 			if !ok {
-				wg.Done()
 				return
 			}
 			s.handleInputTriggeredProcess(i)

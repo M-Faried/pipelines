@@ -10,70 +10,20 @@ type Builder[I any] struct{}
 
 // NewStep creates a new step based on the configuration
 func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
-
-	if c, ok := config.(StepBasicConfig[I]); ok {
-		if c.Process == nil {
-			panic("process is required")
-		}
-		return &stepBasic[I]{
-			stepBase:     createBaseStep[I](c.Label, c.Replicas),
-			errorHandler: c.ErrorHandler,
-			process:      c.Process,
-		}
+	switch c := config.(type) {
+	case StepBasicConfig[I]:
+		return newStepBasic(c)
+	case StepFragmenterConfig[I]:
+		return newStepFragmenter(c)
+	case StepResultConfig[I]:
+		return newStepResult(c)
+	case StepFilterConfig[I]:
+		return newStepFilter(c)
+	case StepBufferedConfig[I]:
+		return newStepBuffered(c)
+	default:
+		panic(fmt.Sprintf("unknown step configuration: %v", config))
 	}
-
-	if c, ok := config.(StepFragmenterConfig[I]); ok {
-		if c.Process == nil {
-			panic("process is required")
-		}
-		return &stepFragmenter[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas),
-			process:  c.Process,
-		}
-	}
-
-	if c, ok := config.(StepResultConfig[I]); ok {
-		if c.Process == nil {
-			panic("process is required")
-		}
-		return &stepResult[I]{
-			stepBase: createBaseStep[I](c.Label, c.Replicas),
-			process:  c.Process,
-		}
-	}
-
-	if c, ok := config.(StepFilterConfig[I]); ok {
-		if c.PassCriteria == nil {
-			panic("process is required")
-		}
-		return &stepFilter[I]{
-			stepBase:     createBaseStep[I](c.Label, c.Replicas),
-			passCriteria: c.PassCriteria,
-		}
-	}
-
-	if c, ok := config.(StepBufferedConfig[I]); ok {
-		if c.InputTriggeredProcess == nil && c.TimeTriggeredProcess == nil {
-			panic("either time triggered or input process is required")
-		}
-		if c.TimeTriggeredProcess != nil && c.TimeTriggeredProcessInterval == 0 {
-			panic("time triggered process interval is required to be used with time triggered process")
-		}
-		if c.BufferSize <= 0 {
-			panic("buffer size must be greater than or equal to 0")
-		}
-		return &stepBuffered[I]{
-			stepBase:                     createBaseStep[I](c.Label, c.Replicas),
-			bufferSize:                   c.BufferSize,
-			inputTriggeredProcess:        c.InputTriggeredProcess,
-			timeTriggeredProcess:         c.TimeTriggeredProcess,
-			timeTriggeredProcessInterval: c.TimeTriggeredProcessInterval,
-			passThrough:                  c.PassThrough,
-			buffer:                       make([]I, 0, c.BufferSize),
-		}
-	}
-
-	panic(fmt.Sprintf("unknown step configuration: %v", config))
 }
 
 // NewPipeline creates a new pipeline with the given channel size and steps.
@@ -83,14 +33,4 @@ func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipelin
 	pipe.steps = castToInternalSteps(steps)
 	pipe.channelSize = channelSize
 	return pipe
-}
-
-func createBaseStep[I any](label string, replicas uint16) stepBase[I] {
-	if replicas == 0 {
-		replicas = 1
-	}
-	step := stepBase[I]{}
-	step.label = label
-	step.replicas = replicas
-	return step
 }
