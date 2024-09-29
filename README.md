@@ -129,18 +129,14 @@ func main() {
 
 5. **Buffered Step:** Retains multiple elements in the pipeline to run a calculation over periodically or based on input.
 
-Based on the type of the step your create, different configurations are required to be submitted by the user.
-
-### Replicas
-
-The pipelines package allows you to scale up any step of any type just by setting the number of replicas of each step in the configuration.
+Based on the type of the step your create, different configurations are required to be submitted by the user. One of these configurations is the pipelines which allows to scale up any step of any type just by setting the number of replicas of each step in the configuration.
 
 ## Builder
 
 You need to create an instance first from the builder to use it to create any part of the pipeline.
 
 ```go
-builder := builder := &pip.Builder[<TypeOfPipelineAndSteps>]{}
+builder := &pip.Builder[<TypeOfPipelineAndSteps>]{}
 ```
 
 ## Basic Step
@@ -250,7 +246,7 @@ Buffered step is a step that doesn't apply an operation on a single token, but b
 
 The buffered step supports either or both of the 2 kinds of span. It also supports the pass through feature which allows users of the package to control whether the buffered pipeline tokens are sent to the following steps after being buffered or not.
 
-You have also the option to flush the buffer any time you like.
+You have also the option to flush the buffer or not after running your calculation on the buffer.
 
 ### Time Triggered Buffer Step (Example 6)
 
@@ -297,23 +293,24 @@ In the following example, process waits till the buffer is full and calculates t
 type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I] // Don't redefine
 
 func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessOutput[int64] {
-	// checking the threshold to start calculation
-	if len(buffer) >= 10 {
-		var sum int64
-		for _, v := range buffer {
-			sum += v
-		}
-		return pip.StepBufferedProcessOutput[int64]{
-			HasResult:   true,
-			Result:      sum,
-			FlushBuffer: true, // This instructs the buffer to flush the data it retains not to affect the length threshold.
-		}
-	}
-	return pip.StepBufferedProcessOutput[int64]{
+
+    // skipping the calcluation if not enough data was buffered.
+    if len(buffer) < 10 {
+        return pip.StepBufferedProcessOutput[int64]{
 		HasResult:   false,
 		Result:      0,
 		FlushBuffer: false,
 	}
+
+    var sum int64
+    for _, v := range buffer {
+        sum += v
+    }
+    return pip.StepBufferedProcessOutput[int64]{
+        HasResult:   true,
+        Result:      sum,
+        FlushBuffer: true, // This instructs the buffered step to flush the data it retains and start accumulating fresh data.
+    }
 }
 
 bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
@@ -334,8 +331,6 @@ bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
 - The InputTriggered and the TimeTriggered processes are implemented in a concurrent safe context so the buffer will not change during their execution.
 
 - When you set the **PassThrough** to true and the input triggered process returns a valid result. The received input will be sent first to the following steps then the new result.
-
-- When using buffered channels don't use **pipeline.WaitTillDone()** unless you have a finite number of data and you flush the data in the buffer regularly. Other wise wait till done will stall your application.
 
 - Again, you can set both time triggered and input triggered processes for the buffer step and they will be both be executed by their triggeres.
 
@@ -381,6 +376,8 @@ pipeline.WaitTillDone()
 ```
 
 It is an optional step to use and you can call Terminate() directly without waiting, but all the tokens in the pipeline will be discarded.
+
+When using buffered channels don't use **pipeline.WaitTillDone()** unless you have a finite number of inputs and you flush the data in the buffer regularly. Otherwise wait till done will stall your application and may result a deadlock..
 
 ### Terminating Pipeline
 
