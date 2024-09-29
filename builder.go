@@ -1,5 +1,7 @@
 package pipelines
 
+import "fmt"
+
 // StepConfig is an interface that defines the configuration for a step
 type StepConfig[I any] interface{}
 
@@ -71,7 +73,7 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
 		}
 	}
 
-	return nil
+	panic(fmt.Sprintf("unknown step configuration: %v", config))
 }
 
 // NewPipeline creates a new pipeline with the given channel size and steps.

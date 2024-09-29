@@ -367,11 +367,13 @@ func TestNewStep_InvalidConfig(t *testing.T) {
 	// Test with StepConfig
 	stepConfig := builder
 
-	step := builder.NewStep(stepConfig)
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
 
-	if step != nil {
-		t.Error("Expected step to be nil, got something")
-	}
+	builder.NewStep(stepConfig)
 }
 
 func TestNewPipeline(t *testing.T) {

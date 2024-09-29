@@ -128,6 +128,8 @@ func castToInternalSteps[I any](step []IStep[I]) []iStepInternal[I] <span class=
 		
 		<pre class="file" id="file1" style="display: none">package pipelines
 
+import "fmt"
+
 // StepConfig is an interface that defines the configuration for a step
 type StepConfig[I any] interface{}
 
@@ -199,7 +201,7 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] <span class="cov8" t
                 }</span>
         }
 
-        <span class="cov8" title="1">return nil</span>
+        <span class="cov8" title="1">panic(fmt.Sprintf("unknown step configuration: %v", config))</span>
 }
 
 // NewPipeline creates a new pipeline with the given channel size and steps.
