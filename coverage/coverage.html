@@ -540,10 +540,11 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span cla
                 // this is needed to keep the thread alive as well inc case there is a long delay in the input.
                 s.timeTriggeredProcessInterval = 1000 * time.Hour
         }</span>
-        <span class="cov8" title="1">timer := time.NewTimer(s.timeTriggeredProcessInterval)
+        <span class="cov8" title="1">ticker := time.NewTicker(s.timeTriggeredProcessInterval)
         for </span><span class="cov8" title="1">{
                 select </span>{
                 case &lt;-ctx.Done():<span class="cov8" title="1">
+                        ticker.Stop()
                         wg.Done()
                         return</span>
                 case i, ok := &lt;-s.input:<span class="cov8" title="1">
@@ -552,9 +553,8 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span cla
                                 return
                         }</span>
                         <span class="cov8" title="1">s.handleInputTriggeredProcess(i)</span>
-                case &lt;-timer.C:<span class="cov8" title="1">
-                        s.handleTimeTriggeredProcess()
-                        timer.Reset(s.timeTriggeredProcessInterval)</span>
+                case &lt;-ticker.C:<span class="cov8" title="1">
+                        s.handleTimeTriggeredProcess()</span>
                 }
         }
 }
