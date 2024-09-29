@@ -297,10 +297,11 @@ func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessO
     // skipping the calcluation if not enough data was buffered.
     if len(buffer) < 10 {
         return pip.StepBufferedProcessOutput[int64]{
-		HasResult:   false,
-		Result:      0,
-		FlushBuffer: false,
-	}
+            HasResult:   false,
+            Result:      0,
+            FlushBuffer: false,
+	    }
+    }
 
     var sum int64
     for _, v := range buffer {
