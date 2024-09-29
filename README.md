@@ -390,7 +390,7 @@ pipeline.Terminate()
 
 # Real Life Example (Sensor Data)
 
-In the examples folder you will find a full and complex example on how to use pipelines to process data streams efficiently. The example is to solve the below complex statement which is mentioned also in the
+In the examples folder you will find a full and complex example on how to use pipelines to process data streams efficiently. The example is the code to solve the below problem statement.
 
 ### Problem Statement:
 
