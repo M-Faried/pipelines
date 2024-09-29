@@ -22,6 +22,16 @@ type stepBase[I any] struct {
 	incrementTokensCount func()
 }
 
+func newBaseStep[I any](label string, replicas uint16) stepBase[I] {
+	if replicas == 0 {
+		replicas = 1
+	}
+	step := stepBase[I]{}
+	step.label = label
+	step.replicas = replicas
+	return step
+}
+
 func (s *stepBase[I]) GetLabel() string {
 	return s.label
 }

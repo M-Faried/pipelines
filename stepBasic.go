@@ -37,6 +37,17 @@ type stepBasic[I any] struct {
 	process StepBasicProcess[I]
 }
 
+func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] {
+	if config.Process == nil {
+		panic("process is required")
+	}
+	return &stepBasic[I]{
+		stepBase:     newBaseStep[I](config.Label, config.Replicas),
+		errorHandler: config.ErrorHandler,
+		process:      config.Process,
+	}
+}
+
 func (s *stepBasic[I]) reportError(err error) {
 	if s.errorHandler != nil {
 		s.errorHandler(s.label, err)
@@ -45,14 +56,13 @@ func (s *stepBasic[I]) reportError(err error) {
 
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *stepBasic[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
-			wg.Done()
 			return
 		case i, ok := <-s.input:
 			if !ok {
-				wg.Done()
 				return
 			}
 			o, err := s.process(i)

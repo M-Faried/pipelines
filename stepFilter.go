@@ -26,16 +26,25 @@ type stepFilter[I any] struct {
 	passCriteria StepFilterPassCriteria[I]
 }
 
+func newStepFilter[I any](config StepFilterConfig[I]) IStep[I] {
+	if config.PassCriteria == nil {
+		panic("process is required")
+	}
+	return &stepFilter[I]{
+		stepBase:     newBaseStep[I](config.Label, config.Replicas),
+		passCriteria: config.PassCriteria,
+	}
+}
+
 // run is a method that runs the step process and will be executed in a separate goroutine.
 func (s *stepFilter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
-			wg.Done()
 			return
 		case i, ok := <-s.input:
 			if !ok {
-				wg.Done()
 				return
 			}
 			if s.passCriteria(i) {

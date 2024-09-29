@@ -27,15 +27,24 @@ type stepResult[I any] struct {
 	process StepResultProcess[I]
 }
 
+func newStepResult[I any](config StepResultConfig[I]) IStep[I] {
+	if config.Process == nil {
+		panic("process is required")
+	}
+	return &stepResult[I]{
+		stepBase: newBaseStep[I](config.Label, config.Replicas),
+		process:  config.Process,
+	}
+}
+
 func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
 	for {
 		select {
 		case <-ctx.Done():
-			wg.Done()
 			return
 		case i, ok := <-s.input:
 			if !ok {
-				wg.Done()
 				return
 			}
 			s.process(i)
