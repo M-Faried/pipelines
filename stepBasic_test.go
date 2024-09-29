@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestStepStandard_SuccessfullProcess(t *testing.T) {
+func TestStepBasic_SuccessfullProcess(t *testing.T) {
 
 	errorHandler := &mockErrorHandler{}
 	decrementHandler := &mockDecrementTokensHandler{}
@@ -76,7 +76,7 @@ func TestStepStandard_SuccessfullProcess(t *testing.T) {
 	close(step.output)
 }
 
-func TestStepStandard_ProcessWithError(t *testing.T) {
+func TestStepBasic_ProcessWithError(t *testing.T) {
 
 	errorHandler := &mockErrorHandler{}
 	decrementHandler := &mockDecrementTokensHandler{}
@@ -145,7 +145,7 @@ func TestStepStandard_ProcessWithError(t *testing.T) {
 	close(step.output)
 }
 
-func TestStepStandard_ClosingChannelShouldTerminateTheStep(t *testing.T) {
+func TestStepBasic_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 
 	errorHandler := &mockErrorHandler{}
 	decrementHandler := &mockDecrementTokensHandler{}
