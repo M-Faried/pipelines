@@ -18,13 +18,15 @@ type StepResultConfig[I any] struct {
 	Replicas uint16
 
 	// Process is the function that processes the input data and does not return any data.
-	Process StepResultProcess[I]
+	Process        StepResultProcess[I]
+	ReverseProcess StepResultProcess[I]
 }
 
 // stepResult is a struct that represents a step in the pipeline that does not return any data.
 type stepResult[I any] struct {
 	stepBase[I]
-	process StepResultProcess[I]
+	process        StepResultProcess[I]
+	reverseProcess StepResultProcess[I]
 }
 
 func newStepResult[I any](config StepResultConfig[I]) IStep[I] {
@@ -32,8 +34,9 @@ func newStepResult[I any](config StepResultConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepResult[I]{
-		stepBase: newBaseStep[I](config.Label, config.Replicas),
-		process:  config.Process,
+		stepBase:       newBaseStep[I](config.Label, config.Replicas),
+		process:        config.Process,
+		reverseProcess: config.ReverseProcess,
 	}
 }
 
@@ -49,6 +52,22 @@ func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 			s.process(i)
 			s.decrementTokensCount()
+		}
+	}
+}
+
+func (s *stepResult[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case o, ok := <-s.output:
+			if !ok {
+				return
+			}
+			s.reverseProcess(o)
+			s.incrementTokensCount()
 		}
 	}
 }

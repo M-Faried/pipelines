@@ -25,6 +25,8 @@ type StepBasicConfig[I any] struct {
 
 	// Process is a function that will be applied to the incoming data
 	Process StepBasicProcess[I]
+
+	ReverseProcess StepBasicProcess[I]
 }
 
 type stepBasic[I any] struct {
@@ -34,7 +36,8 @@ type stepBasic[I any] struct {
 	errorHandler StepBasicErrorHandler
 
 	// process is a function that will be applied to the incoming data.
-	process StepBasicProcess[I]
+	process        StepBasicProcess[I]
+	reverseProcess StepBasicProcess[I]
 }
 
 func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] {
@@ -42,9 +45,10 @@ func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepBasic[I]{
-		stepBase:     newBaseStep[I](config.Label, config.Replicas),
-		errorHandler: config.ErrorHandler,
-		process:      config.Process,
+		stepBase:       newBaseStep[I](config.Label, config.Replicas),
+		errorHandler:   config.ErrorHandler,
+		process:        config.Process,
+		reverseProcess: config.ReverseProcess,
 	}
 }
 
@@ -72,6 +76,28 @@ func (s *stepBasic[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				s.reportError(err)
 			} else {
 				s.output <- o
+			}
+		}
+	}
+}
+
+func (s *stepBasic[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case o, ok := <-s.output:
+			if !ok {
+				return
+			}
+			i, err := s.reverseProcess(o)
+			if err != nil {
+				// since we will not proceed with the current token, we need to decrement the tokens count.
+				s.decrementTokensCount()
+				s.reportError(err)
+			} else {
+				s.input <- i
 			}
 		}
 	}

@@ -15,6 +15,9 @@ type stepBase[I any] struct {
 	// replicas is a number of goroutines that will be running the step.
 	replicas uint16
 
+	// instructs the step to run in duplex mode.
+	isDuplex bool
+
 	// decrementTokensCount is a function that decrements the number of tokens in the pipeline.
 	decrementTokensCount func()
 
@@ -62,4 +65,12 @@ func (s *stepBase[I]) SetDecrementTokensCountHandler(handler func()) {
 
 func (s *stepBase[I]) SetIncrementTokensCountHandler(handler func()) {
 	s.incrementTokensCount = handler
+}
+
+func (s *stepBase[I]) SetIsDuplex(duplex bool) {
+	s.isDuplex = duplex
+}
+
+func (s *stepBase[I]) GetIsDuplex() bool {
+	return s.isDuplex
 }
