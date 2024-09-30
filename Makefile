@@ -13,15 +13,12 @@ test:
 	go test -coverprofile=$(COVERAGE_FILE) $(PACKAGE)
 
 # # Generate coverage report in text format
-# coverage: test
-# 	go tool cover -func=$(COVERAGE_FILE)
+coverage: test
+	go tool cover -func=$(COVERAGE_FILE)
 
 # Generate coverage report in HTML format
 show-cover-html: test
 	go tool cover -html=$(COVERAGE_FILE)
-
-gen-cover-html: test
-	go tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML)
 
 # Clean up coverage files
 clean:
