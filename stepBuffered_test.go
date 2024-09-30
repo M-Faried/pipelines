@@ -282,10 +282,6 @@ func TestStepBuffered_NewStep(t *testing.T) {
 		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
 	}
 
-	if concreteStep.bufferSize != 20 {
-		t.Errorf("Expected buffer size to be 20, got %d", concreteStep.bufferSize)
-	}
-
 	if concreteStep.timeTriggeredProcess == nil {
 		t.Error("Expected time triggered process to be set, got nil")
 	}
@@ -302,11 +298,79 @@ func TestStepBuffered_NewStep(t *testing.T) {
 		t.Error("Expected pass through to be true, got false")
 	}
 
+	if concreteStep.bufferSize != 20 {
+		t.Errorf("Expected buffer size to be 20, got %d", concreteStep.bufferSize)
+	}
+
 	if cap(concreteStep.buffer) != 20 {
 		t.Errorf("Expected buffer capacity to be 20, got %d", cap(concreteStep.buffer))
 	}
 
 	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
+}
+
+func TestStepBuffered_NewStep_InputTriggeredOnly(t *testing.T) {
+
+	processInputTriggered := func(input []int) StepBufferedProcessOutput[int] {
+		return StepBufferedProcessOutput[int]{}
+	}
+
+	// Test with StepConfig
+	stepConfig := StepBufferedConfig[int]{
+		Label:                 "testStep",
+		Replicas:              1,
+		BufferSize:            15,
+		InputChannelSize:      5,
+		InputTriggeredProcess: processInputTriggered,
+	}
+
+	step := newStepBuffered(stepConfig)
+
+	var concreteStep *stepBuffered[int]
+	var ok bool
+
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepBuffered[int]); !ok {
+		t.Error("Expected step to be of type stepBuffered")
+	}
+
+	if concreteStep.label != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", step.GetLabel())
+	}
+
+	if concreteStep.replicas != 1 {
+		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.inputTriggeredProcess == nil {
+		t.Error("Expected input triggered process to be set, got nil")
+	}
+
+	if concreteStep.timeTriggeredProcess != nil {
+		t.Errorf("Expected input triggered process to be nil, got %v", concreteStep.timeTriggeredProcess)
+	}
+
+	if concreteStep.timeTriggeredProcessInterval > 0 {
+		t.Errorf("Expected time triggered process interval to be 0s, got %s", concreteStep.timeTriggeredProcessInterval)
+	}
+
+	if concreteStep.passThrough {
+		t.Error("Expected pass through to be false, got true")
+	}
+
+	if concreteStep.bufferSize != 15 {
+		t.Errorf("Expected buffer size to be 15, got %d", concreteStep.bufferSize)
+	}
+
+	if cap(concreteStep.buffer) != 15 {
+		t.Errorf("Expected buffer capacity to be 20, got %d", cap(concreteStep.buffer))
+	}
+
+	if concreteStep.inputChannelSize != 5 {
 		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
 	}
 }
