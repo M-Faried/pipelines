@@ -114,3 +114,63 @@ func TestStepFragmenter_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 	}
 	close(step.output)
 }
+
+func TestStepFragmenter_NewStep(t *testing.T) {
+
+	process := func(input int) []int { return []int{input} }
+
+	// Test with StepConfig
+	stepConfig := StepFragmenterConfig[int]{
+		Label:            "fragmenterStep",
+		Replicas:         2,
+		Process:          process,
+		InputChannelSize: 10,
+	}
+
+	step := newStepFragmenter(stepConfig)
+	var concreteStep *stepFragmenter[int]
+	var ok bool
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepFragmenter[int]); !ok {
+		t.Error("Expected step to be of type stepFragmenter")
+	}
+
+	if step.GetLabel() != "fragmenterStep" {
+		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", step.GetLabel())
+	}
+	if step.GetReplicas() != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.label != "fragmenterStep" {
+		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", concreteStep.label)
+	}
+	if concreteStep.replicas != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", concreteStep.replicas)
+	}
+	if concreteStep.process == nil {
+		t.Error("Expected process to be set, got nil")
+	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
+}
+
+func TestStepFragmenter_NewStep_MissingProcess(t *testing.T) {
+
+	// Test with StepConfig
+	stepConfig := StepFragmenterConfig[int]{
+		Label:    "testStep",
+		Replicas: 1,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	newStepFragmenter(stepConfig)
+}

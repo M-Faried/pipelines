@@ -126,3 +126,67 @@ func TestStepFilter_ClosingWithParentContext(t *testing.T) {
 	close(step.input)
 	close(step.output)
 }
+
+func TestStepFilter_NewStep(t *testing.T) {
+
+	process := func(input int) bool { return true }
+
+	// Test with StepConfig
+	stepConfig := StepFilterConfig[int]{
+		Label:            "testStep",
+		Replicas:         2,
+		InputChannelSize: 10,
+		PassCriteria:     process,
+	}
+
+	step := newStepFilter(stepConfig)
+
+	var concreteStep *stepFilter[int]
+	var ok bool
+
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepFilter[int]); !ok {
+		t.Error("Expected step to be of type stepFilter")
+	}
+
+	if step.GetLabel() != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", step.GetLabel())
+	}
+	if step.GetReplicas() != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.label != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", concreteStep.label)
+	}
+	if concreteStep.replicas != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", concreteStep.replicas)
+	}
+	if concreteStep.passCriteria == nil {
+		t.Error("Expected process to be set, got nil")
+	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
+}
+
+func TestStepFilter_NewStep_MissingProcess(t *testing.T) {
+
+	builder := &Builder[int]{}
+
+	// Test with StepConfig
+	stepConfig := StepFilterConfig[int]{
+		Label:    "testStep",
+		Replicas: 1,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewStep(stepConfig)
+}

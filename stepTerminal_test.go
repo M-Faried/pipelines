@@ -79,3 +79,58 @@ func TestStepTerminal_ClosingInputChannel(t *testing.T) {
 		t.Error("expected step to stop immediately after context is cancelled")
 	}
 }
+
+func TestStepTerminal_NewStep(t *testing.T) {
+
+	process := func(input int) {}
+
+	// Test with StepConfig
+	stepConfig := StepTerminalConfig[int]{
+		Label:            "fragmenterStep",
+		InputChannelSize: 10,
+		Replicas:         5,
+		Process:          process,
+	}
+
+	step := newStepTerminal(stepConfig)
+	var concreteStep *stepTerminal[int]
+	var ok bool
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepTerminal[int]); !ok {
+		t.Error("Expected step to be of type stepTerminal")
+	}
+
+	if step.GetLabel() != "fragmenterStep" {
+		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", step.GetLabel())
+	}
+
+	if step.GetReplicas() != 5 {
+		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.process == nil {
+		t.Error("Expected process to be set, got nil")
+	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
+}
+
+func TestStepTerminal_NewStep_MissingProcess(t *testing.T) {
+
+	// Test with StepConfig
+	stepConfig := StepTerminalConfig[int]{
+		Label:    "testStep",
+		Replicas: 1,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	newStepTerminal(stepConfig)
+}

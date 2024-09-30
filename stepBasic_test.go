@@ -199,3 +199,71 @@ func TestStepBasic_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 		t.Error("expected step to stop immediately after context is cancelled")
 	}
 }
+
+func TestStepBasic_NewStep(t *testing.T) {
+
+	process := func(input int) (int, error) { return input, nil }
+	errorHandler := func(label string, err error) {}
+
+	// Test with StepConfig
+	stepConfig := StepBasicConfig[int]{
+		Label:            "testStep",
+		Replicas:         0, //should be rectified to 1
+		ErrorHandler:     errorHandler,
+		Process:          process,
+		InputChannelSize: 10,
+	}
+
+	step := newStepBasic(stepConfig)
+	var concreteStep *stepBasic[int]
+	var ok bool
+	if step == nil {
+		t.Error("Expected step to be created, got nil")
+	}
+	if concreteStep, ok = step.(*stepBasic[int]); !ok {
+		t.Error("Expected step to be of type stepBasic")
+	}
+
+	if step.GetLabel() != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", step.GetLabel())
+	}
+
+	if step.GetReplicas() != 1 {
+		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	}
+
+	if concreteStep.label != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", concreteStep.label)
+	}
+	if concreteStep.replicas != 1 {
+		t.Errorf("Expected replicas to be 1, got %d", concreteStep.replicas)
+	}
+	if concreteStep.errorHandler == nil {
+		t.Error("Expected error handler to be set, got nil")
+	}
+	if concreteStep.process == nil {
+		t.Error("Expected process to be set, got nil")
+	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
+}
+
+func TestStepBasic_NewStep_MissingProcess(t *testing.T) {
+	errorHandler := func(label string, err error) {}
+
+	// Test with StepConfig
+	stepConfig := StepBasicConfig[int]{
+		Label:        "testStep",
+		Replicas:     1,
+		ErrorHandler: errorHandler,
+	}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	newStepBasic(stepConfig)
+}
