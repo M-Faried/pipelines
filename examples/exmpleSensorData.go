@@ -261,7 +261,7 @@ func ExampleSensor() {
 	<-ctx.Done()
 	// Wait for the goroutines to finish too.
 	time.Sleep(1 * time.Second)
-	fmt.Println("Sensor Data Example Done !!!")
+	fmt.Println("Sensor Data Example Done!!!")
 }
 
 func generateSensorData() *SensorData {
