@@ -1,14 +1,20 @@
 # Motivation
 
+<p align="center">
+  <img src="logo.png" alt="Logo" />
+</p>
+
 The package is created to fulfil the need for having a pipeline with concurrent steps to facilitate the pipeline design pattern in Go programming language. Pipeline design pattern is generally useful when you have a complex process that you need to break down into multiple consecutive steps.
 
-To put the package into perspective, I was working on a scientific application receiving a data stream from another service. A complex and demanding data transformation was required before saving it to the database. I found myself having to handle complex complex data transformations in addition to dealing with concurrency and synchronization challenges.
+To put the package into perspective, I was working on a scientific application receiving a data stream from another service. A complex and demanding data transformation was required before saving it to the database.
+
+I found myself having to handle complex complex data transformations in addition to dealing with concurrency and synchronization challenges.
 
 Scaling up the whole execution of the process and having multiple concurrent workers was an option, but some steps in the execution needed to aggregate large chunks of data that might be fragmented across workers and to synchronize them was a nightmarish experience.
 
-So I built this package in order to separate and hide scaling, concurrency, and synchronization concerns from the actual complex process of transformation.
+So I built this package to separate and hide scaling, concurrency, and synchronization concerns from the complex transformation process.
 
-### Benefits Of Using Pipelines
+### Benefits Of Using Pipelines Package
 
 - Very simple to use, integrate, and extend.
 
