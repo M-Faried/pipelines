@@ -71,7 +71,7 @@
 				
 				<option value="file7">github.com/m-faried/pipelines/stepFragmenter.go (100.0%)</option>
 				
-				<option value="file8">github.com/m-faried/pipelines/stepResult.go (100.0%)</option>
+				<option value="file8">github.com/m-faried/pipelines/stepTerminal.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -104,6 +104,9 @@ type IStep[I any] interface {
 
 type iStepInternal[I any] interface {
         IStep[I]
+
+        SetInputChannelSize(uint16)
+        GetInputChannelSize() uint16
 
         SetInputChannel(chan I)
         GetInputChannel() chan I
@@ -143,8 +146,8 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] <span class="cov8" t
                 return newStepBasic(c)</span>
         case StepFragmenterConfig[I]:<span class="cov8" title="1">
                 return newStepFragmenter(c)</span>
-        case StepResultConfig[I]:<span class="cov8" title="1">
-                return newStepResult(c)</span>
+        case StepTerminalConfig[I]:<span class="cov8" title="1">
+                return newStepTerminal(c)</span>
         case StepFilterConfig[I]:<span class="cov8" title="1">
                 return newStepFilter(c)</span>
         case StepBufferedConfig[I]:<span class="cov8" title="1">
@@ -156,10 +159,10 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] <span class="cov8" t
 
 // NewPipeline creates a new pipeline with the given channel size and steps.
 // The channel size is the buffer size for all channels used to connect steps.
-func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipeline[I] <span class="cov8" title="1">{
+func (s *Builder[I]) NewPipeline(defaultChannelSize uint16, steps ...IStep[I]) IPipeline[I] <span class="cov8" title="1">{
         pipe := &amp;pipeline[I]{}
         pipe.steps = castToInternalSteps(steps)
-        pipe.channelSize = channelSize
+        pipe.defaultChannelSize = defaultChannelSize
         return pipe
 }</span>
 </pre>
@@ -168,6 +171,7 @@ func (s *Builder[I]) NewPipeline(channelSize uint16, steps ...IStep[I]) IPipelin
 
 import (
         "context"
+        "fmt"
         "sync"
 )
 
@@ -175,7 +179,7 @@ import (
 type IPipeline[I any] interface {
 
         // Init initializes the pipeline and has to be called once before running the pipeline.
-        Init()
+        Init() error
 
         // Run starts the pipeline.
         Run(ctx context.Context)
@@ -202,11 +206,11 @@ type pipeline[I any] struct {
         // steps is the list of steps in the pipeline.
         steps []iStepInternal[I]
 
-        // channelSize is the buffer size for all channels used to connect steps.
-        channelSize uint16
+        // defaultChannelSize is the default buffer size used for all channels which has no input channel size set explicitly.
+        defaultChannelSize uint16
 
-        // stepsCtxCancel is used to cancel the context of the steps.
-        stepsCtxCancel context.CancelFunc
+        // cancelStepsContext is used to cancel the context of the steps.
+        cancelStepsContext context.CancelFunc
 
         // stepsWaitGroup is used to wait for all the step routines to receive ctx cancel signal.
         stepsWaitGroup *sync.WaitGroup
@@ -230,8 +234,23 @@ type pipeline[I any] struct {
         channelsClosed bool
 }
 
-func (p *pipeline[I]) Init() <span class="cov8" title="1">{
-        p.initOnce.Do(func() </span><span class="cov8" title="1">{
+func (p *pipeline[I]) Init() error <span class="cov8" title="1">{
+
+        if p.defaultChannelSize == 0 </span><span class="cov8" title="1">{
+                return fmt.Errorf("default channel size should be greater than 0")
+        }</span>
+
+        <span class="cov8" title="1">if len(p.steps) == 0 </span><span class="cov8" title="1">{
+                return fmt.Errorf("steps of the pipeline cannot be empty")
+        }</span>
+
+        <span class="cov8" title="1">for _, c := range p.steps </span><span class="cov8" title="1">{
+                if c == nil </span><span class="cov8" title="1">{
+                        return fmt.Errorf("step cannot be nil")
+                }</span>
+        }
+
+        <span class="cov8" title="1">p.initOnce.Do(func() </span><span class="cov8" title="1">{
                 // creating a condition variable for the done condition
                 p.doneCond = sync.NewCond(&amp;p.tokensCountMutex)
 
@@ -242,8 +261,15 @@ func (p *pipeline[I]) Init() <span class="cov8" title="1">{
                 // an input for each step
                 allChannels := make([]chan I, stepsCount)
                 for i := 0; i &lt; stepsCount; i++ </span><span class="cov8" title="1">{
-                        allChannels[i] = make(chan I, p.channelSize)
-                }</span>
+                        // check if the channel size is set for this step.
+                        if p.steps[i].GetInputChannelSize() &gt; 0 </span><span class="cov8" title="1">{
+                                allChannels[i] = make(chan I, p.steps[i].GetInputChannelSize())
+                        }</span> else<span class="cov8" title="1"> {
+                                // if not we will use the default channel size.
+                                allChannels[i] = make(chan I, p.defaultChannelSize)
+                                p.steps[i].SetInputChannelSize(p.defaultChannelSize)
+                        }</span>
+                }
 
                 // setting channels for each step
                 <span class="cov8" title="1">for i := 0; i &lt; stepsCount-1; i++ </span><span class="cov8" title="1">{
@@ -263,6 +289,7 @@ func (p *pipeline[I]) Init() <span class="cov8" title="1">{
                 // setting the decrement for the result step.
                 p.steps[resultStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)</span>
         })
+        <span class="cov8" title="1">return nil</span>
 }
 
 func (p *pipeline[I]) Run(ctx context.Context) <span class="cov8" title="1">{
@@ -272,7 +299,7 @@ func (p *pipeline[I]) Run(ctx context.Context) <span class="cov8" title="1">{
 
                 // creating a child context for the steps from the parent context.
                 stepsCtx, cancel := context.WithCancel(ctx)
-                p.stepsCtxCancel = cancel
+                p.cancelStepsContext = cancel
 
                 // running steps in reverse order
                 for i := len(p.steps) - 1; i &gt;= 0; i-- </span><span class="cov8" title="1">{
@@ -296,7 +323,7 @@ func (p *pipeline[I]) WaitTillDone() <span class="cov8" title="1">{
 func (p *pipeline[I]) Terminate() <span class="cov8" title="1">{
 
         // checking the steps are running
-        if p.stepsWaitGroup == nil </span><span class="cov8" title="1">{
+        if p.stepsWaitGroup == nil &amp;&amp; p.channelsClosed </span><span class="cov8" title="1">{
                 return
         }</span>
 
@@ -304,7 +331,7 @@ func (p *pipeline[I]) Terminate() <span class="cov8" title="1">{
         <span class="cov8" title="1">p.channelsClosed = true
 
         // canceling the context in case the parent context is not cancelled.
-        p.stepsCtxCancel()
+        p.cancelStepsContext()
 
         // wait for step routines to be done
         p.stepsWaitGroup.Wait()
@@ -373,6 +400,9 @@ type stepBase[I any] struct {
         // replicas is a number of goroutines that will be running the step.
         replicas uint16
 
+        // inputChannelSize is the buffer size for the input channel to the step.
+        inputChannelSize uint16
+
         // decrementTokensCount is a function that decrements the number of tokens in the pipeline.
         decrementTokensCount func()
 
@@ -380,18 +410,27 @@ type stepBase[I any] struct {
         incrementTokensCount func()
 }
 
-func newBaseStep[I any](label string, replicas uint16) stepBase[I] <span class="cov8" title="1">{
+func newBaseStep[I any](label string, replicas uint16, inputChannelSize uint16) stepBase[I] <span class="cov8" title="1">{
         if replicas == 0 </span><span class="cov8" title="1">{
                 replicas = 1
         }</span>
         <span class="cov8" title="1">step := stepBase[I]{}
         step.label = label
         step.replicas = replicas
+        step.inputChannelSize = inputChannelSize
         return step</span>
 }
 
 func (s *stepBase[I]) GetLabel() string <span class="cov8" title="1">{
         return s.label
+}</span>
+
+func (s *stepBase[I]) SetInputChannelSize(size uint16) <span class="cov8" title="1">{
+        s.inputChannelSize = size
+}</span>
+
+func (s *stepBase[I]) GetInputChannelSize() uint16 <span class="cov8" title="1">{
+        return s.inputChannelSize
 }</span>
 
 func (s *stepBase[I]) SetInputChannel(input chan I) <span class="cov8" title="1">{
@@ -442,6 +481,9 @@ type StepBasicConfig[I any] struct {
         // Label is a human-readable label for the step
         Label string
 
+        // InputChannelSize is the buffer size for the input channel to the step
+        InputChannelSize uint16
+
         // Replicas is the number of replicas of the step that should be run in parallel
         Replicas uint16
 
@@ -467,7 +509,7 @@ func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] <span class="cov8" 
                 panic("process is required")</span>
         }
         <span class="cov8" title="1">return &amp;stepBasic[I]{
-                stepBase:     newBaseStep[I](config.Label, config.Replicas),
+                stepBase:     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
                 errorHandler: config.ErrorHandler,
                 process:      config.Process,
         }</span>
@@ -535,6 +577,9 @@ type StepBufferedConfig[I any] struct {
         // Replicas is the number of replicas (go routines) created to run the step.
         Replicas uint16
 
+        // InputChannelSize is the buffer size for the input channel to the step
+        InputChannelSize uint16
+
         // BufferSize is the max size of the buffer. If the buffer is full, the oldest element will be removed.
         BufferSize int
 
@@ -574,14 +619,15 @@ func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] <span class="
         <span class="cov8" title="1">if config.BufferSize &lt;= 0 </span><span class="cov8" title="1">{
                 panic("buffer size must be greater than or equal to 0")</span>
         }
+
         <span class="cov8" title="1">return &amp;stepBuffered[I]{
-                stepBase:                     newBaseStep[I](config.Label, config.Replicas),
+                stepBase:                     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
                 bufferSize:                   config.BufferSize,
+                passThrough:                  config.PassThrough,
+                buffer:                       make([]I, 0, config.BufferSize),
                 inputTriggeredProcess:        config.InputTriggeredProcess,
                 timeTriggeredProcess:         config.TimeTriggeredProcess,
                 timeTriggeredProcessInterval: config.TimeTriggeredProcessInterval,
-                passThrough:                  config.PassThrough,
-                buffer:                       make([]I, 0, config.BufferSize),
         }</span>
 }
 
@@ -674,6 +720,7 @@ func (s *stepBuffered[I]) handleTimeTriggeredProcess() <span class="cov8" title=
 
         processOutput := s.timeTriggeredProcess(s.buffer)
 
+        // Check if the process has a result or not.
         if processOutput.HasResult </span><span class="cov8" title="1">{
                 s.incrementTokensCount()
                 s.output &lt;- processOutput.Result
@@ -709,6 +756,9 @@ type StepFilterConfig[I any] struct {
         // Replicas is the number of replicas (go routines) created to run the step.
         Replicas uint16
 
+        // InputChannelSize is the buffer size for the input channel to the step
+        InputChannelSize uint16
+
         // PassCriteria is a function that determines if the data should be passed or not.
         PassCriteria StepFilterPassCriteria[I]
 }
@@ -723,7 +773,7 @@ func newStepFilter[I any](config StepFilterConfig[I]) IStep[I] <span class="cov8
                 panic("process is required")</span>
         }
         <span class="cov8" title="1">return &amp;stepFilter[I]{
-                stepBase:     newBaseStep[I](config.Label, config.Replicas),
+                stepBase:     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
                 passCriteria: config.PassCriteria,
         }</span>
 }
@@ -765,6 +815,9 @@ type StepFragmenterConfig[I any] struct {
         // Label is the name of the step.
         Label string
 
+        // InputChannelSize is the buffer size for the input channel to the step
+        InputChannelSize uint16
+
         // Replicas is the number of replicas (go routines) created to run the step.
         Replicas uint16
 
@@ -782,7 +835,7 @@ func newStepFragmenter[I any](config StepFragmenterConfig[I]) IStep[I] <span cla
                 panic("process is required")</span>
         }
         <span class="cov8" title="1">return &amp;stepFragmenter[I]{
-                stepBase: newBaseStep[I](config.Label, config.Replicas),
+                stepBase: newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
                 process:  config.Process,
         }</span>
 }
@@ -817,39 +870,43 @@ import (
         "sync"
 )
 
-// StepResultProcess is a function that processes the input data and does not return any data.
-type StepResultProcess[I any] func(I)
+// StepTerminalProcess is a function that processes the input data and does not return any data.
+type StepTerminalProcess[I any] func(I)
 
-// StepResultConfig is a struct that defines the configuration for a result step
-type StepResultConfig[I any] struct {
+// StepTerminalConfig is a struct that defines the configuration for a result step
+type StepTerminalConfig[I any] struct {
 
         // Label is the name of the step.
         Label string
+
+        // InputChannelSize is the buffer size for the input channel to the step
+        InputChannelSize uint16
 
         // Replicas is the number of replicas (go routines) created to run the step.
         Replicas uint16
 
         // Process is the function that processes the input data and does not return any data.
-        Process StepResultProcess[I]
+        Process        StepTerminalProcess[I]
+        ReverseProcess StepTerminalProcess[I]
 }
 
-// stepResult is a struct that represents a step in the pipeline that does not return any data.
-type stepResult[I any] struct {
+// stepTerminal is a struct that represents a step in the pipeline that does not return any data.
+type stepTerminal[I any] struct {
         stepBase[I]
-        process StepResultProcess[I]
+        process StepTerminalProcess[I]
 }
 
-func newStepResult[I any](config StepResultConfig[I]) IStep[I] <span class="cov8" title="1">{
+func newStepTerminal[I any](config StepTerminalConfig[I]) IStep[I] <span class="cov8" title="1">{
         if config.Process == nil </span><span class="cov8" title="1">{
                 panic("process is required")</span>
         }
-        <span class="cov8" title="1">return &amp;stepResult[I]{
-                stepBase: newBaseStep[I](config.Label, config.Replicas),
+        <span class="cov8" title="1">return &amp;stepTerminal[I]{
+                stepBase: newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
                 process:  config.Process,
         }</span>
 }
 
-func (s *stepResult[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
+func (s *stepTerminal[I]) Run(ctx context.Context, wg *sync.WaitGroup) <span class="cov8" title="1">{
         defer wg.Done()
         for </span><span class="cov8" title="1">{
                 select </span>{
