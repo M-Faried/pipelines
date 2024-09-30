@@ -3,6 +3,7 @@
 # Variables
 PACKAGE = .
 COVERAGE_FILE = ./coverage/coverage.out
+COVERAGE_REPORT = ./coverage/coverage-report.txt
 COVERAGE_HTML = ./coverage/coverage.html
 
 # Default target
@@ -14,7 +15,7 @@ test:
 
 # # Generate coverage report in text format
 coverage: test
-	go tool cover -func=$(COVERAGE_FILE)
+	go tool cover -func=$(COVERAGE_FILE) -o ${COVERAGE_REPORT}
 
 # Generate coverage report in HTML format
 show-cover-html: test
