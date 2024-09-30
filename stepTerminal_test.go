@@ -9,7 +9,7 @@ import (
 
 func TestStepTerminal_SuccessfulProcess(t *testing.T) {
 
-	processHandler := &mockResultProcessHandler[int]{}
+	processHandler := &mockTerminalProcessHandler[int]{}
 	decrementTokensHandler := &mockDecrementTokensHandler{}
 	incrementTokensHandler := &mockIncrementTokensHandler{}
 
@@ -50,7 +50,7 @@ func TestStepTerminal_SuccessfulProcess(t *testing.T) {
 }
 
 func TestStepTerminal_ClosingInputChannel(t *testing.T) {
-	processHandler := &mockResultProcessHandler[int]{}
+	processHandler := &mockTerminalProcessHandler[int]{}
 	decrementTokensHandler := &mockDecrementTokensHandler{}
 
 	step := &stepTerminal[int]{

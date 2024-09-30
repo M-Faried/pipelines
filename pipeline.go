@@ -112,13 +112,13 @@ func (p *pipeline[I]) Init() error {
 			p.steps[i].SetIncrementTokensCountHandler(p.incrementTokensCount)
 		}
 
-		// setting the input for the result step.
-		stepBeforeResultIndex := stepsCount - 2
-		resultStepIndex := stepsCount - 1
-		// setting the input for the result step from the step before it.
-		p.steps[resultStepIndex].SetInputChannel(p.steps[stepBeforeResultIndex].GetOutputChannel())
-		// setting the decrement for the result step.
-		p.steps[resultStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)
+		// setting the input for the terminal step.
+		stepBeforeTerminalStepIndex := stepsCount - 2
+		terminalStepIndex := stepsCount - 1
+		// setting the input for the terminal step from the step before it.
+		p.steps[terminalStepIndex].SetInputChannel(p.steps[stepBeforeTerminalStepIndex].GetOutputChannel())
+		// setting the decrement for the terminal step.
+		p.steps[terminalStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)
 	})
 	return nil
 }

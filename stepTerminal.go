@@ -8,7 +8,7 @@ import (
 // StepTerminalProcess is a function that processes the input data and does not return any data.
 type StepTerminalProcess[I any] func(I)
 
-// StepTerminalConfig is a struct that defines the configuration for a result step
+// StepTerminalConfig is a struct that defines the configuration for a terminal step
 type StepTerminalConfig[I any] struct {
 
 	// Label is the name of the step.

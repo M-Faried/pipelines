@@ -14,7 +14,7 @@ func TestStepBasic_SuccessfullProcess(t *testing.T) {
 	decrementHandler := &mockDecrementTokensHandler{}
 	incrementHandler := &mockIncrementTokensHandler{}
 
-	// Create a stepStandard instance
+	// Create a basic step instance
 	step := &stepBasic[int]{
 		stepBase: stepBase[int]{
 			input:                make(chan int, 1),
@@ -87,7 +87,7 @@ func TestStepBasic_ProcessWithError(t *testing.T) {
 		return 0, fmt.Errorf("test error")
 	}
 
-	// Create a stepStandard instance
+	// Create a stepBasic instance
 	step := &stepBasic[int]{
 		stepBase: stepBase[int]{
 			input:                make(chan int, 1),
@@ -151,7 +151,7 @@ func TestStepBasic_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 	decrementHandler := &mockDecrementTokensHandler{}
 	incrementHandler := &mockIncrementTokensHandler{}
 
-	// Create a stepStandard instance
+	// Create a stepBasic instance
 	step := &stepBasic[int]{
 		stepBase: stepBase[int]{
 			input:                make(chan int, 1),

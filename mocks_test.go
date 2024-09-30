@@ -19,13 +19,13 @@ func (m *mockErrorHandler) Handle(label string, err error) {
 	m.err = err
 }
 
-// mockResultProcessHandler is a mock implementation of the result process handler
-type mockResultProcessHandler[I any] struct {
+// mockTerminalProcessHandler is a mock implementation of the terminal process handler
+type mockTerminalProcessHandler[I any] struct {
 	called bool
 	input  I
 }
 
-func (m *mockResultProcessHandler[I]) Handle(input I) {
+func (m *mockTerminalProcessHandler[I]) Handle(input I) {
 	m.called = true
 	m.input = input
 }

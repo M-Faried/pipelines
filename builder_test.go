@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func TestNewStep_StandardStep(t *testing.T) {
+func TestNewStep_BasicStep(t *testing.T) {
 	builder := &Builder[int]{}
 
 	process := func(input int) (int, error) { return input, nil }
@@ -13,10 +13,11 @@ func TestNewStep_StandardStep(t *testing.T) {
 
 	// Test with StepConfig
 	stepConfig := StepBasicConfig[int]{
-		Label:        "testStep",
-		Replicas:     0, //should be rectified to 1
-		ErrorHandler: errorHandler,
-		Process:      process,
+		Label:            "testStep",
+		Replicas:         0, //should be rectified to 1
+		ErrorHandler:     errorHandler,
+		Process:          process,
+		InputChannelSize: 10,
 	}
 
 	step := builder.NewStep(stepConfig)
@@ -26,7 +27,7 @@ func TestNewStep_StandardStep(t *testing.T) {
 		t.Error("Expected step to be created, got nil")
 	}
 	if concreteStep, ok = step.(*stepBasic[int]); !ok {
-		t.Error("Expected step to be of type stepStandard")
+		t.Error("Expected step to be of type stepBasic")
 	}
 
 	if step.GetLabel() != "testStep" {
@@ -37,15 +38,24 @@ func TestNewStep_StandardStep(t *testing.T) {
 		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
 	}
 
+	if concreteStep.label != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", concreteStep.label)
+	}
+	if concreteStep.replicas != 1 {
+		t.Errorf("Expected replicas to be 1, got %d", concreteStep.replicas)
+	}
 	if concreteStep.errorHandler == nil {
 		t.Error("Expected error handler to be set, got nil")
 	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
 }
 
-func TestNewStep_StandardStep_MissingProcess(t *testing.T) {
+func TestNewStep_BasicStep_MissingProcess(t *testing.T) {
 
 	builder := &Builder[int]{}
 	errorHandler := func(label string, err error) {}
@@ -73,9 +83,10 @@ func TestNewStep_FilterStep(t *testing.T) {
 
 	// Test with StepConfig
 	stepConfig := StepFilterConfig[int]{
-		Label:        "testStep",
-		Replicas:     1,
-		PassCriteria: process,
+		Label:            "testStep",
+		Replicas:         2,
+		InputChannelSize: 10,
+		PassCriteria:     process,
 	}
 
 	step := builder.NewStep(stepConfig)
@@ -87,19 +98,27 @@ func TestNewStep_FilterStep(t *testing.T) {
 		t.Error("Expected step to be created, got nil")
 	}
 	if concreteStep, ok = step.(*stepFilter[int]); !ok {
-		t.Error("Expected step to be of type stepStandard")
+		t.Error("Expected step to be of type stepFilter")
 	}
 
 	if step.GetLabel() != "testStep" {
 		t.Errorf("Expected label to be 'testStep', got '%s'", step.GetLabel())
 	}
-
-	if step.GetReplicas() != 1 {
-		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	if step.GetReplicas() != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", step.GetReplicas())
 	}
 
+	if concreteStep.label != "testStep" {
+		t.Errorf("Expected label to be 'testStep', got '%s'", concreteStep.label)
+	}
+	if concreteStep.replicas != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", concreteStep.replicas)
+	}
 	if concreteStep.passCriteria == nil {
 		t.Error("Expected process to be set, got nil")
+	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
 	}
 }
 
@@ -129,9 +148,10 @@ func TestNewStep_FragmenterStep(t *testing.T) {
 
 	// Test with StepConfig
 	stepConfig := StepFragmenterConfig[int]{
-		Label:    "fragmenterStep",
-		Replicas: 1,
-		Process:  process,
+		Label:            "fragmenterStep",
+		Replicas:         2,
+		Process:          process,
+		InputChannelSize: 10,
 	}
 
 	step := builder.NewStep(stepConfig)
@@ -141,19 +161,27 @@ func TestNewStep_FragmenterStep(t *testing.T) {
 		t.Error("Expected step to be created, got nil")
 	}
 	if concreteStep, ok = step.(*stepFragmenter[int]); !ok {
-		t.Error("Expected step to be of type stepStandard")
+		t.Error("Expected step to be of type stepFragmenter")
 	}
 
 	if step.GetLabel() != "fragmenterStep" {
 		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", step.GetLabel())
 	}
-
-	if step.GetReplicas() != 1 {
-		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	if step.GetReplicas() != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", step.GetReplicas())
 	}
 
+	if concreteStep.label != "fragmenterStep" {
+		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", concreteStep.label)
+	}
+	if concreteStep.replicas != 2 {
+		t.Errorf("Expected replicas to be 2, got %d", concreteStep.replicas)
+	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
+	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
 	}
 }
 
@@ -191,6 +219,7 @@ func TestNewStep_BufferStep(t *testing.T) {
 		Label:                        "testStep",
 		Replicas:                     1,
 		BufferSize:                   20,
+		InputChannelSize:             10,
 		PassThrough:                  true,
 		InputTriggeredProcess:        processInputTriggered,
 		TimeTriggeredProcess:         processTimeTriggered,
@@ -206,7 +235,7 @@ func TestNewStep_BufferStep(t *testing.T) {
 		t.Error("Expected step to be created, got nil")
 	}
 	if concreteStep, ok = step.(*stepBuffered[int]); !ok {
-		t.Error("Expected step to be of type stepStandard")
+		t.Error("Expected step to be of type stepBuffered")
 	}
 
 	if concreteStep.label != "testStep" {
@@ -239,6 +268,10 @@ func TestNewStep_BufferStep(t *testing.T) {
 
 	if cap(concreteStep.buffer) != 20 {
 		t.Errorf("Expected buffer capacity to be 20, got %d", cap(concreteStep.buffer))
+	}
+
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
 	}
 }
 
@@ -313,9 +346,10 @@ func TestNewStep_TerminalStep(t *testing.T) {
 
 	// Test with StepConfig
 	stepConfig := StepTerminalConfig[int]{
-		Label:    "fragmenterStep",
-		Replicas: 5,
-		Process:  process,
+		Label:            "fragmenterStep",
+		InputChannelSize: 10,
+		Replicas:         5,
+		Process:          process,
 	}
 
 	step := builder.NewStep(stepConfig)
@@ -325,7 +359,7 @@ func TestNewStep_TerminalStep(t *testing.T) {
 		t.Error("Expected step to be created, got nil")
 	}
 	if concreteStep, ok = step.(*stepTerminal[int]); !ok {
-		t.Error("Expected step to be of type stepStandard")
+		t.Error("Expected step to be of type stepTerminal")
 	}
 
 	if step.GetLabel() != "fragmenterStep" {
@@ -339,9 +373,12 @@ func TestNewStep_TerminalStep(t *testing.T) {
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}
+	if concreteStep.inputChannelSize != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
 }
 
-func TestNewStep_ResultStep_MissingProcess(t *testing.T) {
+func TestNewStep_TerminalStep_MissingProcess(t *testing.T) {
 
 	builder := &Builder[int]{}
 

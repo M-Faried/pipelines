@@ -12,7 +12,7 @@ type StepBasicErrorHandler func(string, error)
 // StepBasicProcess is a function that processes a single input data and returns a single output data.
 type StepBasicProcess[I any] func(I) (I, error)
 
-// StepBasicConfig is a struct that defines the configuration for a standard step
+// StepBasicConfig is a struct that defines the configuration for a basic step
 type StepBasicConfig[I any] struct {
 	// Label is a human-readable label for the step
 	Label string
