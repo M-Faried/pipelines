@@ -2,6 +2,7 @@ package pipelines
 
 import (
 	"context"
+	"fmt"
 	"sync"
 )
 
@@ -36,7 +37,7 @@ type pipeline[I any] struct {
 	// steps is the list of steps in the pipeline.
 	steps []iStepInternal[I]
 
-	// defaultChannelSize is the buffer size for all channels used to connect steps.
+	// defaultChannelSize is the default buffer size used for all channels which has no input channel size set explicitly.
 	defaultChannelSize uint16
 
 	// cancelStepsContext is used to cancel the context of the steps.
@@ -65,6 +66,21 @@ type pipeline[I any] struct {
 }
 
 func (p *pipeline[I]) Init() error {
+
+	if p.defaultChannelSize == 0 {
+		return fmt.Errorf("default channel size should be greater than 0")
+	}
+
+	if len(p.steps) == 0 {
+		return fmt.Errorf("steps of the pipeline cannot be empty")
+	}
+
+	for _, c := range p.steps {
+		if c == nil {
+			return fmt.Errorf("step cannot be nil")
+		}
+	}
+
 	p.initOnce.Do(func() {
 		// creating a condition variable for the done condition
 		p.doneCond = sync.NewCond(&p.tokensCountMutex)
