@@ -11,6 +11,14 @@ func TestGetLabel(t *testing.T) {
 	}
 }
 
+func TestSetInputChannelSize(t *testing.T) {
+	step := stepBase[int]{}
+	step.SetInputChannelSize(10)
+	if step.GetInputChannelSize() != 10 {
+		t.Errorf("expected input channel size to be 10, got %d", step.GetInputChannelSize())
+	}
+}
+
 func TestSetInputChannel(t *testing.T) {
 	inputChan := make(chan int)
 	step := stepBase[int]{}

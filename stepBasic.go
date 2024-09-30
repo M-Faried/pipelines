@@ -17,6 +17,9 @@ type StepBasicConfig[I any] struct {
 	// Label is a human-readable label for the step
 	Label string
 
+	// InputChannelSize is the buffer size for the input channel to the step
+	InputChannelSize uint16
+
 	// Replicas is the number of replicas of the step that should be run in parallel
 	Replicas uint16
 
@@ -42,7 +45,7 @@ func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepBasic[I]{
-		stepBase:     newBaseStep[I](config.Label, config.Replicas),
+		stepBase:     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
 		errorHandler: config.ErrorHandler,
 		process:      config.Process,
 	}

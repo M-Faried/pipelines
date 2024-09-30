@@ -62,6 +62,7 @@ type mockStep[I any] struct {
 	decrementHandler func()
 	errorHandler     *mockErrorHandler
 	finalStep        bool
+	inputChannelSize uint16
 }
 
 func (m *mockStep[I]) GetLabel() string {
@@ -119,4 +120,12 @@ func (m *mockStep[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 		}
 	}
+}
+
+func (s *mockStep[I]) SetInputChannelSize(size uint16) {
+	s.inputChannelSize = size
+}
+
+func (s *mockStep[I]) GetInputChannelSize() uint16 {
+	return s.inputChannelSize
 }

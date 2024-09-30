@@ -14,6 +14,9 @@ type StepFragmenterConfig[I any] struct {
 	// Label is the name of the step.
 	Label string
 
+	// InputChannelSize is the buffer size for the input channel to the step
+	InputChannelSize uint16
+
 	// Replicas is the number of replicas (go routines) created to run the step.
 	Replicas uint16
 
@@ -31,7 +34,7 @@ func newStepFragmenter[I any](config StepFragmenterConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepFragmenter[I]{
-		stepBase: newBaseStep[I](config.Label, config.Replicas),
+		stepBase: newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
 		process:  config.Process,
 	}
 }

@@ -9,7 +9,7 @@ import (
 type IPipeline[I any] interface {
 
 	// Init initializes the pipeline and has to be called once before running the pipeline.
-	Init()
+	Init() error
 
 	// Run starts the pipeline.
 	Run(ctx context.Context)
@@ -36,11 +36,11 @@ type pipeline[I any] struct {
 	// steps is the list of steps in the pipeline.
 	steps []iStepInternal[I]
 
-	// channelSize is the buffer size for all channels used to connect steps.
-	channelSize uint16
+	// defaultChannelSize is the buffer size for all channels used to connect steps.
+	defaultChannelSize uint16
 
-	// stepsCtxCancel is used to cancel the context of the steps.
-	stepsCtxCancel context.CancelFunc
+	// cancelStepsContext is used to cancel the context of the steps.
+	cancelStepsContext context.CancelFunc
 
 	// stepsWaitGroup is used to wait for all the step routines to receive ctx cancel signal.
 	stepsWaitGroup *sync.WaitGroup
@@ -64,7 +64,7 @@ type pipeline[I any] struct {
 	channelsClosed bool
 }
 
-func (p *pipeline[I]) Init() {
+func (p *pipeline[I]) Init() error {
 	p.initOnce.Do(func() {
 		// creating a condition variable for the done condition
 		p.doneCond = sync.NewCond(&p.tokensCountMutex)
@@ -76,7 +76,14 @@ func (p *pipeline[I]) Init() {
 		// an input for each step
 		allChannels := make([]chan I, stepsCount)
 		for i := 0; i < stepsCount; i++ {
-			allChannels[i] = make(chan I, p.channelSize)
+			// check if the channel size is set for this step.
+			if p.steps[i].GetInputChannelSize() > 0 {
+				allChannels[i] = make(chan I, p.steps[i].GetInputChannelSize())
+			} else {
+				// if not we will use the default channel size.
+				allChannels[i] = make(chan I, p.defaultChannelSize)
+				p.steps[i].SetInputChannelSize(p.defaultChannelSize)
+			}
 		}
 
 		// setting channels for each step
@@ -97,6 +104,7 @@ func (p *pipeline[I]) Init() {
 		// setting the decrement for the result step.
 		p.steps[resultStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)
 	})
+	return nil
 }
 
 func (p *pipeline[I]) Run(ctx context.Context) {
@@ -106,7 +114,7 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 
 		// creating a child context for the steps from the parent context.
 		stepsCtx, cancel := context.WithCancel(ctx)
-		p.stepsCtxCancel = cancel
+		p.cancelStepsContext = cancel
 
 		// running steps in reverse order
 		for i := len(p.steps) - 1; i >= 0; i-- {
@@ -130,7 +138,7 @@ func (p *pipeline[I]) WaitTillDone() {
 func (p *pipeline[I]) Terminate() {
 
 	// checking the steps are running
-	if p.stepsWaitGroup == nil {
+	if p.stepsWaitGroup == nil && p.channelsClosed {
 		return
 	}
 
@@ -138,7 +146,7 @@ func (p *pipeline[I]) Terminate() {
 	p.channelsClosed = true
 
 	// canceling the context in case the parent context is not cancelled.
-	p.stepsCtxCancel()
+	p.cancelStepsContext()
 
 	// wait for step routines to be done
 	p.stepsWaitGroup.Wait()

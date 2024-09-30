@@ -18,6 +18,9 @@ type IStep[I any] interface {
 type iStepInternal[I any] interface {
 	IStep[I]
 
+	SetInputChannelSize(uint16)
+	GetInputChannelSize() uint16
+
 	SetInputChannel(chan I)
 	GetInputChannel() chan I
 

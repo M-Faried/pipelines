@@ -397,7 +397,7 @@ func TestNewPipeline(t *testing.T) {
 		t.Errorf("Expected 2 steps in pipeline, got %d", len(concretePipeline.steps))
 	}
 
-	if concretePipeline.channelSize != 10 {
-		t.Errorf("Expected channel size to be 10, got %d", concretePipeline.channelSize)
+	if concretePipeline.defaultChannelSize != 10 {
+		t.Errorf("Expected channel size to be 10, got %d", concretePipeline.defaultChannelSize)
 	}
 }
