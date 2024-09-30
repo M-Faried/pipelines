@@ -102,19 +102,27 @@ func TestStepTerminal_NewStep(t *testing.T) {
 		t.Error("Expected step to be of type stepTerminal")
 	}
 
-	if step.GetLabel() != "fragmenterStep" {
-		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", step.GetLabel())
+	if concreteStep.label != "fragmenterStep" {
+		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", concreteStep.label)
 	}
-
-	if step.GetReplicas() != 5 {
-		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	if concreteStep.replicas != 5 {
+		t.Errorf("Expected replicas to be 1, got %d", concreteStep.replicas)
 	}
-
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}
 	if concreteStep.inputChannelSize != 10 {
 		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.inputChannelSize)
+	}
+
+	if step.GetLabel() != "fragmenterStep" {
+		t.Errorf("Expected label to be 'fragmenterStep', got '%s'", step.GetLabel())
+	}
+	if step.GetReplicas() != 5 {
+		t.Errorf("Expected replicas to be 1, got %d", step.GetReplicas())
+	}
+	if concreteStep.GetInputChannelSize() != 10 {
+		t.Errorf("Expected input channel size to be 10, got %d", concreteStep.GetInputChannelSize())
 	}
 }
 
