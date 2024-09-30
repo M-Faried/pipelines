@@ -242,8 +242,8 @@ func ExampleSensor() {
 		fmt.Println("Pipeline Terminated!!!")
 	}()
 
+	// Simulating the sensor data generation every 50ms
 	go func() {
-		// Simulating the sensor data generation every 50ms
 		ticker := time.NewTicker(SIMULATED_DATA_GEN_INTERVAL)
 		for {
 			select {
