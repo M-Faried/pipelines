@@ -14,8 +14,8 @@ func TestPipeline_Init(t *testing.T) {
 	}
 
 	p := &pipeline[int]{
-		steps:       steps,
-		channelSize: 10,
+		steps:              steps,
+		defaultChannelSize: 10,
 	}
 
 	p.Init()
@@ -35,9 +35,57 @@ func TestPipeline_Init(t *testing.T) {
 	if p.tokensCount != 0 {
 		t.Errorf("expected tokens count to be 0, got %d", p.tokensCount)
 	}
+}
 
-	p.WaitTillDone()
-	p.Terminate()
+func TestPipeline_Init_MissingDefaultChannelSize(t *testing.T) {
+
+	steps := []iStepInternal[int]{
+		&mockStep[int]{replicas: 1},
+		&mockStep[int]{replicas: 1, finalStep: true},
+	}
+
+	p := &pipeline[int]{
+		steps:              steps,
+		defaultChannelSize: 0,
+	}
+
+	err := p.Init()
+	if err == nil {
+		t.Errorf("expected error for missing default channel size")
+	}
+}
+
+func TestPipeline_Init_MissingSteps(t *testing.T) {
+
+	steps := []iStepInternal[int]{}
+
+	p := &pipeline[int]{
+		steps:              steps,
+		defaultChannelSize: 10,
+	}
+
+	err := p.Init()
+	if err == nil {
+		t.Errorf("expected error for missing steps")
+	}
+}
+
+func TestPipeline_Init_NilSteps(t *testing.T) {
+
+	steps := []iStepInternal[int]{
+		&mockStep[int]{replicas: 1},
+		nil,
+	}
+
+	p := &pipeline[int]{
+		steps:              steps,
+		defaultChannelSize: 10,
+	}
+
+	err := p.Init()
+	if err == nil {
+		t.Errorf("expected error for missing step")
+	}
 }
 
 func TestPipeline_Run(t *testing.T) {
@@ -47,8 +95,8 @@ func TestPipeline_Run(t *testing.T) {
 	}
 
 	p := &pipeline[int]{
-		steps:       steps,
-		channelSize: 10,
+		steps:              steps,
+		defaultChannelSize: 10,
 	}
 	p.Init()
 
@@ -56,7 +104,7 @@ func TestPipeline_Run(t *testing.T) {
 	defer cancel()
 	p.Run(ctx)
 
-	if p.stepsCtxCancel == nil {
+	if p.cancelStepsContext == nil {
 		t.Errorf("expected stepsCtxCancel to be initialized")
 	}
 
@@ -70,13 +118,13 @@ func TestPipeline_Run(t *testing.T) {
 
 func TestPipeline_FeedOne(t *testing.T) {
 	steps := []iStepInternal[int]{
-		&mockStep[int]{replicas: 1},
+		&mockStep[int]{replicas: 1, inputChannelSize: 10},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
 
 	p := &pipeline[int]{
-		steps:       steps,
-		channelSize: 10,
+		steps:              steps,
+		defaultChannelSize: 10,
 	}
 	p.Init()
 
@@ -103,6 +151,9 @@ func TestPipeline_FeedOne(t *testing.T) {
 	if p.TokensCount() != 0 {
 		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
 	}
+
+	// Testing recalling terminate won't cause troubles
+	p.Terminate()
 }
 
 func TestPipeline_FeedMany(t *testing.T) {
@@ -112,8 +163,8 @@ func TestPipeline_FeedMany(t *testing.T) {
 	}
 
 	p := &pipeline[int]{
-		steps:       steps,
-		channelSize: 10,
+		steps:              steps,
+		defaultChannelSize: 10,
 	}
 	p.Init()
 
@@ -150,8 +201,8 @@ func TestPipeline_Terminate(t *testing.T) {
 	}
 
 	p := &pipeline[int]{
-		steps:       steps,
-		channelSize: 10,
+		steps:              steps,
+		defaultChannelSize: 10,
 	}
 	p.Init()
 
@@ -177,6 +228,8 @@ func TestPipeline_Terminate(t *testing.T) {
 			t.Errorf("expected input channel of the second step to be closed")
 		}
 	}
+
+	p.Terminate() // Test recalling terminate won't cause troubles
 }
 
 func TestPipeline_WaitTillDone(t *testing.T) {
@@ -186,8 +239,8 @@ func TestPipeline_WaitTillDone(t *testing.T) {
 	}
 
 	p := &pipeline[int]{
-		steps:       steps,
-		channelSize: 10,
+		steps:              steps,
+		defaultChannelSize: 10,
 	}
 	p.Init()
 

@@ -197,7 +197,7 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 		TimeTriggeredProcessInterval: SENSOR_DATA_AVG_INTERVAL,
 	})
 
-	saveInDBStep := builder.NewStep(pip.StepResultConfig[*SensorData]{
+	saveInDBStep := builder.NewStep(pip.StepTerminalConfig[*SensorData]{
 		Label:    "saveInDB",
 		Replicas: REPLICAS_SAVE_DB_STEP,
 		Process:  saveInDB,
@@ -242,8 +242,8 @@ func ExampleSensor() {
 		fmt.Println("Pipeline Terminated!!!")
 	}()
 
+	// Simulating the sensor data generation every 50ms
 	go func() {
-		// Simulating the sensor data generation every 50ms
 		ticker := time.NewTicker(SIMULATED_DATA_GEN_INTERVAL)
 		for {
 			select {
@@ -261,7 +261,7 @@ func ExampleSensor() {
 	<-ctx.Done()
 	// Wait for the goroutines to finish too.
 	time.Sleep(1 * time.Second)
-	fmt.Println("Sensor Data Example Done !!!")
+	fmt.Println("Sensor Data Example Done!!!")
 }
 
 func generateSensorData() *SensorData {

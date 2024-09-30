@@ -12,10 +12,13 @@ type StepBasicErrorHandler func(string, error)
 // StepBasicProcess is a function that processes a single input data and returns a single output data.
 type StepBasicProcess[I any] func(I) (I, error)
 
-// StepBasicConfig is a struct that defines the configuration for a standard step
+// StepBasicConfig is a struct that defines the configuration for a basic step
 type StepBasicConfig[I any] struct {
 	// Label is a human-readable label for the step
 	Label string
+
+	// InputChannelSize is the buffer size for the input channel to the step
+	InputChannelSize uint16
 
 	// Replicas is the number of replicas of the step that should be run in parallel
 	Replicas uint16
@@ -42,7 +45,7 @@ func newStepBasic[I any](config StepBasicConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepBasic[I]{
-		stepBase:     newBaseStep[I](config.Label, config.Replicas),
+		stepBase:     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
 		errorHandler: config.ErrorHandler,
 		process:      config.Process,
 	}

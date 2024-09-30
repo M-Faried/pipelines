@@ -17,6 +17,9 @@ type StepFilterConfig[I any] struct {
 	// Replicas is the number of replicas (go routines) created to run the step.
 	Replicas uint16
 
+	// InputChannelSize is the buffer size for the input channel to the step
+	InputChannelSize uint16
+
 	// PassCriteria is a function that determines if the data should be passed or not.
 	PassCriteria StepFilterPassCriteria[I]
 }
@@ -31,7 +34,7 @@ func newStepFilter[I any](config StepFilterConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepFilter[I]{
-		stepBase:     newBaseStep[I](config.Label, config.Replicas),
+		stepBase:     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
 		passCriteria: config.PassCriteria,
 	}
 }

@@ -30,6 +30,9 @@ type StepBufferedConfig[I any] struct {
 	// Replicas is the number of replicas (go routines) created to run the step.
 	Replicas uint16
 
+	// InputChannelSize is the buffer size for the input channel to the step
+	InputChannelSize uint16
+
 	// BufferSize is the max size of the buffer. If the buffer is full, the oldest element will be removed.
 	BufferSize int
 
@@ -69,14 +72,15 @@ func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] {
 	if config.BufferSize <= 0 {
 		panic("buffer size must be greater than or equal to 0")
 	}
+
 	return &stepBuffered[I]{
-		stepBase:                     newBaseStep[I](config.Label, config.Replicas),
+		stepBase:                     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
 		bufferSize:                   config.BufferSize,
+		passThrough:                  config.PassThrough,
+		buffer:                       make([]I, 0, config.BufferSize),
 		inputTriggeredProcess:        config.InputTriggeredProcess,
 		timeTriggeredProcess:         config.TimeTriggeredProcess,
 		timeTriggeredProcessInterval: config.TimeTriggeredProcessInterval,
-		passThrough:                  config.PassThrough,
-		buffer:                       make([]I, 0, config.BufferSize),
 	}
 }
 
@@ -169,6 +173,7 @@ func (s *stepBuffered[I]) handleTimeTriggeredProcess() {
 
 	processOutput := s.timeTriggeredProcess(s.buffer)
 
+	// Check if the process has a result or not.
 	if processOutput.HasResult {
 		s.incrementTokensCount()
 		s.output <- processOutput.Result

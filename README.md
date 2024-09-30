@@ -87,7 +87,7 @@ func main() {
         PassCriteria: isPositiveValue,
     })
 
-    printResultStep := builder.NewStep(pip.StepResultConfig[int64]{
+    printResultStep := builder.NewStep(pip.StepTerminalConfig[int64]{
         Label:    "print",
         Replicas: 1,
         Process:  printResult,
@@ -123,13 +123,23 @@ func main() {
 
 2. **Filter Step:** Filters some undesired input to the pipeline.
 
-3. **Result Step:** The final step in the pipeline where the results of previous steps are presented or saved.
+3. **Terminal Step:** The final step in the pipeline where the results of pipeline steps are presented, saved, or sent over network.
 
 4. **Fragmenter Step:** Breaks down any token into multiple tokens and feeds them to the next steps in the pipeline.
 
 5. **Buffered Step:** Retains multiple elements in the pipeline to run a calculation over periodically or based on input.
 
-Based on the type of the step your create, different configurations are required to be submitted by the user. One of these configurations is the pipelines which allows to scale up any step of any type just by setting the number of replicas of each step in the configuration.
+Based on the type of the step your create, different configurations are required to be submitted by the user.
+
+### Basic Step Configuration:
+
+Each step has basic configuration in addition to other configuration based on the type of the required step. These basic configuration are:
+
+1. **Label:** Used by the user to identify the step and give it context specific name.
+
+2. **Replicas:** Used to scale up any step of any type. It's optional and its default value is set to 1. It specifies the number of go routines to run steps in.
+
+3. **InputChannelSize:** Specifies the buffer size of the input channel to the step. It is optional, and if it is not set, the input channel buffer size will be set to the default channel size of the pipeline
 
 ## Builder
 
@@ -199,16 +209,16 @@ step := builder.NewStep(pip.StepFilterConfig[int64]{
 })
 ```
 
-## Result Step
+## Terminal Step
 
-Result step is the final step in the pipeline and can return errors only. It also has the same two versions of the constructor with the same parameters order. It is the process where you save the results of the pipeline to the database, send it over the network, ....
+Terminal step is the final step in the pipeline. It is the process where you save the results of the pipeline to the database, send it over the network, ....
 
 ```go
-// The result process type expected by the result step.
-type StepResultProcess[I any] func(I) // Don't redefine
+// The process type expected by the terminal step.
+type StepTerminalProcess[I any] func(I) // Don't redefine
 
 // result step
-resultStep := builder.NewStep(pip.StepResultConfig[int64]{
+resultStep := builder.NewStep(pip.StepTerminalConfig[int64]{
     Replicas: 1,
     Label:    "print",
     Process:  func(token int64) {
@@ -219,7 +229,7 @@ resultStep := builder.NewStep(pip.StepResultConfig[int64]{
 
 ## Fragmenter Step (Example 5)
 
-Fragmenter step allows users to break down a token into multiple tokens and fed to the following steps of the pipelines. This is useful when you are having a large chunk of data and want to breake down into a smaller problem and aggregate results later into the result step. You can reap its benifits of course when you increase the number of the replcias of subsequent steps.
+Fragmenter step allows users to break down a token into multiple tokens and fed to the following steps of the pipelines. This is useful when you are having a large chunk of data and want to breake down into a smaller problem and aggregate results later into a terminal step. You can reap its benifits of course when you increase the number of the replcias of subsequent steps.
 
 ```go
 // The fragmenter process type expected by the fragmenter step.
@@ -331,7 +341,7 @@ bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
 
 - The InputTriggered and the TimeTriggered processes are implemented in a concurrent safe context so the buffer will not change during their execution.
 
-- When you set the **PassThrough** to true and the input triggered process returns a valid result. The received input will be sent first to the following steps then the new result.
+- When you set the **PassThrough** to true AND the input triggered process returns a valid result. The received input will be sent first to the following steps then the result from the process output.
 
 - Again, you can set both time triggered and input triggered processes for the buffer step and they will be both be executed by their triggeres.
 
@@ -341,13 +351,13 @@ Although the pipeline can operate on one type, but you can create a container st
 
 The pipeline creation requires 2 arguments
 
-1. The buffer size of the channels used to communication among the pipeline. Configure it depending on your needs.
+1. The default buffer size of the channels used to communication among the pipeline steps. This is the size used if the input channel size is not set explicitly in the step.
 
 2. Steps in the order of execution.
 
 ```go
 channelBufferSize := 10
-pipeline := builder.NewPipeline(channelBufferSize, step1, step2, step3, resultStep)
+pipeline := builder.NewPipeline(defaultChannelBufferSize, step1, step2, step3, terminalStep)
 ```
 
 ### Pipeline Running
