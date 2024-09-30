@@ -4,7 +4,6 @@
 PACKAGE = .
 COVERAGE_FILE = ./coverage/coverage.out
 COVERAGE_REPORT = ./coverage/coverage-report.txt
-COVERAGE_HTML = ./coverage/coverage.html
 
 # Default target
 all: test coverage html
@@ -17,12 +16,12 @@ test:
 coverage: test
 	go tool cover -func=$(COVERAGE_FILE) -o ${COVERAGE_REPORT}
 
-# Generate coverage report in HTML format
-show-cover-html: test
-	go tool cover -html=$(COVERAGE_FILE)
-
 # Clean up coverage files
 clean:
-	rm -f $(COVERAGE_FILE) $(COVERAGE_HTML)
+	rm -f $(COVERAGE_FILE) $(COVERAGE_REPORT)
+
+# Generate coverage report in HTML format
+show-coverage-html: test
+	go tool cover -html=$(COVERAGE_FILE)
 
 .PHONY: all test coverage html clean
