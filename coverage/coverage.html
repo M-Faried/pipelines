@@ -281,13 +281,13 @@ func (p *pipeline[I]) Init() error <span class="cov8" title="1">{
                         p.steps[i].SetIncrementTokensCountHandler(p.incrementTokensCount)
                 }</span>
 
-                // setting the input for the result step.
-                <span class="cov8" title="1">stepBeforeResultIndex := stepsCount - 2
-                resultStepIndex := stepsCount - 1
-                // setting the input for the result step from the step before it.
-                p.steps[resultStepIndex].SetInputChannel(p.steps[stepBeforeResultIndex].GetOutputChannel())
-                // setting the decrement for the result step.
-                p.steps[resultStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)</span>
+                // setting the input for the terminal step.
+                <span class="cov8" title="1">stepBeforeTerminalStepIndex := stepsCount - 2
+                terminalStepIndex := stepsCount - 1
+                // setting the input for the terminal step from the step before it.
+                p.steps[terminalStepIndex].SetInputChannel(p.steps[stepBeforeTerminalStepIndex].GetOutputChannel())
+                // setting the decrement for the terminal step.
+                p.steps[terminalStepIndex].SetDecrementTokensCountHandler(p.decrementTokensCount)</span>
         })
         <span class="cov8" title="1">return nil</span>
 }
@@ -476,7 +476,7 @@ type StepBasicErrorHandler func(string, error)
 // StepBasicProcess is a function that processes a single input data and returns a single output data.
 type StepBasicProcess[I any] func(I) (I, error)
 
-// StepBasicConfig is a struct that defines the configuration for a standard step
+// StepBasicConfig is a struct that defines the configuration for a basic step
 type StepBasicConfig[I any] struct {
         // Label is a human-readable label for the step
         Label string
@@ -873,7 +873,7 @@ import (
 // StepTerminalProcess is a function that processes the input data and does not return any data.
 type StepTerminalProcess[I any] func(I)
 
-// StepTerminalConfig is a struct that defines the configuration for a result step
+// StepTerminalConfig is a struct that defines the configuration for a terminal step
 type StepTerminalConfig[I any] struct {
 
         // Label is the name of the step.
