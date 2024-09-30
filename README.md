@@ -49,10 +49,10 @@ More examples are submitted in the examples folder in addition to the following 
 ```Go
 
 import (
-	"context"
-	"fmt"
+    "context"
+    "fmt"
 
-	pip "github.com/m-faried/pipelines"
+    pip "github.com/m-faried/pipelines"
 )
 
 func plus5(i int64) (int64, error) {
