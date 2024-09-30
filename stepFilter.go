@@ -19,14 +19,11 @@ type StepFilterConfig[I any] struct {
 
 	// PassCriteria is a function that determines if the data should be passed or not.
 	PassCriteria StepFilterPassCriteria[I]
-
-	ReversePassCriteria StepFilterPassCriteria[I]
 }
 
 type stepFilter[I any] struct {
 	stepBase[I]
-	passCriteria        StepFilterPassCriteria[I]
-	reversePassCriteria StepFilterPassCriteria[I]
+	passCriteria StepFilterPassCriteria[I]
 }
 
 func newStepFilter[I any](config StepFilterConfig[I]) IStep[I] {
@@ -52,25 +49,6 @@ func (s *stepFilter[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 			if s.passCriteria(i) {
 				s.output <- i
-			} else {
-				s.decrementTokensCount()
-			}
-		}
-	}
-}
-
-func (s *stepFilter[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case o, ok := <-s.output:
-			if !ok {
-				return
-			}
-			if s.reversePassCriteria(o) {
-				s.input <- o
 			} else {
 				s.decrementTokensCount()
 			}

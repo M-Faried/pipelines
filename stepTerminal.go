@@ -25,8 +25,7 @@ type StepTerminalConfig[I any] struct {
 // stepTerminal is a struct that represents a step in the pipeline that does not return any data.
 type stepTerminal[I any] struct {
 	stepBase[I]
-	process        StepTerminalProcess[I]
-	reverseProcess StepTerminalProcess[I]
+	process StepTerminalProcess[I]
 }
 
 func newStepTerminal[I any](config StepTerminalConfig[I]) IStep[I] {
@@ -34,9 +33,8 @@ func newStepTerminal[I any](config StepTerminalConfig[I]) IStep[I] {
 		panic("process is required")
 	}
 	return &stepTerminal[I]{
-		stepBase:       newBaseStep[I](config.Label, config.Replicas),
-		process:        config.Process,
-		reverseProcess: config.ReverseProcess,
+		stepBase: newBaseStep[I](config.Label, config.Replicas),
+		process:  config.Process,
 	}
 }
 
@@ -52,22 +50,6 @@ func (s *stepTerminal[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 			s.process(i)
 			s.decrementTokensCount()
-		}
-	}
-}
-
-func (s *stepTerminal[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case o, ok := <-s.output:
-			if !ok {
-				return
-			}
-			s.reverseProcess(o)
-			s.incrementTokensCount()
 		}
 	}
 }

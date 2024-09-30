@@ -62,7 +62,6 @@ type mockStep[I any] struct {
 	decrementHandler func()
 	errorHandler     *mockErrorHandler
 	finalStep        bool
-	isDuplex         bool
 }
 
 func (m *mockStep[I]) GetLabel() string {
@@ -102,14 +101,6 @@ func (m *mockStep[I]) SetErrorHandler(handler *mockErrorHandler) {
 	m.errorHandler = handler
 }
 
-func (m *mockStep[I]) SetIsDuplex(reverse bool) {
-	m.isDuplex = reverse
-}
-
-func (m *mockStep[I]) GetIsDuplex() bool {
-	return m.isDuplex
-}
-
 func (m *mockStep[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	for {
 		select {
@@ -125,25 +116,6 @@ func (m *mockStep[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 				m.decrementHandler()
 			} else {
 				m.outputChannel <- item
-			}
-		}
-	}
-}
-
-func (m *mockStep[I]) RunReverse(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case item, ok := <-m.outputChannel:
-			if !ok {
-				return
-			}
-			if m.finalStep {
-				m.decrementHandler()
-			} else {
-				m.inputChannel <- item
 			}
 		}
 	}

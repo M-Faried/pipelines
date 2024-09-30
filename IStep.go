@@ -24,14 +24,10 @@ type iStepInternal[I any] interface {
 	SetOutputChannel(chan I)
 	GetOutputChannel() chan I
 
-	SetIsDuplex(bool)
-	GetIsDuplex() bool
-
 	SetIncrementTokensCountHandler(func())
 	SetDecrementTokensCountHandler(func())
 
 	Run(context.Context, *sync.WaitGroup)
-	RunReverse(ctx context.Context, wg *sync.WaitGroup)
 }
 
 func castToInternalSteps[I any](step []IStep[I]) []iStepInternal[I] {
