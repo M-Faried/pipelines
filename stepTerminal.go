@@ -21,8 +21,7 @@ type StepTerminalConfig[I any] struct {
 	Replicas uint16
 
 	// Process is the function that processes the input data and does not return any data.
-	Process        StepTerminalProcess[I]
-	ReverseProcess StepTerminalProcess[I]
+	Process StepTerminalProcess[I]
 }
 
 // stepTerminal is a struct that represents a step in the pipeline that does not return any data.
