@@ -37,7 +37,7 @@ func Example6() {
 		PassCriteria: oddNumberCriteria,
 	})
 
-	aggregator := builder.NewStep(pip.StepBufferConfig[int64]{
+	sumCalculator := builder.NewStep(pip.StepBufferConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   2,
 		BufferSize: 5,
@@ -47,7 +47,7 @@ func Example6() {
 		// accurate interval time for inputs to avoid stalling pipeline for long.
 		// You can use either or both threshold and interval time based on your needs in other cases.
 		TimeTriggeredProcess:         periodicCalculateSum,
-		TimeTriggeredProcessInterval: 100 * time.Millisecond, //This means the buffer calculates the result from the buffer every 500ms
+		TimeTriggeredProcessInterval: 500 * time.Millisecond, //This means the buffer calculates the result from the buffer every 500ms
 
 	})
 
@@ -57,7 +57,7 @@ func Example6() {
 		Process:  printResult,
 	})
 
-	pipeline := builder.NewPipeline(10, filter, aggregator, result)
+	pipeline := builder.NewPipeline(10, filter, sumCalculator, result)
 	pipeline.Init()
 
 	ctx := context.Background()
@@ -65,7 +65,7 @@ func Example6() {
 
 	for i := 1; i <= 20; i++ {
 		pipeline.FeedOne(int64(i))
-		time.Sleep(500 * time.Millisecond)
+		time.Sleep(1 * time.Second)
 	}
 
 	// since the values of the buffere are not flushed, using WaitTillDone will keep your pipeline running forever
