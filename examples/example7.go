@@ -11,7 +11,7 @@ func evenNumberCriteria(i int64) bool {
 	return i%2 == 0
 }
 
-func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+func calculateSumOnBufferCountThreshold(buffer []int64) (int64, pip.BufferFlags) {
 
 	fmt.Println("calculateEvenSum Input: ", buffer)
 
@@ -21,17 +21,15 @@ func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessO
 		for _, v := range buffer {
 			sum += v
 		}
-		return pip.StepBufferedProcessOutput[int64]{
-			HasResult:   true,
-			Result:      sum,
-			FlushBuffer: true, // This means the buffer is going to be flushed after the calculation.
+		return sum, pip.BufferFlags{
+			SendProcessOuput: true,
+			FlushBuffer:      true, // This means the buffer is going to be flushed after the calculation.
 		}
 	}
 
-	return pip.StepBufferedProcessOutput[int64]{
-		HasResult:   false,
-		Result:      0,
-		FlushBuffer: false,
+	return 0, pip.BufferFlags{
+		SendProcessOuput: false,
+		FlushBuffer:      false,
 	}
 }
 
@@ -46,7 +44,7 @@ func Example7() {
 		PassCriteria: evenNumberCriteria,
 	})
 
-	buffer := builder.NewStep(pip.StepBufferedConfig[int64]{
+	buffer := builder.NewStep(pip.StepBufferConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   5,
 		BufferSize: 10,

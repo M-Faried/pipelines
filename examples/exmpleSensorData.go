@@ -54,10 +54,10 @@ func isValidSensorData(data *SensorData) bool {
 }
 
 // called with every input sensor data
-func tempratureErrorMonitor(data []*SensorData) pip.StepBufferedProcessOutput[*SensorData] {
+func tempratureErrorMonitor(data []*SensorData) (*SensorData, pip.BufferFlags) {
 
 	if len(data) < TEMPRATURE_AVG_ERROR_VALUES_COUNT {
-		return pip.StepBufferedProcessOutput[*SensorData]{}
+		return nil, pip.BufferFlags{}
 	}
 
 	sum := 0.0
@@ -71,20 +71,20 @@ func tempratureErrorMonitor(data []*SensorData) pip.StepBufferedProcessOutput[*S
 		fmt.Println("----recalibrating sensor due to temprature error----")
 		fmt.Println("----------------------------------------------------")
 		fmt.Println()
-		return pip.StepBufferedProcessOutput[*SensorData]{
+		return nil, pip.BufferFlags{
 			// flusing the buffer to avoid sending the recalibration signal multiple times.
 			FlushBuffer: true,
 		}
 	}
 
-	return pip.StepBufferedProcessOutput[*SensorData]{}
+	return nil, pip.BufferFlags{}
 }
 
 // called with every input sensor data
-func humidityErrorMonitor(data []*SensorData) pip.StepBufferedProcessOutput[*SensorData] {
+func humidityErrorMonitor(data []*SensorData) (*SensorData, pip.BufferFlags) {
 
 	if len(data) < HUMIDITY_AVG_ERROR_VALUES_COUNT {
-		return pip.StepBufferedProcessOutput[*SensorData]{}
+		return nil, pip.BufferFlags{}
 	}
 
 	sum := 0.0
@@ -98,28 +98,29 @@ func humidityErrorMonitor(data []*SensorData) pip.StepBufferedProcessOutput[*Sen
 		fmt.Println("-----recalibrating sensor due to humidity error-----")
 		fmt.Println("----------------------------------------------------")
 		fmt.Println()
-		return pip.StepBufferedProcessOutput[*SensorData]{
+		return nil, pip.BufferFlags{
 			// flusing the buffer to avoid sending the recalibration signal multiple times.
 			FlushBuffer: true,
 		}
 	}
 
-	return pip.StepBufferedProcessOutput[*SensorData]{}
+	return nil, pip.BufferFlags{}
 }
 
 // called every second.
-func sensorAvgDataCalculation(data []*SensorData) pip.StepBufferedProcessOutput[*SensorData] {
+func sensorAvgDataCalculation(data []*SensorData) (*SensorData, pip.BufferFlags) {
 
 	// If no data is received, zero average log.
 	if len(data) == 0 {
-		return pip.StepBufferedProcessOutput[*SensorData]{
-			HasResult: true,
-			Result: &SensorData{
-				TemperatureValue:      0,
-				TemperatureErrorValue: 0,
-				HumidityValue:         0,
-				HumidityErrorValue:    0,
-			},
+		result := &SensorData{
+			TemperatureValue:      0,
+			TemperatureErrorValue: 0,
+			HumidityValue:         0,
+			HumidityErrorValue:    0,
+		}
+
+		return result, pip.BufferFlags{
+			SendProcessOuput: true,
 		}
 	}
 
@@ -147,9 +148,8 @@ func sensorAvgDataCalculation(data []*SensorData) pip.StepBufferedProcessOutput[
 		HumidityErrorValue:    math.Round(humidityErrorAvg),
 	}
 
-	return pip.StepBufferedProcessOutput[*SensorData]{
-		HasResult: true,
-		Result:    approximatedData,
+	return approximatedData, pip.BufferFlags{
+		SendProcessOuput: true,
 		// Not flushing the data so that we can calculate the average when there is no new data.
 	}
 }
@@ -172,7 +172,7 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 		PassCriteria: isValidSensorData,
 	})
 
-	tempratureErrorMonitorStep := builder.NewStep(pip.StepBufferedConfig[*SensorData]{
+	tempratureErrorMonitorStep := builder.NewStep(pip.StepBufferConfig[*SensorData]{
 		Label:                 "tempratureErrorMonitor",
 		Replicas:              REPLICAS_TEMP_MONITOR_STEP,
 		PassThrough:           true, // Since it is used for monitor.
@@ -180,7 +180,7 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 		InputTriggeredProcess: tempratureErrorMonitor,
 	})
 
-	humidityErrorMonitorStep := builder.NewStep(pip.StepBufferedConfig[*SensorData]{
+	humidityErrorMonitorStep := builder.NewStep(pip.StepBufferConfig[*SensorData]{
 		Label:                 "humidityErrorMonitor",
 		Replicas:              REPLICAS_HUMI_MONITOR_STEP,
 		PassThrough:           true, // Since it is used for monitor.
@@ -188,7 +188,7 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 		InputTriggeredProcess: humidityErrorMonitor,
 	})
 
-	avgDataStep := builder.NewStep(pip.StepBufferedConfig[*SensorData]{
+	avgDataStep := builder.NewStep(pip.StepBufferConfig[*SensorData]{
 		Label:                        "avgData",
 		Replicas:                     REPLICAS_AVG_DATA_STEP,
 		PassThrough:                  false,
