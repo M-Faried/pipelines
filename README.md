@@ -314,8 +314,8 @@ func calculateSumOnBufferCountThreshold(buffer []int64) (int64, pip.BufferFlags)
     // skipping the calcluation if not enough data was buffered.
     if len(buffer) < 10 {
         return 0, pip.BufferFlags{
-            HasResult:   false,
-            FlushBuffer: false,
+            SendProcessOuput:   false,
+            FlushBuffer:        false,
         }
     }
 
@@ -324,8 +324,8 @@ func calculateSumOnBufferCountThreshold(buffer []int64) (int64, pip.BufferFlags)
         sum += v
     }
     return sum, pip.BufferFlags{
-        HasResult:   true,
-        FlushBuffer: true, // This instructs the buffer step to flush the data it retains and start accumulating fresh data.
+        SendProcessOuput:   true,
+        FlushBuffer:        true, // This instructs the buffer step to flush the data it retains and start accumulating fresh data.
     }
 }
 
