@@ -6,21 +6,18 @@ import (
 	"time"
 )
 
-// BufferFlags is the output of the StepBufferProcess.
-type BufferFlags[I any] struct {
+// BufferFlags is flags instructing the buffer step to behave in certain way.
+type BufferFlags struct {
 
 	// SendProcessOuput is a flag to indicate if the process has a result or not.
 	SendProcessOuput bool
-
-	// Result is the result of the process.
-	Result I
 
 	// FlushBuffer signals the step to flush all the values stored in the buffer.
 	FlushBuffer bool
 }
 
 // StepBufferProcess is the function signature for the process which is called periodically or when the input is received.
-type StepBufferProcess[I any] func([]I) BufferFlags[I]
+type StepBufferProcess[I any] func([]I) (I, BufferFlags)
 
 // StepBufferConfig is the confiuration for creating a buffer step.
 type StepBufferConfig[I any] struct {
@@ -145,16 +142,16 @@ func (s *stepBuffer[I]) handleInputTriggeredProcess(i I) {
 	}
 
 	// Processing the buffer after adding the element.
-	processOutput := s.inputTriggeredProcess(s.buffer)
+	processOutput, flags := s.inputTriggeredProcess(s.buffer)
 
-	if processOutput.SendProcessOuput {
+	if flags.SendProcessOuput {
 		// Since this is a new result, we need to increment the tokens count.
 		s.incrementTokensCount()
-		s.output <- processOutput.Result
+		s.output <- processOutput
 	}
 
 	// Check if the buffer should be flushed or not.
-	if processOutput.FlushBuffer {
+	if flags.FlushBuffer {
 		length := len(s.buffer)
 		for range length {
 			s.decrementTokensCount()
@@ -172,16 +169,16 @@ func (s *stepBuffer[I]) handleTimeTriggeredProcess() {
 	s.bufferMutex.Lock()
 	defer s.bufferMutex.Unlock()
 
-	processOutput := s.timeTriggeredProcess(s.buffer)
+	processOutput, flags := s.timeTriggeredProcess(s.buffer)
 
 	// Check if the process has a result or not.
-	if processOutput.SendProcessOuput {
+	if flags.SendProcessOuput {
 		s.incrementTokensCount()
-		s.output <- processOutput.Result
+		s.output <- processOutput
 	}
 
 	// Check if the buffer should be flushed or not.
-	if processOutput.FlushBuffer {
+	if flags.FlushBuffer {
 		length := len(s.buffer)
 		for range length {
 			s.decrementTokensCount()

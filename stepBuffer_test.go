@@ -23,11 +23,10 @@ func TestStepBuffer_Run_InputTriggered(t *testing.T) {
 		bufferSize:  3,
 		buffer:      make([]int, 0, 3),
 		passThrough: true,
-		inputTriggeredProcess: func(buffer []int) BufferFlags[int] {
+		inputTriggeredProcess: func(buffer []int) (int, BufferFlags) {
 			fmt.Println("inputTriggeredProcess", buffer)
-			return BufferFlags[int]{
+			return 0, BufferFlags{
 				SendProcessOuput: false,
-				Result:           0,
 				FlushBuffer:      false,
 			}
 		},
@@ -95,10 +94,10 @@ func TestStepBuffer_Run_InputTriggered_FlushBuffer(t *testing.T) {
 		},
 		bufferSize:  3,
 		passThrough: false,
-		inputTriggeredProcess: func(buffer []int) BufferFlags[int] {
-			return BufferFlags[int]{
+		inputTriggeredProcess: func(buffer []int) (int, BufferFlags) {
+			result := buffer[len(buffer)-1] * 2
+			return result, BufferFlags{
 				SendProcessOuput: true,
-				Result:           buffer[len(buffer)-1] * 2,
 				FlushBuffer:      true,
 			}
 		},
@@ -169,20 +168,18 @@ func TestStepBuffer_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
 		},
 		bufferSize:  3,
 		passThrough: false,
-		timeTriggeredProcess: func(buffer []int) BufferFlags[int] {
+		timeTriggeredProcess: func(buffer []int) (int, BufferFlags) {
 			if len(buffer) < 3 {
-				return BufferFlags[int]{
+				return 0, BufferFlags{
 					SendProcessOuput: false,
-					Result:           0,
 				}
 			}
 			sum := 0
 			for _, v := range buffer {
 				sum += v
 			}
-			return BufferFlags[int]{
+			return sum, BufferFlags{
 				SendProcessOuput: true,
-				Result:           sum,
 				FlushBuffer:      true,
 			}
 		},
@@ -243,11 +240,11 @@ func TestStepBuffer_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
 
 func TestStepBuffer_NewStep(t *testing.T) {
 
-	processInputTriggered := func(input []int) BufferFlags[int] {
-		return BufferFlags[int]{}
+	processInputTriggered := func(input []int) (int, BufferFlags) {
+		return 0, BufferFlags{}
 	}
-	processTimeTriggered := func(input []int) BufferFlags[int] {
-		return BufferFlags[int]{}
+	processTimeTriggered := func(input []int) (int, BufferFlags) {
+		return 0, BufferFlags{}
 	}
 
 	// Test with StepConfig
@@ -313,8 +310,8 @@ func TestStepBuffer_NewStep(t *testing.T) {
 
 func TestStepBuffer_NewStep_InputTriggeredOnly(t *testing.T) {
 
-	processInputTriggered := func(input []int) BufferFlags[int] {
-		return BufferFlags[int]{}
+	processInputTriggered := func(input []int) (int, BufferFlags) {
+		return 0, BufferFlags{}
 	}
 
 	// Test with StepConfig
@@ -400,7 +397,7 @@ func TestStepBuffer_NewStep_TimeTriggeredWithoutInterval(t *testing.T) {
 	stepConfig := StepBufferConfig[int]{
 		Label:                "testStep",
 		Replicas:             1,
-		TimeTriggeredProcess: func(input []int) BufferFlags[int] { return BufferFlags[int]{} },
+		TimeTriggeredProcess: func(input []int) (int, BufferFlags) { return 0, BufferFlags{} },
 		BufferSize:           10,
 	}
 
@@ -419,8 +416,8 @@ func TestStepBuffer_NewStep_MissingBufferSize(t *testing.T) {
 	stepConfig := StepBufferConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
-		TimeTriggeredProcess:         func(input []int) BufferFlags[int] { return BufferFlags[int]{} },
-		InputTriggeredProcess:        func(input []int) BufferFlags[int] { return BufferFlags[int]{} },
+		TimeTriggeredProcess:         func(input []int) (int, BufferFlags) { return 0, BufferFlags{} },
+		InputTriggeredProcess:        func(input []int) (int, BufferFlags) { return 0, BufferFlags{} },
 		TimeTriggeredProcessInterval: 10 * time.Second,
 	}
 

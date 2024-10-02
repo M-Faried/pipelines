@@ -54,10 +54,10 @@ func isValidSensorData(data *SensorData) bool {
 }
 
 // called with every input sensor data
-func tempratureErrorMonitor(data []*SensorData) pip.BufferFlags[*SensorData] {
+func tempratureErrorMonitor(data []*SensorData) (*SensorData, pip.BufferFlags) {
 
 	if len(data) < TEMPRATURE_AVG_ERROR_VALUES_COUNT {
-		return pip.BufferFlags[*SensorData]{}
+		return nil, pip.BufferFlags{}
 	}
 
 	sum := 0.0
@@ -71,20 +71,20 @@ func tempratureErrorMonitor(data []*SensorData) pip.BufferFlags[*SensorData] {
 		fmt.Println("----recalibrating sensor due to temprature error----")
 		fmt.Println("----------------------------------------------------")
 		fmt.Println()
-		return pip.BufferFlags[*SensorData]{
+		return nil, pip.BufferFlags{
 			// flusing the buffer to avoid sending the recalibration signal multiple times.
 			FlushBuffer: true,
 		}
 	}
 
-	return pip.BufferFlags[*SensorData]{}
+	return nil, pip.BufferFlags{}
 }
 
 // called with every input sensor data
-func humidityErrorMonitor(data []*SensorData) pip.BufferFlags[*SensorData] {
+func humidityErrorMonitor(data []*SensorData) (*SensorData, pip.BufferFlags) {
 
 	if len(data) < HUMIDITY_AVG_ERROR_VALUES_COUNT {
-		return pip.BufferFlags[*SensorData]{}
+		return nil, pip.BufferFlags{}
 	}
 
 	sum := 0.0
@@ -98,28 +98,29 @@ func humidityErrorMonitor(data []*SensorData) pip.BufferFlags[*SensorData] {
 		fmt.Println("-----recalibrating sensor due to humidity error-----")
 		fmt.Println("----------------------------------------------------")
 		fmt.Println()
-		return pip.BufferFlags[*SensorData]{
+		return nil, pip.BufferFlags{
 			// flusing the buffer to avoid sending the recalibration signal multiple times.
 			FlushBuffer: true,
 		}
 	}
 
-	return pip.BufferFlags[*SensorData]{}
+	return nil, pip.BufferFlags{}
 }
 
 // called every second.
-func sensorAvgDataCalculation(data []*SensorData) pip.BufferFlags[*SensorData] {
+func sensorAvgDataCalculation(data []*SensorData) (*SensorData, pip.BufferFlags) {
 
 	// If no data is received, zero average log.
 	if len(data) == 0 {
-		return pip.BufferFlags[*SensorData]{
+		result := &SensorData{
+			TemperatureValue:      0,
+			TemperatureErrorValue: 0,
+			HumidityValue:         0,
+			HumidityErrorValue:    0,
+		}
+
+		return result, pip.BufferFlags{
 			SendProcessOuput: true,
-			Result: &SensorData{
-				TemperatureValue:      0,
-				TemperatureErrorValue: 0,
-				HumidityValue:         0,
-				HumidityErrorValue:    0,
-			},
 		}
 	}
 
@@ -147,9 +148,8 @@ func sensorAvgDataCalculation(data []*SensorData) pip.BufferFlags[*SensorData] {
 		HumidityErrorValue:    math.Round(humidityErrorAvg),
 	}
 
-	return pip.BufferFlags[*SensorData]{
+	return approximatedData, pip.BufferFlags{
 		SendProcessOuput: true,
-		Result:           approximatedData,
 		// Not flushing the data so that we can calculate the average when there is no new data.
 	}
 }

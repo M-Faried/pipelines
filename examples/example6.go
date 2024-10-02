@@ -12,7 +12,7 @@ func oddNumberCriteria(i int64) bool {
 	return i%2 != 0
 }
 
-func periodicCalculateSum(buffer []int64) pip.BufferFlags[int64] {
+func periodicCalculateSum(buffer []int64) (int64, pip.BufferFlags) {
 	fmt.Println("calculateOddSum Input: ", buffer)
 
 	var sum int64
@@ -20,9 +20,8 @@ func periodicCalculateSum(buffer []int64) pip.BufferFlags[int64] {
 		sum += v
 	}
 
-	return pip.BufferFlags[int64]{
+	return sum, pip.BufferFlags{
 		SendProcessOuput: true,
-		Result:           sum,
 		FlushBuffer:      false,
 	}
 }

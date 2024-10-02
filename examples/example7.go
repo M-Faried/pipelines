@@ -11,7 +11,7 @@ func evenNumberCriteria(i int64) bool {
 	return i%2 == 0
 }
 
-func calculateSumOnBufferCountThreshold(buffer []int64) pip.BufferFlags[int64] {
+func calculateSumOnBufferCountThreshold(buffer []int64) (int64, pip.BufferFlags) {
 
 	fmt.Println("calculateEvenSum Input: ", buffer)
 
@@ -21,16 +21,14 @@ func calculateSumOnBufferCountThreshold(buffer []int64) pip.BufferFlags[int64] {
 		for _, v := range buffer {
 			sum += v
 		}
-		return pip.BufferFlags[int64]{
+		return sum, pip.BufferFlags{
 			SendProcessOuput: true,
-			Result:           sum,
 			FlushBuffer:      true, // This means the buffer is going to be flushed after the calculation.
 		}
 	}
 
-	return pip.BufferFlags[int64]{
+	return 0, pip.BufferFlags{
 		SendProcessOuput: false,
-		Result:           0,
 		FlushBuffer:      false,
 	}
 }

@@ -25,7 +25,7 @@ func TestBuilder_TestNewStep(t *testing.T) {
 			PassCriteria: func(int) bool { return false },
 		}, false},
 		{"BufferedConfig", StepBufferConfig[int]{
-			InputTriggeredProcess: func([]int) BufferFlags[int] { return BufferFlags[int]{} },
+			InputTriggeredProcess: func([]int) (int, BufferFlags) { return 0, BufferFlags{} },
 			BufferSize:            5,
 		}, false},
 	}

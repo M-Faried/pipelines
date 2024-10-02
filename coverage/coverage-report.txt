@@ -24,11 +24,11 @@ github.com/m-faried/pipelines/stepBase.go:75:		SetIncrementTokensCountHandler	10
 github.com/m-faried/pipelines/stepBasic.go:43:		newStepBasic			100.0%
 github.com/m-faried/pipelines/stepBasic.go:54:		reportError			100.0%
 github.com/m-faried/pipelines/stepBasic.go:61:		Run				100.0%
-github.com/m-faried/pipelines/stepBuffered.go:65:	newStepBuffered			100.0%
-github.com/m-faried/pipelines/stepBuffered.go:87:	Run				100.0%
-github.com/m-faried/pipelines/stepBuffered.go:111:	addToBuffer			100.0%
-github.com/m-faried/pipelines/stepBuffered.go:121:	handleInputTriggeredProcess	100.0%
-github.com/m-faried/pipelines/stepBuffered.go:165:	handleTimeTriggeredProcess	100.0%
+github.com/m-faried/pipelines/stepBuffer.go:63:		newStepBuffer			100.0%
+github.com/m-faried/pipelines/stepBuffer.go:85:		Run				100.0%
+github.com/m-faried/pipelines/stepBuffer.go:109:	addToBuffer			100.0%
+github.com/m-faried/pipelines/stepBuffer.go:119:	handleInputTriggeredProcess	100.0%
+github.com/m-faried/pipelines/stepBuffer.go:163:	handleTimeTriggeredProcess	100.0%
 github.com/m-faried/pipelines/stepFilter.go:32:		newStepFilter			100.0%
 github.com/m-faried/pipelines/stepFilter.go:43:		Run				100.0%
 github.com/m-faried/pipelines/stepFragmenter.go:32:	newStepFragmenter		100.0%
