@@ -38,6 +38,6 @@ type IStep[I any] interface {
 	// Sets the handler for inclrementing the pipline's tokens count by 1. Used by the pipeline during init.
 	SetDecrementTokensCountHandler(func())
 
-	// Runs the listeners to input channels. Used by the pipeline during Run.
+	// Runs the listeners to input channels. Used by the pipline to run the step.
 	Run(context.Context, *sync.WaitGroup)
 }

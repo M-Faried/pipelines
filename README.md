@@ -316,7 +316,7 @@ bufferStep := builder.NewStep(pip.StepBufferConfig[int64]{
 })
 ```
 
-### Important Notes
+### Important Notes On Buffer Step
 
 - The buffer size remains fixed, and when it is full the **oldest data is overwritten**. You will find the oldest data at index 0 and the most recent at the last element of the array.
 
@@ -327,6 +327,18 @@ bufferStep := builder.NewStep(pip.StepBufferConfig[int64]{
 - When you set the **PassThrough** to true AND the input triggered process returns a valid result. The received input will be sent first to the following steps then the result from the process output.
 
 - Again, you can set both time triggered and input triggered processes for the buffer step and they will be both be executed by their triggeres.
+
+## Creating Custom Step
+
+You can create an entirely different custom step by implementing the **IStep** interface methods.
+
+Just take care that the following are provided by the pipeline and their values using setters, so don't set or run them yourself and implement only the setters. You can use them directly in the run method as needed.
+
+- The input channel
+- The output channel
+- The decrement tokens handler
+- The increment tokens handler
+- Run method.
 
 ## Pipeline
 
