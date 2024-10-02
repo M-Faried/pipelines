@@ -13,30 +13,31 @@ type IStep[I any] interface {
 
 	// GetReplicas returns the number of replicas of the step.
 	GetReplicas() uint16
-}
 
-type iStepInternal[I any] interface {
-	IStep[I]
-
+	// Sets the input channel buffer size. Used by the pipeline during init.
 	SetInputChannelSize(uint16)
+
+	// Gets the input channel buffer size.
 	GetInputChannelSize() uint16
 
+	// Sets the input channel. Used by the pipeline during init.
 	SetInputChannel(chan I)
+
+	// Gets the input channel.
 	GetInputChannel() chan I
 
+	// Sets the output channel. Used by the pipeline during init.
 	SetOutputChannel(chan I)
+
+	// Gets the output channel.
 	GetOutputChannel() chan I
 
+	// Sets the handler for inclrementing the pipline's tokens count by 1. Used by the pipeline during init.
 	SetIncrementTokensCountHandler(func())
+
+	// Sets the handler for inclrementing the pipline's tokens count by 1. Used by the pipeline during init.
 	SetDecrementTokensCountHandler(func())
 
+	// Runs the listeners to input channels. Used by the pipeline during Run.
 	Run(context.Context, *sync.WaitGroup)
-}
-
-func castToInternalSteps[I any](step []IStep[I]) []iStepInternal[I] {
-	internalSteps := make([]iStepInternal[I], len(step))
-	for i, s := range step {
-		internalSteps[i] = s.(iStepInternal[I])
-	}
-	return internalSteps
 }

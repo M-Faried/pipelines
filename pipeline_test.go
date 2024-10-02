@@ -8,7 +8,7 @@ import (
 
 func TestPipeline_Init(t *testing.T) {
 
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
@@ -39,7 +39,7 @@ func TestPipeline_Init(t *testing.T) {
 
 func TestPipeline_Init_MissingDefaultChannelSize(t *testing.T) {
 
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
@@ -57,7 +57,7 @@ func TestPipeline_Init_MissingDefaultChannelSize(t *testing.T) {
 
 func TestPipeline_Init_MissingSteps(t *testing.T) {
 
-	steps := []iStepInternal[int]{}
+	steps := []IStep[int]{}
 
 	p := &pipeline[int]{
 		steps:              steps,
@@ -72,7 +72,7 @@ func TestPipeline_Init_MissingSteps(t *testing.T) {
 
 func TestPipeline_Init_NilSteps(t *testing.T) {
 
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		nil,
 	}
@@ -89,7 +89,7 @@ func TestPipeline_Init_NilSteps(t *testing.T) {
 }
 
 func TestPipeline_Run(t *testing.T) {
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
@@ -117,7 +117,7 @@ func TestPipeline_Run(t *testing.T) {
 }
 
 func TestPipeline_FeedOne(t *testing.T) {
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1, inputChannelSize: 10},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
@@ -157,7 +157,7 @@ func TestPipeline_FeedOne(t *testing.T) {
 }
 
 func TestPipeline_FeedMany(t *testing.T) {
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
@@ -195,7 +195,7 @@ func TestPipeline_FeedMany(t *testing.T) {
 }
 
 func TestPipeline_Terminate(t *testing.T) {
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
@@ -233,7 +233,7 @@ func TestPipeline_Terminate(t *testing.T) {
 }
 
 func TestPipeline_WaitTillDone(t *testing.T) {
-	steps := []iStepInternal[int]{
+	steps := []IStep[int]{
 		&mockStep[int]{replicas: 1},
 		&mockStep[int]{replicas: 1, finalStep: true},
 	}
