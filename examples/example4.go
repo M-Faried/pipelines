@@ -11,8 +11,8 @@ func isEvenValue(i int64) bool {
 	return i%2 == 0
 }
 
-func by2(i int64) (int64, error) {
-	return i * 2, nil
+func by2(i int64) int64 {
+	return i * 2
 }
 
 func printFilterResult(i int64) {

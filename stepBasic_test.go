@@ -2,7 +2,6 @@ package pipelines
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
@@ -10,7 +9,6 @@ import (
 
 func TestStepBasic_SuccessfullProcess(t *testing.T) {
 
-	errorHandler := &mockErrorHandler{}
 	decrementHandler := &mockDecrementTokensHandler{}
 	incrementHandler := &mockIncrementTokensHandler{}
 
@@ -22,10 +20,9 @@ func TestStepBasic_SuccessfullProcess(t *testing.T) {
 			decrementTokensCount: decrementHandler.Handle,
 			incrementTokensCount: incrementHandler.Handle,
 		},
-		errorHandler: errorHandler.Handle,
 		// Define a simple process function that just returns the input as output
-		process: func(input int) (int, error) {
-			return input, nil
+		process: func(input int) int {
+			return input
 		},
 	}
 
@@ -52,11 +49,6 @@ func TestStepBasic_SuccessfullProcess(t *testing.T) {
 		t.Error("timeout waiting for output")
 	}
 
-	// Check that the error handler was not called
-	if errorHandler.called {
-		t.Errorf("did not expect error handler to be called")
-	}
-
 	// Check that the decrement handler was not called
 	if decrementHandler.called {
 		t.Errorf("did not expect decrement handler to be called")
@@ -76,78 +68,8 @@ func TestStepBasic_SuccessfullProcess(t *testing.T) {
 	close(step.output)
 }
 
-func TestStepBasic_ProcessWithError(t *testing.T) {
-
-	errorHandler := &mockErrorHandler{}
-	decrementHandler := &mockDecrementTokensHandler{}
-	incrementHandler := &mockIncrementTokensHandler{}
-
-	// Define a simple process function that just returns the input as output
-	process := func(input int) (int, error) {
-		return 0, fmt.Errorf("test error")
-	}
-
-	// Create a stepBasic instance
-	step := &stepBasic[int]{
-		stepBase: stepBase[int]{
-			input:                make(chan int, 1),
-			output:               make(chan int, 1),
-			decrementTokensCount: decrementHandler.Handle,
-			incrementTokensCount: incrementHandler.Handle,
-		},
-		errorHandler: errorHandler.Handle,
-		process:      process,
-	}
-
-	// Create a context with cancel
-	ctx, cancel := context.WithCancel(context.Background())
-
-	// Create a WaitGroup to wait for the goroutine to finish
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	// Run the step in a separate goroutine
-	go step.Run(ctx, &wg)
-
-	// Send an input value to the step
-	step.input <- 42
-
-	// Check the output value
-	select {
-	case output := <-step.output:
-		t.Error("expected error but got an output", output)
-	case <-time.After(1 * time.Second):
-		// do nothing the timout is expected
-	}
-
-	if !errorHandler.called {
-		t.Error("expected error handler to be called")
-	}
-	if errorHandler.err == nil || errorHandler.err.Error() != "test error" {
-		t.Errorf("expected error 'test error', got %v", errorHandler.err)
-	}
-	if !decrementHandler.called {
-		t.Error("expected decrement handler to be called")
-	}
-	if decrementHandler.counter != -1 {
-		t.Errorf("expected value -1, got %d", decrementHandler.counter)
-	}
-	if incrementHandler.called {
-		t.Error("did not expect increment handler to be called")
-	}
-	if incrementHandler.counter != 0 {
-		t.Errorf("expected value 0, got %d", incrementHandler.counter)
-	}
-
-	cancel()
-	wg.Wait()
-	close(step.input)
-	close(step.output)
-}
-
 func TestStepBasic_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 
-	errorHandler := &mockErrorHandler{}
 	decrementHandler := &mockDecrementTokensHandler{}
 	incrementHandler := &mockIncrementTokensHandler{}
 
@@ -159,10 +81,9 @@ func TestStepBasic_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 			decrementTokensCount: decrementHandler.Handle,
 			incrementTokensCount: incrementHandler.Handle,
 		},
-		errorHandler: errorHandler.Handle,
 		// Define a simple process function that just returns the input as output
-		process: func(input int) (int, error) {
-			return input, nil
+		process: func(input int) int {
+			return input
 		},
 	}
 
@@ -202,14 +123,12 @@ func TestStepBasic_ClosingChannelShouldTerminateTheStep(t *testing.T) {
 
 func TestStepBasic_NewStep(t *testing.T) {
 
-	process := func(input int) (int, error) { return input, nil }
-	errorHandler := func(label string, err error) {}
+	process := func(input int) int { return input }
 
 	// Test with StepConfig
 	stepConfig := StepBasicConfig[int]{
 		Label:            "testStep",
 		Replicas:         0, //should be rectified to 1
-		ErrorHandler:     errorHandler,
 		Process:          process,
 		InputChannelSize: 10,
 	}
@@ -238,9 +157,6 @@ func TestStepBasic_NewStep(t *testing.T) {
 	if concreteStep.replicas != 1 {
 		t.Errorf("Expected replicas to be 1, got %d", concreteStep.replicas)
 	}
-	if concreteStep.errorHandler == nil {
-		t.Error("Expected error handler to be set, got nil")
-	}
 	if concreteStep.process == nil {
 		t.Error("Expected process to be set, got nil")
 	}
@@ -250,13 +166,11 @@ func TestStepBasic_NewStep(t *testing.T) {
 }
 
 func TestStepBasic_NewStep_MissingProcess(t *testing.T) {
-	errorHandler := func(label string, err error) {}
 
 	// Test with StepConfig
 	stepConfig := StepBasicConfig[int]{
-		Label:        "testStep",
-		Replicas:     1,
-		ErrorHandler: errorHandler,
+		Label:    "testStep",
+		Replicas: 1,
 	}
 
 	defer func() {

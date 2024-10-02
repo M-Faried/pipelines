@@ -8,13 +8,13 @@ import (
 	pip "github.com/m-faried/pipelines"
 )
 
-func by10(i int64) (int64, error) {
-	return i * 10, nil
+func by10(i int64) int64 {
+	return i * 10
 }
 
-func by100(i int64) (int64, error) {
+func by100(i int64) int64 {
 	time.Sleep(2 * time.Second)
-	return i * 100, nil
+	return i * 100
 }
 
 func printBy10Result(i int64) {

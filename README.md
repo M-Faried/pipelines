@@ -55,12 +55,12 @@ import (
     pip "github.com/m-faried/pipelines"
 )
 
-func plus5(i int64) (int64, error) {
-    return i + 5, nil
+func plus5(i int64) int64 {
+    return i + 5
 }
 
-func minus10(i int64) (int64, error) {
-    return i - 10, nil
+func minus10(i int64) int64 {
+    return i - 10
 }
 
 func isPositiveValue(i int64) bool {
@@ -139,15 +139,15 @@ func main() {
 
 Based on the type of the step your create, different configurations are required to be submitted by the user.
 
-### Basic Step Configuration:
+### All Steps Basic Configuration:
 
 Each step has basic configuration in addition to other configuration based on the type of the required step. These basic configuration are:
 
-1. **Label:** Used by the user to identify the step and give it context specific name.
+1. **Label:** Used by the user to identify the step and give it context specific name and set to empty string by default.
 
 2. **Replicas:** Used to scale up any step of any type. It's optional and its default value is set to 1. It specifies the number of go routines to run steps in.
 
-3. **InputChannelSize:** Specifies the buffer size of the input channel to the step. It is optional, and if it is not set, the input channel buffer size will be set to the default channel size of the pipeline
+3. **InputChannelSize:** Specifies the buffer size of the input channel to the step. It is optional, and if it is not set, the input channel buffer size will be set to the default channel size set in the pipeline creation.
 
 ## Builder
 
@@ -161,48 +161,23 @@ builder := &pip.Builder[<TypeOfPipelineAndSteps>]{}
 
 Carries on a transformation on a single token in the pipeline and pushes it forward to the next steps.
 
-- Label (empty string by default and needed for error reporting and future use)
-
-- Replicas count (The number of replicas to be run for this step)
-
-- The transformation process to be run on every token in the pipeline
-
 ```go
 // The process type expected by the step
-type StepBasicProcess[I any] func(I) (I, error) // Don't redefine
+type StepBasicProcess[I any] func(I) I // Don't redefine
 
 step := builder.NewStep(pip.StepBasicConfig[int64]{
-    Replicas: 3,
     Label:    "minus10",
-    Process:  func(token int64) (int64, error) {
-        return token - 10, nil
-    }, //StepProcess
-})
-```
-
-### Error Handler (Available For Basic Step Only)
-
-You can add the error handler to the configuration of the basic step in case you need to handle errors. When is reported by the step process, both the step label and the error sent to the error handler and the item caused the problem is dropped.
-
-```go
-// StepBasicErrorHandler is the definition of error reporting handler which may or may not be set by the user during creation of the step.
-// The first parameter is the label of the step where the error occurred and the second parameter is the error itself.
-type StepBasicErrorHandler func(string, error) // Don't redefine
-
-// To create a step with error handler
-step := builder.NewStep(pip.StepBasicConfig[int64]{
-    Replicas:       4,
-    Label:          "plus5",
-    Process:        plus5,
-    ErrorHandler:   func(label string, err error ){
-        // the body of the error handler here
+    Replicas: 3,
+    // Process Is Required!
+    Process:  func(token int64) int64 {
+        return token - 10
     },
 })
 ```
 
 ## Filter Step
 
-Used to get rid of any undesired tokens from the pipelines
+Used to get rid of any undesired tokens from the pipelines.
 
 ```go
 // StepFilterPassCriteria is function that determines if the data should be passed or not.
@@ -211,6 +186,7 @@ type StepFilterPassCriteria[I any] func(I) bool // Don't redefine
 step := builder.NewStep(pip.StepFilterConfig[int64]{
     Replicas:     1,
     Label:        "filterEven",
+    // PassCriteria Is Required!
     PassCriteria: func(token int64) bool {
         return token%2 == 0
     },
@@ -219,7 +195,7 @@ step := builder.NewStep(pip.StepFilterConfig[int64]{
 
 ## Terminal Step
 
-Terminal step is the final step in the pipeline. It is the process where you save the results of the pipeline to the database, send it over the network, ....
+Terminal step is the final step in the pipeline and doesn't have an output. It is the process where you save the results of the pipeline to the database, send it over the network, ....
 
 ```go
 // The process type expected by the terminal step.
@@ -229,6 +205,7 @@ type StepTerminalProcess[I any] func(I) // Don't redefine
 resultStep := builder.NewStep(pip.StepTerminalConfig[int64]{
     Replicas: 1,
     Label:    "print",
+    // Process Is Required!
     Process:  func(token int64) {
         fmt.Println("Result:", token)
     },
@@ -247,6 +224,7 @@ type StepFragmenterProcess[I any] func(I) []I // Don't redefine
 splitter := builder.NewStep(pip.StepFragmenterConfig[string]{
     Label:    "fragmenter",
     Replicas: 1,
+    // Process Is Required!
     Process:  func(token string) []string {
         // Split the Value field by comma
 	    splitTokens := strings.Split(token.Value, ",")

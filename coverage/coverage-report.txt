@@ -1,4 +1,3 @@
-github.com/m-faried/pipelines/IStep.go:36:		castToInternalSteps		100.0%
 github.com/m-faried/pipelines/builder.go:12:		NewStep				100.0%
 github.com/m-faried/pipelines/builder.go:31:		NewPipeline			100.0%
 github.com/m-faried/pipelines/pipeline.go:68:		Init				100.0%
@@ -21,9 +20,8 @@ github.com/m-faried/pipelines/stepBase.go:63:		GetOutputChannel		100.0%
 github.com/m-faried/pipelines/stepBase.go:67:		GetReplicas			100.0%
 github.com/m-faried/pipelines/stepBase.go:71:		SetDecrementTokensCountHandler	100.0%
 github.com/m-faried/pipelines/stepBase.go:75:		SetIncrementTokensCountHandler	100.0%
-github.com/m-faried/pipelines/stepBasic.go:43:		newStepBasic			100.0%
-github.com/m-faried/pipelines/stepBasic.go:54:		reportError			100.0%
-github.com/m-faried/pipelines/stepBasic.go:61:		Run				100.0%
+github.com/m-faried/pipelines/stepBasic.go:33:		newStepBasic			100.0%
+github.com/m-faried/pipelines/stepBasic.go:44:		Run				100.0%
 github.com/m-faried/pipelines/stepBuffer.go:63:		newStepBuffer			100.0%
 github.com/m-faried/pipelines/stepBuffer.go:85:		Run				100.0%
 github.com/m-faried/pipelines/stepBuffer.go:109:	addToBuffer			100.0%
