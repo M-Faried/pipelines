@@ -261,8 +261,8 @@ func periodicCalculateSum(buffer []int64) (int64, pip.BufferFlags) {
 		sum += v
 	}
 	return sum, pip.BufferFlags{
-        SendProcessOuput:   true,
-        FlushBuffer: false,
+            SendProcessOuput:   true,
+            FlushBuffer: false,
 	}
 }
 
