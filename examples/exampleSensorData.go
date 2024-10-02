@@ -13,6 +13,8 @@ import (
 	pip "github.com/m-faried/pipelines"
 )
 
+// ExampleSensor is an example of how to use the pipeline to code the sensor data requirements mentioned in the exampleSensorData.md.
+
 const (
 	TEMPRATURE_AVG_ERROR_VALUES_COUNT = 5
 	TEMPRATURE_AVG_ERROR_THRESHOLD    = 10
@@ -216,7 +218,7 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 	return pipeline
 }
 
-// ExampleSensor is an example of how to use the pipeline to code the sensor data requirements mentioned in the README.
+// ExampleSensor is an example of how to use the pipeline to code the sensor data requirements mentioned in the exampleSensorData.md.
 func ExampleSensor() {
 
 	// Set up a channel to listen for interrupt signals
