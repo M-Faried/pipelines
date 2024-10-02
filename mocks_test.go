@@ -6,19 +6,6 @@ import (
 	"sync"
 )
 
-// mockErrorHandler is a mock implementation of the error handler
-type mockErrorHandler struct {
-	called bool
-	label  string
-	err    error
-}
-
-func (m *mockErrorHandler) Handle(label string, err error) {
-	m.called = true
-	m.label = label
-	m.err = err
-}
-
 // mockTerminalProcessHandler is a mock implementation of the terminal process handler
 type mockTerminalProcessHandler[I any] struct {
 	called bool
@@ -60,7 +47,6 @@ type mockStep[I any] struct {
 	replicas         uint16
 	incrementHandler func()
 	decrementHandler func()
-	errorHandler     *mockErrorHandler
 	finalStep        bool
 	inputChannelSize uint16
 }
@@ -96,10 +82,6 @@ func (m *mockStep[I]) SetDecrementTokensCountHandler(handler func()) {
 
 func (m *mockStep[I]) SetIncrementTokensCountHandler(handler func()) {
 	m.incrementHandler = handler
-}
-
-func (m *mockStep[I]) SetErrorHandler(handler *mockErrorHandler) {
-	m.errorHandler = handler
 }
 
 func (m *mockStep[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
