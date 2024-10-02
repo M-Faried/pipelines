@@ -12,7 +12,7 @@ func oddNumberCriteria(i int64) bool {
 	return i%2 != 0
 }
 
-func periodicCalculateSum(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+func periodicCalculateSum(buffer []int64) pip.BufferFlags[int64] {
 	fmt.Println("calculateOddSum Input: ", buffer)
 
 	var sum int64
@@ -20,10 +20,10 @@ func periodicCalculateSum(buffer []int64) pip.StepBufferedProcessOutput[int64] {
 		sum += v
 	}
 
-	return pip.StepBufferedProcessOutput[int64]{
-		HasResult:   true,
-		Result:      sum,
-		FlushBuffer: false,
+	return pip.BufferFlags[int64]{
+		SendProcessOuput: true,
+		Result:           sum,
+		FlushBuffer:      false,
 	}
 }
 
@@ -38,7 +38,7 @@ func Example6() {
 		PassCriteria: oddNumberCriteria,
 	})
 
-	aggregator := builder.NewStep(pip.StepBufferedConfig[int64]{
+	aggregator := builder.NewStep(pip.StepBufferConfig[int64]{
 		Label:      "aggregator",
 		Replicas:   2,
 		BufferSize: 5,

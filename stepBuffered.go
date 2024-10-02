@@ -6,11 +6,11 @@ import (
 	"time"
 )
 
-// StepBufferedProcessOutput is the output of the StepBufferedProcess.
-type StepBufferedProcessOutput[I any] struct {
+// BufferFlags is the output of the StepBufferProcess.
+type BufferFlags[I any] struct {
 
-	// HasResult is a flag to indicate if the process has a result or not.
-	HasResult bool
+	// SendProcessOuput is a flag to indicate if the process has a result or not.
+	SendProcessOuput bool
 
 	// Result is the result of the process.
 	Result I
@@ -19,10 +19,11 @@ type StepBufferedProcessOutput[I any] struct {
 	FlushBuffer bool
 }
 
-// StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
-type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I]
+// StepBufferProcess is the function signature for the process which is called periodically or when the input is received.
+type StepBufferProcess[I any] func([]I) BufferFlags[I]
 
-type StepBufferedConfig[I any] struct {
+// StepBufferConfig is the confiuration for creating a buffer step.
+type StepBufferConfig[I any] struct {
 
 	// Label is the name of the step.
 	Label string
@@ -41,28 +42,28 @@ type StepBufferedConfig[I any] struct {
 	PassThrough bool
 
 	// The process which is called when the input is received and added to the buffer.
-	InputTriggeredProcess StepBufferedProcess[I]
+	InputTriggeredProcess StepBufferProcess[I]
 
 	// The process which is called periodically based on the interval.
-	TimeTriggeredProcess StepBufferedProcess[I]
+	TimeTriggeredProcess StepBufferProcess[I]
 
 	// TimeTriggeredProcessInterval is the interval at which the TimeTriggeredProcess is called.
 	TimeTriggeredProcessInterval time.Duration
 }
 
-type stepBuffered[I any] struct {
+type stepBuffer[I any] struct {
 	stepBase[I]
 	buffer      []I
 	bufferSize  int
 	bufferMutex sync.Mutex
 	passThrough bool
 
-	inputTriggeredProcess        StepBufferedProcess[I]
-	timeTriggeredProcess         StepBufferedProcess[I]
+	inputTriggeredProcess        StepBufferProcess[I]
+	timeTriggeredProcess         StepBufferProcess[I]
 	timeTriggeredProcessInterval time.Duration
 }
 
-func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] {
+func newStepBuffer[I any](config StepBufferConfig[I]) IStep[I] {
 	if config.InputTriggeredProcess == nil && config.TimeTriggeredProcess == nil {
 		panic("either time triggered or input process is required")
 	}
@@ -73,7 +74,7 @@ func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] {
 		panic("buffer size must be greater than or equal to 0")
 	}
 
-	return &stepBuffered[I]{
+	return &stepBuffer[I]{
 		stepBase:                     newBaseStep[I](config.Label, config.Replicas, config.InputChannelSize),
 		bufferSize:                   config.BufferSize,
 		passThrough:                  config.PassThrough,
@@ -84,7 +85,7 @@ func newStepBuffered[I any](config StepBufferedConfig[I]) IStep[I] {
 	}
 }
 
-func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
+func (s *stepBuffer[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	if s.timeTriggeredProcessInterval == 0 {
 		// 1000 hours is to cover the case where the time is not set. The buffer in this case will be input triggered.
 		// this is needed to keep the thread alive as well inc case there is a long delay in the input.
@@ -108,7 +109,7 @@ func (s *stepBuffered[I]) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}
 }
 
-func (s *stepBuffered[I]) addToBuffer(i I) bool {
+func (s *stepBuffer[I]) addToBuffer(i I) bool {
 	overwriteOccurred := false
 	if len(s.buffer) == s.bufferSize {
 		s.buffer = s.buffer[1:]
@@ -118,7 +119,7 @@ func (s *stepBuffered[I]) addToBuffer(i I) bool {
 	return overwriteOccurred
 }
 
-func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
+func (s *stepBuffer[I]) handleInputTriggeredProcess(i I) {
 
 	// All the following has to be done in during the same mutex lock.
 	s.bufferMutex.Lock()
@@ -146,7 +147,7 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 	// Processing the buffer after adding the element.
 	processOutput := s.inputTriggeredProcess(s.buffer)
 
-	if processOutput.HasResult {
+	if processOutput.SendProcessOuput {
 		// Since this is a new result, we need to increment the tokens count.
 		s.incrementTokensCount()
 		s.output <- processOutput.Result
@@ -162,7 +163,7 @@ func (s *stepBuffered[I]) handleInputTriggeredProcess(i I) {
 	}
 }
 
-func (s *stepBuffered[I]) handleTimeTriggeredProcess() {
+func (s *stepBuffer[I]) handleTimeTriggeredProcess() {
 
 	if s.timeTriggeredProcess == nil {
 		return
@@ -174,7 +175,7 @@ func (s *stepBuffered[I]) handleTimeTriggeredProcess() {
 	processOutput := s.timeTriggeredProcess(s.buffer)
 
 	// Check if the process has a result or not.
-	if processOutput.HasResult {
+	if processOutput.SendProcessOuput {
 		s.incrementTokensCount()
 		s.output <- processOutput.Result
 	}

@@ -19,8 +19,8 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
 		return newStepTerminal(c)
 	case StepFilterConfig[I]:
 		return newStepFilter(c)
-	case StepBufferedConfig[I]:
-		return newStepBuffered(c)
+	case StepBufferConfig[I]:
+		return newStepBuffer(c)
 	default:
 		panic(fmt.Sprintf("unknown step configuration: %v", config))
 	}

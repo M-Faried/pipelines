@@ -8,12 +8,12 @@ import (
 	"time"
 )
 
-func TestStepBuffered_Run_InputTriggered(t *testing.T) {
+func TestStepBuffer_Run_InputTriggered(t *testing.T) {
 
 	incrementTokens := &mockIncrementTokensHandler{}
 	decrementTokens := &mockDecrementTokensHandler{}
 
-	step := &stepBuffered[int]{
+	step := &stepBuffer[int]{
 		stepBase: stepBase[int]{
 			input:                make(chan int),
 			output:               make(chan int),
@@ -23,12 +23,12 @@ func TestStepBuffered_Run_InputTriggered(t *testing.T) {
 		bufferSize:  3,
 		buffer:      make([]int, 0, 3),
 		passThrough: true,
-		inputTriggeredProcess: func(buffer []int) StepBufferedProcessOutput[int] {
+		inputTriggeredProcess: func(buffer []int) BufferFlags[int] {
 			fmt.Println("inputTriggeredProcess", buffer)
-			return StepBufferedProcessOutput[int]{
-				HasResult:   false,
-				Result:      0,
-				FlushBuffer: false,
+			return BufferFlags[int]{
+				SendProcessOuput: false,
+				Result:           0,
+				FlushBuffer:      false,
 			}
 		},
 	}
@@ -82,11 +82,11 @@ func TestStepBuffered_Run_InputTriggered(t *testing.T) {
 	}
 }
 
-func TestStepBuffered_Run_InputTriggered_FlushBuffer(t *testing.T) {
+func TestStepBuffer_Run_InputTriggered_FlushBuffer(t *testing.T) {
 	incrementTokens := &mockIncrementTokensHandler{}
 	decrementTokens := &mockDecrementTokensHandler{}
 
-	step := &stepBuffered[int]{
+	step := &stepBuffer[int]{
 		stepBase: stepBase[int]{
 			input:                make(chan int),
 			output:               make(chan int),
@@ -95,11 +95,11 @@ func TestStepBuffered_Run_InputTriggered_FlushBuffer(t *testing.T) {
 		},
 		bufferSize:  3,
 		passThrough: false,
-		inputTriggeredProcess: func(buffer []int) StepBufferedProcessOutput[int] {
-			return StepBufferedProcessOutput[int]{
-				HasResult:   true,
-				Result:      buffer[len(buffer)-1] * 2,
-				FlushBuffer: true,
+		inputTriggeredProcess: func(buffer []int) BufferFlags[int] {
+			return BufferFlags[int]{
+				SendProcessOuput: true,
+				Result:           buffer[len(buffer)-1] * 2,
+				FlushBuffer:      true,
 			}
 		},
 		timeTriggeredProcessInterval: 50 * time.Millisecond,
@@ -155,12 +155,12 @@ func TestStepBuffered_Run_InputTriggered_FlushBuffer(t *testing.T) {
 	}
 }
 
-func TestStepBuffered_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
+func TestStepBuffer_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
 
 	incrementTokens := &mockIncrementTokensHandler{}
 	decrementTokens := &mockDecrementTokensHandler{}
 
-	step := &stepBuffered[int]{
+	step := &stepBuffer[int]{
 		stepBase: stepBase[int]{
 			input:                make(chan int),
 			output:               make(chan int),
@@ -169,21 +169,21 @@ func TestStepBuffered_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
 		},
 		bufferSize:  3,
 		passThrough: false,
-		timeTriggeredProcess: func(buffer []int) StepBufferedProcessOutput[int] {
+		timeTriggeredProcess: func(buffer []int) BufferFlags[int] {
 			if len(buffer) < 3 {
-				return StepBufferedProcessOutput[int]{
-					HasResult: false,
-					Result:    0,
+				return BufferFlags[int]{
+					SendProcessOuput: false,
+					Result:           0,
 				}
 			}
 			sum := 0
 			for _, v := range buffer {
 				sum += v
 			}
-			return StepBufferedProcessOutput[int]{
-				HasResult:   true,
-				Result:      sum,
-				FlushBuffer: true,
+			return BufferFlags[int]{
+				SendProcessOuput: true,
+				Result:           sum,
+				FlushBuffer:      true,
 			}
 		},
 		timeTriggeredProcessInterval: 100 * time.Millisecond,
@@ -241,17 +241,17 @@ func TestStepBuffered_HandleTimeTriggeredProcess_FlushBuffer(t *testing.T) {
 	}
 }
 
-func TestStepBuffered_NewStep(t *testing.T) {
+func TestStepBuffer_NewStep(t *testing.T) {
 
-	processInputTriggered := func(input []int) StepBufferedProcessOutput[int] {
-		return StepBufferedProcessOutput[int]{}
+	processInputTriggered := func(input []int) BufferFlags[int] {
+		return BufferFlags[int]{}
 	}
-	processTimeTriggered := func(input []int) StepBufferedProcessOutput[int] {
-		return StepBufferedProcessOutput[int]{}
+	processTimeTriggered := func(input []int) BufferFlags[int] {
+		return BufferFlags[int]{}
 	}
 
 	// Test with StepConfig
-	stepConfig := StepBufferedConfig[int]{
+	stepConfig := StepBufferConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		BufferSize:                   20,
@@ -262,16 +262,16 @@ func TestStepBuffered_NewStep(t *testing.T) {
 		TimeTriggeredProcessInterval: 10 * time.Second,
 	}
 
-	step := newStepBuffered(stepConfig)
+	step := newStepBuffer(stepConfig)
 
-	var concreteStep *stepBuffered[int]
+	var concreteStep *stepBuffer[int]
 	var ok bool
 
 	if step == nil {
 		t.Error("Expected step to be created, got nil")
 	}
-	if concreteStep, ok = step.(*stepBuffered[int]); !ok {
-		t.Error("Expected step to be of type stepBuffered")
+	if concreteStep, ok = step.(*stepBuffer[int]); !ok {
+		t.Error("Expected step to be of type stepBuffer")
 	}
 
 	if concreteStep.label != "testStep" {
@@ -311,14 +311,14 @@ func TestStepBuffered_NewStep(t *testing.T) {
 	}
 }
 
-func TestStepBuffered_NewStep_InputTriggeredOnly(t *testing.T) {
+func TestStepBuffer_NewStep_InputTriggeredOnly(t *testing.T) {
 
-	processInputTriggered := func(input []int) StepBufferedProcessOutput[int] {
-		return StepBufferedProcessOutput[int]{}
+	processInputTriggered := func(input []int) BufferFlags[int] {
+		return BufferFlags[int]{}
 	}
 
 	// Test with StepConfig
-	stepConfig := StepBufferedConfig[int]{
+	stepConfig := StepBufferConfig[int]{
 		Label:                 "testStep",
 		Replicas:              1,
 		BufferSize:            15,
@@ -326,16 +326,16 @@ func TestStepBuffered_NewStep_InputTriggeredOnly(t *testing.T) {
 		InputTriggeredProcess: processInputTriggered,
 	}
 
-	step := newStepBuffered(stepConfig)
+	step := newStepBuffer(stepConfig)
 
-	var concreteStep *stepBuffered[int]
+	var concreteStep *stepBuffer[int]
 	var ok bool
 
 	if step == nil {
 		t.Error("Expected step to be created, got nil")
 	}
-	if concreteStep, ok = step.(*stepBuffered[int]); !ok {
-		t.Error("Expected step to be of type stepBuffered")
+	if concreteStep, ok = step.(*stepBuffer[int]); !ok {
+		t.Error("Expected step to be of type stepBuffer")
 	}
 
 	if concreteStep.label != "testStep" {
@@ -375,10 +375,10 @@ func TestStepBuffered_NewStep_InputTriggeredOnly(t *testing.T) {
 	}
 }
 
-func TestStepBuffered_NewStep_MissingTimeAndInputTriggeres(t *testing.T) {
+func TestStepBuffer_NewStep_MissingTimeAndInputTriggeres(t *testing.T) {
 
 	// Test with StepConfig
-	stepConfig := StepBufferedConfig[int]{
+	stepConfig := StepBufferConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
 		TimeTriggeredProcessInterval: 10 * time.Second,
@@ -391,16 +391,16 @@ func TestStepBuffered_NewStep_MissingTimeAndInputTriggeres(t *testing.T) {
 		}
 	}()
 
-	newStepBuffered(stepConfig)
+	newStepBuffer(stepConfig)
 }
 
-func TestStepBuffered_NewStep_TimeTriggeredWithoutInterval(t *testing.T) {
+func TestStepBuffer_NewStep_TimeTriggeredWithoutInterval(t *testing.T) {
 
 	// Test with StepConfig
-	stepConfig := StepBufferedConfig[int]{
+	stepConfig := StepBufferConfig[int]{
 		Label:                "testStep",
 		Replicas:             1,
-		TimeTriggeredProcess: func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
+		TimeTriggeredProcess: func(input []int) BufferFlags[int] { return BufferFlags[int]{} },
 		BufferSize:           10,
 	}
 
@@ -410,17 +410,17 @@ func TestStepBuffered_NewStep_TimeTriggeredWithoutInterval(t *testing.T) {
 		}
 	}()
 
-	newStepBuffered(stepConfig)
+	newStepBuffer(stepConfig)
 }
 
-func TestStepBuffered_NewStep_MissingBufferSize(t *testing.T) {
+func TestStepBuffer_NewStep_MissingBufferSize(t *testing.T) {
 
 	// Test with StepConfig
-	stepConfig := StepBufferedConfig[int]{
+	stepConfig := StepBufferConfig[int]{
 		Label:                        "testStep",
 		Replicas:                     1,
-		TimeTriggeredProcess:         func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
-		InputTriggeredProcess:        func(input []int) StepBufferedProcessOutput[int] { return StepBufferedProcessOutput[int]{} },
+		TimeTriggeredProcess:         func(input []int) BufferFlags[int] { return BufferFlags[int]{} },
+		InputTriggeredProcess:        func(input []int) BufferFlags[int] { return BufferFlags[int]{} },
 		TimeTriggeredProcessInterval: 10 * time.Second,
 	}
 
@@ -430,7 +430,7 @@ func TestStepBuffered_NewStep_MissingBufferSize(t *testing.T) {
 		}
 	}()
 
-	newStepBuffered(stepConfig)
+	newStepBuffer(stepConfig)
 }
 
 func equal(a, b []int) bool {
