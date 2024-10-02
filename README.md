@@ -316,7 +316,7 @@ func calculateSumOnBufferCountThreshold(buffer []int64) (int64, pip.BufferFlags)
         return 0, pip.BufferFlags{
             HasResult:   false,
             FlushBuffer: false,
-	    }
+        }
     }
 
     var sum int64
