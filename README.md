@@ -227,7 +227,7 @@ splitter := builder.NewStep(pip.StepFragmenterConfig[string]{
     // Process Is Required!
     Process:  func(token string) []string {
         // Split the Value field by comma
-	    splitTokens := strings.Split(token.Value, ",")
+        splitTokens := strings.Split(token.Value, ",")
         return splitTokens
     },
 })
@@ -261,8 +261,8 @@ func periodicCalculateSum(buffer []int64) (int64, pip.BufferFlags) {
 		sum += v
 	}
 	return sum, pip.BufferFlags{
-		SendProcessOuput:   true,
-		FlushBuffer: false,
+        SendProcessOuput:   true,
+        FlushBuffer: false,
 	}
 }
 
