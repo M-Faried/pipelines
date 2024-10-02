@@ -35,7 +35,7 @@ type IPipeline[I any] interface {
 type pipeline[I any] struct {
 
 	// steps is the list of steps in the pipeline.
-	steps []iStepInternal[I]
+	steps []IStep[I]
 
 	// defaultChannelSize is the default buffer size used for all channels which has no input channel size set explicitly.
 	defaultChannelSize uint16

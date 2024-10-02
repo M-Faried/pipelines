@@ -13,7 +13,7 @@ func TestBuilder_TestNewStep(t *testing.T) {
 		wantErr bool
 	}{
 		{"BasicConfig", StepBasicConfig[int]{
-			Process: func(int) (int, error) { return 0, nil },
+			Process: func(int) int { return 0 },
 		}, false},
 		{"FragmenterConfig", StepFragmenterConfig[int]{
 			Process: func(int) []int { return []int{} },

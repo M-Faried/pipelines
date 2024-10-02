@@ -1,7 +1,4 @@
 mode: set
-github.com/m-faried/pipelines/IStep.go:36.69,38.25 2 1
-github.com/m-faried/pipelines/IStep.go:38.25,40.3 1 1
-github.com/m-faried/pipelines/IStep.go:41.2,41.22 1 1
 github.com/m-faried/pipelines/builder.go:12.61,13.28 1 1
 github.com/m-faried/pipelines/builder.go:14.26,15.25 1 1
 github.com/m-faried/pipelines/builder.go:16.31,17.30 1 1
@@ -60,19 +57,15 @@ github.com/m-faried/pipelines/stepBase.go:63.49,65.2 1 1
 github.com/m-faried/pipelines/stepBase.go:67.44,69.2 1 1
 github.com/m-faried/pipelines/stepBase.go:71.70,73.2 1 1
 github.com/m-faried/pipelines/stepBase.go:75.70,77.2 1 1
-github.com/m-faried/pipelines/stepBasic.go:43.62,44.27 1 1
-github.com/m-faried/pipelines/stepBasic.go:44.27,45.31 1 1
-github.com/m-faried/pipelines/stepBasic.go:47.2,51.3 1 1
-github.com/m-faried/pipelines/stepBasic.go:54.47,55.27 1 1
-github.com/m-faried/pipelines/stepBasic.go:55.27,57.3 1 1
-github.com/m-faried/pipelines/stepBasic.go:61.69,63.6 2 1
-github.com/m-faried/pipelines/stepBasic.go:63.6,64.10 1 1
-github.com/m-faried/pipelines/stepBasic.go:65.21,66.10 1 1
-github.com/m-faried/pipelines/stepBasic.go:67.27,68.11 1 1
-github.com/m-faried/pipelines/stepBasic.go:68.11,70.5 1 1
-github.com/m-faried/pipelines/stepBasic.go:71.4,72.18 2 1
-github.com/m-faried/pipelines/stepBasic.go:72.18,76.5 2 1
-github.com/m-faried/pipelines/stepBasic.go:76.10,78.5 1 1
+github.com/m-faried/pipelines/stepBasic.go:33.62,34.27 1 1
+github.com/m-faried/pipelines/stepBasic.go:34.27,35.31 1 1
+github.com/m-faried/pipelines/stepBasic.go:37.2,40.3 1 1
+github.com/m-faried/pipelines/stepBasic.go:44.69,46.6 2 1
+github.com/m-faried/pipelines/stepBasic.go:46.6,47.10 1 1
+github.com/m-faried/pipelines/stepBasic.go:48.21,49.10 1 1
+github.com/m-faried/pipelines/stepBasic.go:50.27,51.11 1 1
+github.com/m-faried/pipelines/stepBasic.go:51.11,53.5 1 1
+github.com/m-faried/pipelines/stepBasic.go:54.4,55.17 2 1
 github.com/m-faried/pipelines/stepBuffer.go:63.64,64.79 1 1
 github.com/m-faried/pipelines/stepBuffer.go:64.79,65.62 1 1
 github.com/m-faried/pipelines/stepBuffer.go:67.2,67.84 1 1

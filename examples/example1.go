@@ -7,11 +7,11 @@ import (
 	pip "github.com/m-faried/pipelines"
 )
 
-func plus5(i int64) (int64, error) {
-	return i + 5, nil
+func plus5(i int64) int64 {
+	return i + 5
 }
-func minus10(i int64) (int64, error) {
-	return i - 10, nil
+func minus10(i int64) int64 {
+	return i - 10
 }
 func printResult(i int64) {
 	fmt.Printf("Result: %d \n", i)

@@ -28,14 +28,14 @@ func splitter(token *StringToken) []*StringToken {
 	return result
 }
 
-func trimSpaces(token *StringToken) (*StringToken, error) {
+func trimSpaces(token *StringToken) *StringToken {
 	token.Value = strings.TrimSpace(token.Value)
-	return token, nil
+	return token
 }
 
-func addStars(token *StringToken) (*StringToken, error) {
+func addStars(token *StringToken) *StringToken {
 	token.Value = fmt.Sprintf("*%s*", token.Value)
-	return token, nil
+	return token
 }
 
 func tokenPrinter(token *StringToken) {

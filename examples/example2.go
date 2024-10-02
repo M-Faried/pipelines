@@ -13,11 +13,11 @@ type Token struct {
 	count     int
 }
 
-func processToken(t *Token) (*Token, error) {
+func processToken(t *Token) *Token {
 	t.currValue = fmt.Sprintf("*%s*", t.currValue)
 	t.values = append(t.values, t.currValue)
 	t.count++
-	return t, nil
+	return t
 }
 
 func printToken(t *Token) {
