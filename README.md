@@ -375,9 +375,14 @@ pipeline.FeedMany(items)
 
 ### Waiting Pipeline To Finish
 
-To wait for the pipeline to be done with all the items fed into it, you can use the **blocking** call to wait before resuming execution of your program:
+WaitTillDone is used to block the execution till all the elements/tokens in the pipelines are processed.
+
+**Note:** You have to use a **Terminal Step** as the last step in the pipeline to use this function call. Otherwise, it will block the execution indefinitely.
+
+If you don't care about the current elements in the pipeline, you can call **Terminate()** directly without waiting.
 
 ```go
+// Requries terminal step to be used.
 pipeline.WaitTillDone()
 ```
 
