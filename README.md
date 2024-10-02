@@ -135,7 +135,7 @@ func main() {
 
 4. **Fragmenter Step:** Breaks down any token into multiple tokens and feeds them to the next steps in the pipeline.
 
-5. **Buffered Step:** Retains multiple elements in the pipeline to run a calculation over periodically or based on input.
+5. **Buffer Step:** Retains multiple elements in the pipeline to run a calculation over periodically or based on input.
 
 Based on the type of the step your create, different configurations are required to be submitted by the user.
 
@@ -255,14 +255,14 @@ splitter := builder.NewStep(pip.StepFragmenterConfig[string]{
 })
 ```
 
-## Buffered Step (Examples 6 & 7)
+## Buffer Step (Examples 6 & 7)
 
-Buffered step is a step that doesn't apply an operation on a single token, but buffers multiple items and act on them accordingly. The **collected tokens span** can be of 2 types:
+Buffer step is a step that doesn't apply an operation on a single token, but buffers multiple items and act on them accordingly. The **collected tokens span** can be of 2 types:
 
 1. Received Inputs Count Span
 2. Periodic Time Span (The received token over a period of time)
 
-The buffered step supports either or both of the 2 kinds of span. It also supports the pass through feature which allows users of the package to control whether the buffered pipeline tokens are sent to the following steps after being buffered or not.
+The buffer step supports either or both of the 2 kinds of span. It also supports the pass through feature which allows users of the package to control whether the buffered token is sent to the following steps after being added to buffer or not.
 
 You have also the option to flush the buffer or not after running your calculation on the buffer.
 
@@ -274,22 +274,21 @@ In the following example, the moving sum is calculated with window of size 10.
 
 ```go
 
-// StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
-type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I] // Don't redefine
+// StepBufferProcess is the function signature for the process which is called periodically or when the input is received.
+type StepBufferProcess[I any] func([]I) (I, BufferFlags) // Don't redefine
 
-func periodicCalculateSum(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+func periodicCalculateSum(buffer []int64) (int64, pip.BufferFlags) {
 	var sum int64
 	for _, v := range buffer {
 		sum += v
 	}
-	return pip.StepBufferedProcessOutput[int64]{
-		HasResult:   true,
-		Result:      sum,
+	return sum, pip.BufferFlags{
+		SendProcessOuput:   true,
 		FlushBuffer: false,
 	}
 }
 
-bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
+bufferStep := builder.NewStep(pip.StepBufferConfig[int64]{
     Label:      "periodic buffer",
     Replicas:   2,
     BufferSize: 5,
@@ -307,16 +306,15 @@ For the input triggered buffer, every input received is added to the buffer and 
 In the following example, process waits till the buffer is full and calculates the sum with flushing the elements already added to the buffer.
 
 ```go
-// StepBufferedProcess is the function signature for the process which is called periodically or when the input is received.
-type StepBufferedProcess[I any] func([]I) StepBufferedProcessOutput[I] // Don't redefine
+// StepBufferProcess is the function signature for the process which is called periodically or when the input is received.
+type StepBufferProcess[I any] func([]I) (I, BufferFlags) // Don't redefine
 
-func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessOutput[int64] {
+func calculateSumOnBufferCountThreshold(buffer []int64) (int64, pip.BufferFlags) {
 
     // skipping the calcluation if not enough data was buffered.
     if len(buffer) < 10 {
-        return pip.StepBufferedProcessOutput[int64]{
+        return 0, pip.BufferFlags{
             HasResult:   false,
-            Result:      0,
             FlushBuffer: false,
 	    }
     }
@@ -325,14 +323,13 @@ func calculateSumOnBufferCountThreshold(buffer []int64) pip.StepBufferedProcessO
     for _, v := range buffer {
         sum += v
     }
-    return pip.StepBufferedProcessOutput[int64]{
+    return sum, pip.BufferFlags{
         HasResult:   true,
-        Result:      sum,
-        FlushBuffer: true, // This instructs the buffered step to flush the data it retains and start accumulating fresh data.
+        FlushBuffer: true, // This instructs the buffer step to flush the data it retains and start accumulating fresh data.
     }
 }
 
-bufferStep := builder.NewStep(pip.StepBufferedConfig[int64]{
+bufferStep := builder.NewStep(pip.StepBufferConfig[int64]{
     Label:      "buffer",
     Replicas:   5,
     BufferSize: 10,
@@ -396,7 +393,7 @@ pipeline.WaitTillDone()
 
 It is an optional step to use and you can call Terminate() directly without waiting, but all the tokens in the pipeline will be discarded.
 
-When using buffered channels don't use **pipeline.WaitTillDone()** unless you have a finite number of inputs and you flush the data in the buffer regularly. Otherwise wait till done will stall your application and may result a deadlock..
+When using buffer step(s) don't use **pipeline.WaitTillDone()** unless you have a finite number of inputs and you flush the data in the buffer regularly. Otherwise wait till done will stall your application and may result a deadlock..
 
 ### Terminating Pipeline
 
