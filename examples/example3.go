@@ -42,7 +42,10 @@ func Example3() {
 		Process:  printBy10Result,
 	})
 
-	pipeline := builder.NewPipeline(10, step1, step2, stepResult)
+	pConfig := pip.PipelineConfig{
+		DefaultChannelSize: 10,
+	}
+	pipeline := builder.NewPipeline(pConfig, step1, step2, stepResult)
 	pipeline.Init()
 
 	// Running

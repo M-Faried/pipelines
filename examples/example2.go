@@ -51,7 +51,11 @@ func Example2() {
 		Process:  printToken,
 	})
 
-	pipeline := builder.NewPipeline(10, step1, step2, step3, resultStep)
+	pConfig := pip.PipelineConfig{
+		DefaultChannelSize: 10,
+		TrackTokensCount:   true,
+	}
+	pipeline := builder.NewPipeline(pConfig, step1, step2, step3, resultStep)
 	pipeline.Init()
 
 	// Running

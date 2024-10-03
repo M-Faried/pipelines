@@ -46,7 +46,11 @@ func Example4() {
 	})
 
 	// init pipeline
-	pipeline := builder.NewPipeline(10, step1, step2, resultStep)
+	pConfig := pip.PipelineConfig{
+		DefaultChannelSize: 10,
+		TrackTokensCount:   true,
+	}
+	pipeline := builder.NewPipeline(pConfig, step1, step2, resultStep)
 	pipeline.Init()
 
 	// Running
