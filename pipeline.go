@@ -8,8 +8,8 @@ import (
 
 type PipelineConfig struct {
 
-	// DefaultChannelSize is the buffer size for all channels used to connect steps if the input channel size of any step is not set.
-	DefaultChannelSize uint16
+	// DefaultStepChannelSize is the buffer size for all channels used to connect steps if the input channel size of any step is not set.
+	DefaultStepChannelSize uint16
 
 	// TrackTokensCount indicates whether the pipeline should keep track of the tokens count or not.
 	// This is required if it is important that all tokens in the pipeline must be processed before termination.

@@ -31,6 +31,6 @@ func (s *Builder[I]) NewPipeline(config PipelineConfig, steps ...IStep[I]) IPipe
 	pipe := &pipeline[I]{}
 	pipe.steps = steps
 	pipe.trackTokensCount = config.TrackTokensCount
-	pipe.defaultChannelSize = config.DefaultChannelSize
+	pipe.defaultChannelSize = config.DefaultStepChannelSize
 	return pipe
 }

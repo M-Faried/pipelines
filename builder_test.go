@@ -70,7 +70,7 @@ func TestBuilder_NewPipeline(t *testing.T) {
 	step2 := &mockStep[int]{}
 
 	pipeConfig := PipelineConfig{
-		DefaultChannelSize: 10,
+		DefaultStepChannelSize: 10,
 	}
 	pipe := builder.NewPipeline(pipeConfig, step1, step2)
 	if pipe == nil {

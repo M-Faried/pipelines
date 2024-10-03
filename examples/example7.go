@@ -63,8 +63,8 @@ func Example7() {
 	})
 
 	pConfig := pip.PipelineConfig{
-		DefaultChannelSize: 10,
-		TrackTokensCount:   true,
+		DefaultStepChannelSize: 10,
+		TrackTokensCount:       true,
 	}
 	pipeline := builder.NewPipeline(pConfig, filter, buffer, result)
 	pipeline.Init()
