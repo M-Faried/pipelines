@@ -69,7 +69,10 @@ func TestBuilder_NewPipeline(t *testing.T) {
 	step1 := &mockStep[int]{}
 	step2 := &mockStep[int]{}
 
-	pipe := builder.NewPipeline(10, step1, step2)
+	pipeConfig := PipelineConfig{
+		DefaultChannelSize: 10,
+	}
+	pipe := builder.NewPipeline(pipeConfig, step1, step2)
 	if pipe == nil {
 		t.Error("Expected pipeline to be created, got nil")
 	}

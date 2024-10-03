@@ -6,6 +6,16 @@ import (
 	"sync"
 )
 
+type PipelineConfig struct {
+
+	// DefaultChannelSize is the buffer size for all channels used to connect steps if the input channel size of any step is not set.
+	DefaultChannelSize uint16
+
+	// TrackTokensCount indicates whether the pipeline should keep track of the tokens count or not.
+	// This is required if it is important that all tokens in the pipeline must be processed before termination.
+	TrackTokensCount bool
+}
+
 // IPipeline is an interface that represents a pipeline.
 type IPipeline[I any] interface {
 
@@ -45,6 +55,9 @@ type pipeline[I any] struct {
 
 	// stepsWaitGroup is used to wait for all the step routines to receive ctx cancel signal.
 	stepsWaitGroup *sync.WaitGroup
+
+	// trackTokensCount indicates whether tokens count should be tracked or not.
+	trackTokensCount bool
 
 	// tokensCount is the number of tokens being processed by the pipeline.
 	tokensCount uint64
@@ -144,6 +157,9 @@ func (p *pipeline[I]) Run(ctx context.Context) {
 }
 
 func (p *pipeline[I]) WaitTillDone() {
+	if !p.trackTokensCount {
+		return
+	}
 	p.doneCond.L.Lock()
 	defer p.doneCond.L.Unlock()
 	for p.tokensCount > 0 {
@@ -195,18 +211,27 @@ func (p *pipeline[I]) FeedMany(items []I) {
 }
 
 func (p *pipeline[I]) TokensCount() uint64 {
+	if !p.trackTokensCount {
+		return 0
+	}
 	p.tokensCountMutex.Lock()
 	defer p.tokensCountMutex.Unlock()
 	return p.tokensCount
 }
 
 func (p *pipeline[I]) incrementTokensCount() {
+	if !p.trackTokensCount {
+		return
+	}
 	p.tokensCountMutex.Lock()
 	defer p.tokensCountMutex.Unlock()
 	p.tokensCount++
 }
 
 func (p *pipeline[I]) decrementTokensCount() {
+	if !p.trackTokensCount {
+		return
+	}
 	p.tokensCountMutex.Lock()
 	defer p.tokensCountMutex.Unlock()
 	p.tokensCount--

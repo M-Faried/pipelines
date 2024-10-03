@@ -27,10 +27,10 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
 }
 
 // NewPipeline creates a new pipeline with the given channel size and steps.
-// The channel size is the buffer size for all channels used to connect steps.
-func (s *Builder[I]) NewPipeline(defaultChannelSize uint16, steps ...IStep[I]) IPipeline[I] {
+func (s *Builder[I]) NewPipeline(config PipelineConfig, steps ...IStep[I]) IPipeline[I] {
 	pipe := &pipeline[I]{}
 	pipe.steps = steps
-	pipe.defaultChannelSize = defaultChannelSize
+	pipe.trackTokensCount = config.TrackTokensCount
+	pipe.defaultChannelSize = config.DefaultChannelSize
 	return pipe
 }
