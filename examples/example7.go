@@ -62,7 +62,11 @@ func Example7() {
 		Process:  printResult,
 	})
 
-	pipeline := builder.NewPipeline(10, filter, buffer, result)
+	pConfig := pip.PipelineConfig{
+		DefaultStepChannelSize: 10,
+		TrackTokensCount:       true,
+	}
+	pipeline := builder.NewPipeline(pConfig, filter, buffer, result)
 	pipeline.Init()
 
 	ctx := context.Background()

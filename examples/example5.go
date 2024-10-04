@@ -68,7 +68,11 @@ func Example5() {
 		Process:  tokenPrinter,
 	})
 
-	pipeline := builder.NewPipeline(10, splitter, trim, stars, result)
+	pConfig := pip.PipelineConfig{
+		DefaultStepChannelSize: 10,
+		TrackTokensCount:       true,
+	}
+	pipeline := builder.NewPipeline(pConfig, splitter, trim, stars, result)
 	pipeline.Init()
 
 	ctx := context.Background()

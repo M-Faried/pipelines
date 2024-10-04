@@ -125,6 +125,7 @@ func TestPipeline_FeedOne(t *testing.T) {
 	p := &pipeline[int]{
 		steps:              steps,
 		defaultChannelSize: 10,
+		trackTokensCount:   true,
 	}
 	p.Init()
 
@@ -137,13 +138,12 @@ func TestPipeline_FeedOne(t *testing.T) {
 		t.Errorf("expected tokens count to be 1, got %d", p.TokensCount())
 	}
 
-	time.Sleep(100 * time.Millisecond) // wait for the pipeline to process the items
+	p.WaitTillDone() // wait for the pipeline to process the items
 
 	if p.TokensCount() != 0 {
 		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
 	}
 
-	p.WaitTillDone()
 	p.Terminate()
 
 	// Test feeding after termination
@@ -165,6 +165,7 @@ func TestPipeline_FeedMany(t *testing.T) {
 	p := &pipeline[int]{
 		steps:              steps,
 		defaultChannelSize: 10,
+		trackTokensCount:   true,
 	}
 	p.Init()
 
@@ -254,5 +255,45 @@ func TestPipeline_WaitTillDone(t *testing.T) {
 	if p.TokensCount() != 0 {
 		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
 	}
+	p.Terminate()
+}
+
+func TestPipeline_TrackTokensCount(t *testing.T) {
+	steps := []IStep[int]{
+		&mockStep[int]{replicas: 1, inputChannelSize: 10},
+		&mockStep[int]{replicas: 1, finalStep: true},
+	}
+
+	p := &pipeline[int]{
+		steps:              steps,
+		defaultChannelSize: 10,
+		trackTokensCount:   false,
+	}
+	p.Init()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	p.Run(ctx)
+
+	p.FeedOne(1)
+	if p.TokensCount() != 0 {
+		t.Errorf("expected tokens count to be 1, got %d", p.TokensCount())
+	}
+
+	time.Sleep(100 * time.Millisecond) // wait for the pipeline to process the items
+
+	if p.TokensCount() != 0 {
+		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
+	}
+
+	p.Terminate()
+
+	// Test feeding after termination
+	p.FeedOne(5)
+	if p.TokensCount() != 0 {
+		t.Errorf("expected tokens count to be 0, got %d", p.TokensCount())
+	}
+
+	// Testing recalling terminate won't cause troubles
 	p.Terminate()
 }

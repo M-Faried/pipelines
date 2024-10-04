@@ -102,8 +102,11 @@ func main() {
     })
 
     // Creating & init the pipeline
-    channelsBufferSize := 10
-    pipeline := builder.NewPipeline(channelsBufferSize, plus5Step, minus10Step, filterStep, printResultStep)
+    config := pip.PipelineConfig{
+        DefaultStepChannelSize: 10,
+        TrackTokensCount:       true,
+    }
+    pipeline := builder.NewPipeline(config, plus5Step, minus10Step, filterStep, printResultStep)
     pipeline.Init()
 
     // Running
@@ -346,13 +349,19 @@ Although the pipeline can operate on one type, but you can create a container st
 
 The pipeline creation requires 2 arguments
 
-1. The default buffer size of the channels used to communication among the pipeline steps. This is the size used if the input channel size is not set explicitly in the step.
+1. The configuration object of the pipeline.
 
 2. Steps in the order of execution.
 
 ```go
+config := pip.PipelineConfig{
+    // The default step input channel size. This is used for any step that has no input channel size explicitly set.
+    DefaultStepChannelSize: 10,
+    // Tells the pipeline to keep track of the tokens count. This is important if you need to monitor the pipeline and want to use WaitTillDone function.
+    TrackTokensCount:       true,
+}
 channelBufferSize := 10
-pipeline := builder.NewPipeline(defaultChannelBufferSize, step1, step2, step3, terminalStep)
+pipeline := builder.NewPipeline(config, step1, step2, step3, terminalStep)
 ```
 
 ### Pipeline Running
@@ -377,12 +386,13 @@ pipeline.FeedMany(items)
 
 WaitTillDone is used to block the execution till all the elements/tokens in the pipelines are processed.
 
-**Note:** You have to use a **Terminal Step** as the last step in the pipeline to use this function call. Otherwise, it will block the execution indefinitely.
+**Note:** You have to set **TrackTokensCount** pipline configuration to true and use a **Terminal Step** as the last step in the pipeline to use this function call. Otherwise, it will block the execution indefinitely.
 
 If you don't care about the current elements in the pipeline, you can call **Terminate()** directly without waiting.
 
 ```go
 // Requries terminal step to be used.
+// Requries pipeline confiugration TrackTokensCount to be set to true.
 pipeline.WaitTillDone()
 ```
 

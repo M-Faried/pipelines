@@ -205,7 +205,11 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 		Process:  saveInDB,
 	})
 
-	pipeline := builder.NewPipeline(PIPE_CHANNEL_SIZE,
+	pConfig := pip.PipelineConfig{
+		DefaultStepChannelSize: PIPE_CHANNEL_SIZE,
+		TrackTokensCount:       false,
+	}
+	pipeline := builder.NewPipeline(pConfig,
 		filter,
 		tempratureErrorMonitorStep,
 		humidityErrorMonitorStep,
@@ -262,7 +266,7 @@ func ExampleSensor() {
 
 	<-ctx.Done()
 	// Wait for the goroutines to finish too.
-	time.Sleep(1 * time.Second)
+	time.Sleep(100 * time.Millisecond)
 	fmt.Println("Sensor Data Example Done!!!")
 }
 

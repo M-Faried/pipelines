@@ -37,7 +37,11 @@ func Example1() {
 		Process:  printResult,
 	})
 
-	pipeline := builder.NewPipeline(10, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
+	pConfig := pip.PipelineConfig{
+		DefaultStepChannelSize: 10,
+		TrackTokensCount:       true,
+	}
+	pipeline := builder.NewPipeline(pConfig, plus5Step, minus10Step, printResultStep) // Notice 10 is the buffer size
 	pipeline.Init()
 
 	// Running

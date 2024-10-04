@@ -57,7 +57,10 @@ func Example6() {
 		Process:  printResult,
 	})
 
-	pipeline := builder.NewPipeline(10, filter, sumCalculator, result)
+	pConfig := pip.PipelineConfig{
+		DefaultStepChannelSize: 10,
+	}
+	pipeline := builder.NewPipeline(pConfig, filter, sumCalculator, result)
 	pipeline.Init()
 
 	ctx := context.Background()
