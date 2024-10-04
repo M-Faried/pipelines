@@ -355,12 +355,14 @@ The pipeline creation requires 2 arguments
 
 ```go
 config := pip.PipelineConfig{
-    // The default step input channel size. This is used for any step that has no input channel size explicitly set.
+    // The default step input channel size.
+    // This is used for any step that has no input channel size explicitly set.
     DefaultStepChannelSize: 10,
-    // Tells the pipeline to keep track of the tokens count. This is important if you need to monitor the pipeline and want to use WaitTillDone function.
+    // Tells the pipeline to keep track of the tokens count.
+    // This is important if you need to monitor the pipeline and want to use WaitTillDone function.
+    // Setting this to false boosts the performance of steps since the tokens count is a critical section.
     TrackTokensCount:       true,
 }
-channelBufferSize := 10
 pipeline := builder.NewPipeline(config, step1, step2, step3, terminalStep)
 ```
 
