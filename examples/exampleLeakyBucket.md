@@ -10,7 +10,7 @@ The bucket should receive a fixed size string and does the following:
 
 3. Display the words 1 by 1 with the 1 second interval.
 
-4. When it reaches the end, it should start from the beginning.
+4. When there is no data incoming, the bucket should ouput "----"
 
 ### Tip
 

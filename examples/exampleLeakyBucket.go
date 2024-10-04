@@ -13,7 +13,13 @@ import (
 	pip "github.com/m-faried/pipelines"
 )
 
-const TEXT = "piplines is an awesome package !!!"
+const (
+	TEXT          = "piplines is an awesome package !!!"
+	TEXT_2        = "New Text, 2 Available"
+	TEXT_3        = "New Text 3 Arrived:"
+	TEXT_4        = "This is the last Text"
+	BUFFER_LENGTH = 10
+)
 
 type leakyBucket struct {
 	addedTokensCount int
@@ -35,13 +41,16 @@ func (l *leakyBucket) timeTriggeredProcess(buffer []string) (string, pip.BufferF
 
 	itemIndex := len(buffer) - l.addedTokensCount
 
-	if l.addedTokensCount > 1 {
+	if l.addedTokensCount > 0 {
 		l.addedTokensCount--
-	} else if l.addedTokensCount == 1 {
-		l.addedTokensCount = len(buffer)
 	}
 
-	return buffer[itemIndex], pip.BufferFlags{SendProcessOuput: true}
+	if itemIndex < len(buffer) {
+		return buffer[itemIndex], pip.BufferFlags{SendProcessOuput: true}
+	} else {
+		return "----", pip.BufferFlags{SendProcessOuput: true}
+	}
+
 }
 
 func createLeakyBucketPipeline() pip.IPipeline[string] {
@@ -71,7 +80,7 @@ func createLeakyBucketPipeline() pip.IPipeline[string] {
 	leakyBucket := &leakyBucket{}
 	bucketStep := builder.NewStep(pip.StepBufferConfig[string]{
 		Label:                        "Leaky Bucket Step",
-		BufferSize:                   10,
+		BufferSize:                   BUFFER_LENGTH,
 		InputTriggeredProcess:        leakyBucket.inputTriggered,
 		TimeTriggeredProcess:         leakyBucket.timeTriggeredProcess,
 		TimeTriggeredProcessInterval: 1 * time.Second,
@@ -88,7 +97,6 @@ func createLeakyBucketPipeline() pip.IPipeline[string] {
 		DefaultStepChannelSize: 10,
 		TrackTokensCount:       false,
 	}
-
 	pipeline := builder.NewPipeline(pConfig, wordSplitter, wordTrimmer, wordFilter, bucketStep, printer)
 	pipeline.Init()
 	return pipeline
@@ -103,7 +111,16 @@ func ExampleLeakyBucket() {
 
 	pipeline := createLeakyBucketPipeline()
 	pipeline.Run(ctx)
-	pipeline.FeedOne(TEXT)
+
+	go func() {
+		pipeline.FeedOne(TEXT)
+		time.Sleep(2 * time.Second)
+		pipeline.FeedOne(TEXT_2)
+		time.Sleep(15 * time.Second)
+		pipeline.FeedOne(TEXT_3)
+		time.Sleep(15 * time.Second)
+		pipeline.FeedOne(TEXT_4)
+	}()
 
 	// Goroutine to cancel the context when an interrupt signal is received
 	go func() {
