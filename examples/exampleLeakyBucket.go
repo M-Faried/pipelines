@@ -94,8 +94,8 @@ func createLeakyBucketPipeline() pip.IPipeline[string] {
 	})
 
 	pConfig := pip.PipelineConfig{
-		DefaultStepChannelSize: 10,
-		TrackTokensCount:       false,
+		DefaultStepInputChannelSize: 10,
+		TrackTokensCount:            false,
 	}
 	pipeline := builder.NewPipeline(pConfig, wordSplitter, wordTrimmer, wordFilter, bucketStep, printer)
 	pipeline.Init()

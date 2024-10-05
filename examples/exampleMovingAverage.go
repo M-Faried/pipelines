@@ -42,7 +42,6 @@ func createMovingAveragePipeline() pip.IPipeline[int64] {
 	buffer := builder.NewStep(pip.StepBufferConfig[int64]{
 		Label:                 "buffer",
 		Replicas:              1,
-		InputChannelSize:      5,
 		BufferSize:            5,                // The moving average window size
 		PassThrough:           false,            // This means that the buffer will not let the elements move to the following steps.
 		InputTriggeredProcess: calculateAverage, // The process which is triggered with every input.
@@ -57,7 +56,7 @@ func createMovingAveragePipeline() pip.IPipeline[int64] {
 	})
 
 	pConfig := pip.PipelineConfig{
-		DefaultStepChannelSize: 1,
+		DefaultStepInputChannelSize: 1,
 	}
 	pipeline := builder.NewPipeline(pConfig, filter, buffer, print)
 	pipeline.Init()

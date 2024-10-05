@@ -58,7 +58,7 @@ func Example6() {
 	})
 
 	pConfig := pip.PipelineConfig{
-		DefaultStepChannelSize: 10,
+		DefaultStepInputChannelSize: 10,
 	}
 	pipeline := builder.NewPipeline(pConfig, filter, sumCalculator, result)
 	pipeline.Init()

@@ -6,7 +6,9 @@ github.com/m-faried/pipelines/builder.go:18.29,19.28 1 1
 github.com/m-faried/pipelines/builder.go:20.27,21.26 1 1
 github.com/m-faried/pipelines/builder.go:22.27,23.26 1 1
 github.com/m-faried/pipelines/builder.go:24.10,25.63 1 1
-github.com/m-faried/pipelines/builder.go:30.89,36.2 5 1
+github.com/m-faried/pipelines/builder.go:30.89,32.45 1 1
+github.com/m-faried/pipelines/builder.go:32.45,33.59 1 1
+github.com/m-faried/pipelines/builder.go:36.2,40.13 5 1
 github.com/m-faried/pipelines/pipeline.go:81.36,83.31 1 1
 github.com/m-faried/pipelines/pipeline.go:83.31,85.3 1 1
 github.com/m-faried/pipelines/pipeline.go:87.2,87.23 1 1

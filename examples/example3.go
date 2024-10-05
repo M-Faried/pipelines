@@ -43,7 +43,7 @@ func Example3() {
 	})
 
 	pConfig := pip.PipelineConfig{
-		DefaultStepChannelSize: 10,
+		DefaultStepInputChannelSize: 10,
 	}
 	pipeline := builder.NewPipeline(pConfig, step1, step2, stepResult)
 	pipeline.Init()

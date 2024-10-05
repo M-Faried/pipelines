@@ -47,7 +47,8 @@ func TestBuilder_TestNewStep(t *testing.T) {
 		})
 	}
 }
-func TestBuilder_InvalidConfig(t *testing.T) {
+
+func TestBuilder_InvalidStepConfig(t *testing.T) {
 
 	builder := &Builder[int]{}
 
@@ -70,7 +71,7 @@ func TestBuilder_NewPipeline(t *testing.T) {
 	step2 := &mockStep[int]{}
 
 	pipeConfig := PipelineConfig{
-		DefaultStepChannelSize: 10,
+		DefaultStepInputChannelSize: 10,
 	}
 	pipe := builder.NewPipeline(pipeConfig, step1, step2)
 	if pipe == nil {
@@ -90,4 +91,21 @@ func TestBuilder_NewPipeline(t *testing.T) {
 	if concretePipeline.defaultChannelSize != 10 {
 		t.Errorf("Expected channel size to be 10, got %d", concretePipeline.defaultChannelSize)
 	}
+}
+
+func TestBuilder_InvalidPipelineConfig(t *testing.T) {
+
+	builder := &Builder[int]{}
+	step1 := &mockStep[int]{}
+	step2 := &mockStep[int]{}
+
+	pipConfig := PipelineConfig{}
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("Expected to panic, got nil")
+		}
+	}()
+
+	builder.NewPipeline(pipConfig, step1, step2)
 }

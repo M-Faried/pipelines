@@ -103,7 +103,7 @@ func main() {
 
     // Creating & init the pipeline
     config := pip.PipelineConfig{
-        DefaultStepChannelSize: 10,
+        DefaultStepInputChannelSize: 10,
         TrackTokensCount:       true,
     }
     pipeline := builder.NewPipeline(config, plus5Step, minus10Step, filterStep, printResultStep)
@@ -356,7 +356,7 @@ The pipeline creation requires 2 arguments
 config := pip.PipelineConfig{
     // The default step input channel size.
     // This is used for any step that has no input channel size explicitly set.
-    DefaultStepChannelSize: 10,
+    DefaultStepInputChannelSize: 10,
     // Tells the pipeline to keep track of the tokens count.
     // This is important if you need to monitor the pipeline and want to use WaitTillDone function.
     // Setting this to false boosts the performance of steps since the tokens count is a critical section.

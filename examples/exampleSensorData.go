@@ -206,8 +206,8 @@ func createSensorDataPipeline() pip.IPipeline[*SensorData] {
 	})
 
 	pConfig := pip.PipelineConfig{
-		DefaultStepChannelSize: PIPE_CHANNEL_SIZE,
-		TrackTokensCount:       false,
+		DefaultStepInputChannelSize: PIPE_CHANNEL_SIZE,
+		TrackTokensCount:            false,
 	}
 	pipeline := builder.NewPipeline(pConfig,
 		filter,
