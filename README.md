@@ -385,15 +385,22 @@ pipeline.FeedMany(items)
 
 ### Waiting Pipeline To Finish
 
-WaitTillDone is used to block the execution till all the elements/tokens in the pipelines are processed.
+WaitTillDone is used to block the execution till all the elements/tokens in the pipelines are processed. This requires some certain conditions to operate:
 
-**Note:** You have to set **TrackTokensCount** pipline configuration to true and use a **Terminal Step** as the last step in the pipeline to use this function call. Otherwise, it will block the execution indefinitely.
+1. Requries pipeline confiugration **TrackTokensCount** to be set to true.
 
-If you don't care about the current elements in the pipeline, you can call **Terminate()** directly without waiting.
+2. Requries terminal step to be used.
+
+3. Requires every buffer to be flushed.
+
+If these conditions are not met, **_WaitTillDone_** will stall the execution indefinitely
+
+If you don't care about the current elements in the pipeline like in the case of data stream, you can call **Terminate()** directly without waiting.
 
 ```go
 // Requries terminal step to be used.
 // Requries pipeline confiugration TrackTokensCount to be set to true.
+// Requires every buffer to be flushed.
 pipeline.WaitTillDone()
 ```
 
