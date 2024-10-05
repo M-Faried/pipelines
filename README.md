@@ -251,7 +251,7 @@ You have also the option to flush the buffer or not after running your calculati
 
 In the time triggered step, every input is added to the buffer, but the process **TimeTriggeredProcess** is called with the current buffer value every **TimeTriggeredProcessInterval** set in the step configuration.
 
-In the following example, the moving sum is calculated with window of size 10.
+In the following example, the step calculates the sum of the latest 5 elements (BufferSize) every 100 ms.
 
 ```go
 
@@ -264,8 +264,8 @@ func periodicCalculateSum(buffer []int64) (int64, pip.BufferFlags) {
 		sum += v
 	}
 	return sum, pip.BufferFlags{
-            SendProcessOuput:   true,
-            FlushBuffer: false,
+        SendProcessOuput:   true,
+        FlushBuffer: false,
 	}
 }
 
@@ -276,7 +276,6 @@ bufferStep := builder.NewStep(pip.StepBufferConfig[int64]{
     PassThrough:                    false,// This means the buffer is going to retain all elements.
     TimeTriggeredProcess:           periodicCalculateSum, // The process which is called periodically with the current buffer value.
     TimeTriggeredProcessInterval:   100 * time.Millisecond, //This means the buffer calculates the result from the buffer every 500ms
-
 })
 ```
 
