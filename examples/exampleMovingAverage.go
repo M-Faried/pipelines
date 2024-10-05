@@ -88,9 +88,21 @@ func ExampleMovingAverage() {
 		fmt.Println("Pipeline Terminated!!!")
 	}()
 
-	for i := 1; i <= 20; i++ {
-		pipeline.FeedOne(int64(i))
-	}
+	go func() {
+		ticker := time.NewTicker(1000 * time.Millisecond)
+		defer ticker.Stop()
+		counter := int64(1)
+		for {
+			select {
+			case <-ctx.Done():
+				fmt.Println("Data generation stopped !!!")
+				return
+			case <-ticker.C:
+				pipeline.FeedOne(counter)
+				counter++
+			}
+		}
+	}()
 
 	fmt.Println("CTRL+C to exit!")
 
