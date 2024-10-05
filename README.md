@@ -259,14 +259,14 @@ In the following example, the step calculates the sum of the latest 5 elements (
 type StepBufferProcess[I any] func([]I) (I, BufferFlags) // Don't redefine
 
 func periodicCalculateSum(buffer []int64) (int64, pip.BufferFlags) {
-	var sum int64
-	for _, v := range buffer {
-		sum += v
-	}
-	return sum, pip.BufferFlags{
+    var sum int64
+    for _, v := range buffer {
+        sum += v
+    }
+    return sum, pip.BufferFlags{
         SendProcessOuput:   true,
         FlushBuffer: false,
-	}
+    }
 }
 
 bufferStep := builder.NewStep(pip.StepBufferConfig[int64]{
