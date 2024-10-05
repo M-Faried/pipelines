@@ -28,6 +28,11 @@ func (s *Builder[I]) NewStep(config StepConfig[I]) IStep[I] {
 
 // NewPipeline creates a new pipeline with the given channel size and steps.
 func (s *Builder[I]) NewPipeline(config PipelineConfig, steps ...IStep[I]) IPipeline[I] {
+
+	if config.DefaultStepChannelSize == 0 {
+		panic("DefaultStepChannelSize configuration is not set")
+	}
+
 	pipe := &pipeline[I]{}
 	pipe.steps = steps
 	pipe.trackTokensCount = config.TrackTokensCount
